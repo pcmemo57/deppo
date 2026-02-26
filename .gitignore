@@ -1,0 +1,22 @@
+# Depo Yönetim Sistemi — Git Ignore
+
+# Hassas yapılandırma dosyaları
+# config/database.php — DB şifresini git'e alma, üretimde kendin oluştur
+
+# Yüklenen resimler (büyük dosyalar)
+images/UrunResim/*
+!images/UrunResim/.gitkeep
+
+# Cache / temp
+*.log
+*.tmp
+*.cache
+
+# IDE dosyaları
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Kurulum sonrası sil
+# setup/install.php — kurulum tamamlandıktan sonra silmeyi unutma!
