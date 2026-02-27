@@ -9,14 +9,14 @@ $footerText = get_setting('footer_text', '© 2026 Depo Yönetim Sistemi');
 </div><!-- /.content-wrapper -->
 
 <!-- Footer -->
-<footer class="main-footer py-2" style="background:<?= e($footerBg)?>; color:<?= e($footerColor)?>; border:none;">
+<footer class="main-footer py-2" style="background:<?= e($footerBg) ?>; color:<?= e($footerColor) ?>; border:none;">
     <div class="float-right d-none d-sm-inline">
         <small>v
-            <?= APP_VERSION?>
+            <?= APP_VERSION ?>
         </small>
     </div>
     <strong>
-        <?= e($footerText)?>
+        <?= e($footerText) ?>
     </strong>
 </footer>
 
@@ -67,24 +67,89 @@ $footerText = get_setting('footer_text', '© 2026 Depo Yönetim Sistemi');
         });
     }
 
-    // Türkçe binler ayıracı formatı
-    function formatTurkish(val) {
-        val = String(val).replace(/[^0-9,]/g, '');
-        var parts = val.split(',');
-        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-        return parts.join(',');
+    /**
+     * Türkçe Sayı Formatlama
+     * @param {any} val - Değer
+     * @param {number} decimals - Ondalık hane sayısı (Default: 2)
+     */
+    function formatTurkish(val, decimals) {
+        if (val === null || val === undefined || val === '') return '';
+        if (decimals === undefined) decimals = 2;
+
+        var str = String(val).trim();
+        var num;
+
+        if (typeof val === 'number') {
+            num = val;
+        } else {
+            if (str.indexOf(',') !== -1) {
+                // Kesin Türk formatı: 1.234,56
+                num = parseFloat(str.replace(/\./g, '').replace(',', '.'));
+            } else if (str.indexOf('.') !== -1) {
+                // Virgül yok ama nokta var. Ambiguous: 1.000 (Bin) mi 1.23 (JS Float) mü?
+                var parts = str.split('.');
+                if (parts.length === 2 && parts[1].length === 3) {
+                    // Noktadan sonra 3 hane varsa binler ayıracı kabul et (Örn: 1.000)
+                    num = parseFloat(str.replace(/\./g, ''));
+                } else {
+                    // Değilse JS float kabul et (Örn: 1234.56)
+                    num = parseFloat(str);
+                }
+            } else {
+                num = parseFloat(str);
+            }
+        }
+
+        if (isNaN(num)) return val;
+
+        var fixed = num.toFixed(decimals);
+        var p = fixed.split('.');
+        // Binler ayıracı ekle
+        p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        return p.join(',');
     }
 
-    // Price input'ları gerçek zamanlı formatla
-    $(document).on('input', '.price-format', function () {
-        var raw = $(this).val().replace(/\./g, '');
-        $(this).val(formatTurkish(raw));
+    /**
+     * Adet Formatlama (Ondalık yok, binler nokta)
+     */
+    function formatQty(val) {
+        if (val === null || val === undefined || val === '') return '';
+        var num = typeof val === 'number' ? val : parseFloat(String(val).replace(/\./g, '').replace(',', '.'));
+        if (isNaN(num)) return val;
+        return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num);
+    }
+
+    /**
+     * Fiyat ve Adet inputları için gerçek zamanlı maskeleme
+     */
+    $(document).on('input', '.price-format', function (e) {
+        var cursor = this.selectionStart;
+        var oldLen = $(this).val().length;
+        var val = $(this).val().replace(/[^0-9,]/g, '');
+
+        var parts = val.split(',');
+        // Binler ayıracı ekle
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+        var formatted = parts[0] + (val.indexOf(',') !== -1 ? ',' + (parts[1] || '').substring(0, 4) : '');
+        $(this).val(formatted);
+
+        var newLen = formatted.length;
+        this.setSelectionRange(cursor + (newLen - oldLen), cursor + (newLen - oldLen));
     });
 
-    // Price input'tan temiz sayısal değer al
+    $(document).on('blur', '.price-format', function () {
+        var val = $(this).val();
+        if (val) $(this).val(formatTurkish(val, 2));
+    });
+
+    /**
+     * Inputtan temiz float değer al
+     */
     function getPriceValue(selector) {
-        var val = $(selector).val().replace(/\./g, '').replace(',', '.');
-        return parseFloat(val) || 0;
+        var val = $(selector).val() || '';
+        if (!val) return 0;
+        return parseFloat(val.replace(/\./g, '').replace(',', '.')) || 0;
     }
 </script>
 

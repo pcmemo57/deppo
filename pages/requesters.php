@@ -6,42 +6,49 @@ requireRole(ROLE_ADMIN, ROLE_USER);
 ?>
 <div class="row">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h3 class="card-title"><i class="fas fa-users me-2"></i>Talep Eden Listesi</h3>
-                <button class="btn btn-success btn-sm" onclick="openModal()">
-                    <i class="fas fa-plus me-1"></i>Talep Eden Ekle
-                </button>
-            </div>
-            <div class="card-body">
-                <div class="d-flex align-items-center gap-2 mb-3">
-                    <input type="text" id="searchBox" class="form-control form-control-sm" placeholder="Ara..."
-                        style="width:220px">
+        <div class="card card-info card-outline">
+            <div class="card-header">
+                <h3 class="card-title text-bold"><i class="fas fa-users me-2"></i>Talep Eden Listesi</h3>
+                <div class="card-tools d-flex gap-2">
                     <select id="perPage" class="form-select form-select-sm" style="width:auto">
-                        <option value="10">10</option>
-                        <option value="25" selected>25</option>
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
                         <option value="50">50</option>
                         <option value="100">100</option>
                     </select>
+                    <div class="input-group input-group-sm" style="width: 220px;">
+                        <input type="text" id="searchBox" class="form-control" placeholder="Ara...">
+                        <div class="input-group-append">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-sm px-3 shadow-sm" onclick="openModal()"
+                        title="Yeni Talep Eden Ekle">
+                        <i class="fas fa-plus me-1"></i> Yeni Talep Eden Ekle
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0 table-responsive">
+                <table class="table table-hover table-striped m-0 table-valign-middle">
+                    <thead class="bg-light">
+                        <tr>
+                            <th style="width:60px" class="ps-3">#</th>
+                            <th>Ad</th>
+                            <th>Soyad</th>
+                            <th>E-posta</th>
+                            <th>Görev</th>
+                            <th style="width:100px">Durum</th>
+                            <th style="width:120px" class="text-center pe-3">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+            <div class="card-footer clearfix">
+                <div class="float-start">
                     <span id="totalCount" class="text-muted small"></span>
                 </div>
-                <div class="table-responsive">
-                    <table class="table table-hover table-striped table-bordered">
-                        <thead class="table-dark">
-                            <tr>
-                                <th style="width:50px">#</th>
-                                <th>Ad</th>
-                                <th>Soyad</th>
-                                <th>E-posta</th>
-                                <th>Görev</th>
-                                <th>Durum</th>
-                                <th style="width:110px">İşlem</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody"></tbody>
-                    </table>
-                </div>
-                <div id="pagination" class="d-flex justify-content-center mt-2"></div>
+                <div id="pagination" class="float-end m-0"></div>
             </div>
         </div>
     </div>
@@ -87,11 +94,18 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">Durum</label>
-                                <select name="is_active" class="form-select">
-                                    <option value="1">Aktif</option>
-                                    <option value="0">Pasif</option>
-                                </select>
+                                <label class="d-block mb-2">Durum</label>
+                                <input type="hidden" name="is_active" id="is_active_input" value="1">
+                                <div class="status-btn-group">
+                                    <button type="button" class="status-btn-item" id="set_active"
+                                        onclick="setStatus(1)">
+                                        <i class="fas fa-check-circle me-1"></i> AKTİF
+                                    </button>
+                                    <button type="button" class="status-btn-item" id="set_inactive"
+                                        onclick="setStatus(0)">
+                                        <i class="fas fa-times-circle me-1"></i> PASİF
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -107,26 +121,30 @@ requireRole(ROLE_ADMIN, ROLE_USER);
 </div>
 
 <script>
-    var curPage = 1, curPerPage = 25, curSearch = '', searchTimer;
-    var apiUrl = '<?= BASE_URL?>/api/requesters.php';
+    var curPage = 1, curPerPage = 10, curSearch = '', searchTimer;
+    var apiUrl = '<?= BASE_URL ?>/api/requesters.php';
 
     function load() {
         $.get(apiUrl, { action: 'list', page: curPage, per_page: curPerPage, search: curSearch }, function (r) {
-            if (!r.success) return;
+            if (!r.success || !r.data.data) return;
             var html = '';
-            $.each(r.data, function (i, u) {
+            $.each(r.data.data, function (i, u) {
                 html += '<tr><td>' + u.id + '</td><td>' + esc(u.name) + '</td><td>' + esc(u.surname) + '</td>';
                 html += '<td>' + esc(u.email || '—') + '</td><td>' + esc(u.title || '—') + '</td>';
-                html += '<td>' + (u.is_active == 1 ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-secondary">Pasif</span>') + '</td>';
+                html += '<td>' +
+                    (u.is_active == 1
+                        ? '<span class="status-badge active" onclick="toggleRow(' + u.id + ',1)"><i class="fas fa-check"></i> AKTİF</span>'
+                        : '<span class="status-badge inactive" onclick="toggleRow(' + u.id + ',0)"><i class="fas fa-times"></i> PASİF</span>'
+                    ) +
+                    '</td>';
                 html += '<td>';
                 html += '<button class="btn btn-xs btn-info me-1" onclick="editRow(' + u.id + ')"><i class="fas fa-edit"></i></button>';
-                html += '<button class="btn btn-xs btn-warning me-1" onclick="toggleRow(' + u.id + ',' + u.is_active + ')"><i class="fas fa-power-off"></i></button>';
                 html += '<button class="btn btn-xs btn-danger" onclick="deleteRow(' + u.id + ')"><i class="fas fa-trash"></i></button>';
                 html += '</td></tr>';
             });
             $('#tableBody').html(html || '<tr><td colspan="7" class="text-center text-muted p-3">Kayıt bulunamadı</td></tr>');
-            $('#totalCount').text('Toplam: ' + r.total + ' kayıt');
-            renderPag(r.total);
+            $('#totalCount').text('Toplam: ' + r.data.total + ' kayıt');
+            renderPag(r.data.total);
         }, 'json');
     }
 
@@ -142,7 +160,7 @@ requireRole(ROLE_ADMIN, ROLE_USER);
         $('#pagination').html(html).find('a').on('click', function (e) { e.preventDefault(); curPage = parseInt($(this).data('p')); load(); });
     }
 
-    function openModal() { $('#formAction').val('add'); $('#formId').val(''); $('#crudForm')[0].reset(); $('#modalTitle').text('Talep Eden Ekle'); $('#crudModal').modal('show'); }
+    function openModal() { $('#formAction').val('add'); $('#formId').val(''); $('#crudForm')[0].reset(); setStatus(1); $('#modalTitle').text('Talep Eden Ekle'); $('#crudModal').modal('show'); }
     function editRow(id) {
         $.get(apiUrl, { action: 'get', id: id }, function (r) {
             if (!r.success) return showError(r.message);
@@ -150,11 +168,21 @@ requireRole(ROLE_ADMIN, ROLE_USER);
             $('#formAction').val('edit'); $('#formId').val(u.id);
             $('[name="name"]').val(u.name); $('[name="surname"]').val(u.surname);
             $('[name="email"]').val(u.email); $('[name="title"]').val(u.title);
-            $('[name="is_active"]').val(u.is_active);
+            setStatus(u.is_active);
             $('#modalTitle').text('Talep Eden Düzenle'); $('#crudModal').modal('show');
         }, 'json');
     }
-    function toggleRow(id, cur) { confirmAction(cur == 1 ? 'Pasifize et?' : 'Aktifleştir?', function () { $.post(apiUrl, { action: 'toggle', id: id, status: cur == 1 ? 0 : 1 }, function (r) { r.success ? showSuccess(r.message) : showError(r.message); load(); }, 'json'); }); }
+
+    function setStatus(val) {
+        $('#is_active_input').val(val);
+        $('.status-btn-item').removeClass('active-state inactive-state');
+        if (val == 1) {
+            $('#set_active').addClass('active-state');
+        } else {
+            $('#set_inactive').addClass('inactive-state');
+        }
+    }
+    function toggleRow(id, cur) { $.post(apiUrl, { action: 'toggle', id: id, status: cur == 1 ? 0 : 1 }, function (r) { r.success ? showSuccess(r.message) : showError(r.message); load(); }, 'json'); }
     function deleteRow(id) { confirmAction('Bu kaydı silmek istediğinize emin misiniz?', function () { $.post(apiUrl, { action: 'delete', id: id }, function (r) { r.success ? showSuccess(r.message) : showError(r.message); load(); }, 'json'); }); }
     function esc(v) { return $('<span>').text(v || '').html(); }
 

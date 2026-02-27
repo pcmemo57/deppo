@@ -9,7 +9,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 $action = sanitize($_POST['action'] ?? $_GET['action'] ?? '');
 $page = max(1, (int)($_GET['page'] ?? 1));
-$perPage = min(100, max(5, (int)($_GET['per_page'] ?? 25)));
+$perPage = min(100, max(5, (int)($_GET['per_page'] ?? 10)));
 $search = sanitize($_GET['search'] ?? '');
 $offset = ($page - 1) * $perPage;
 $table = 'tbl_dp_warehouses';

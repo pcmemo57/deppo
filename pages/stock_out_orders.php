@@ -1,12 +1,20 @@
 <?php
 /**
- * Depodan Çıkış Listesi & Yönetimi
+ * Sipariş Bazlı Çıkış Listesi — Gruplandırılmış Görünüm
  */
 requireRole(ROLE_ADMIN, ROLE_USER, ROLE_REQUESTER);
 $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hidden=0 AND is_active=1 ORDER BY name");
 ?>
-
 <style>
+    .order-row {
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .order-row:hover {
+        background: #f8f9fa !important;
+    }
+
     /* ───────────────────────────────────────────
      KART HEADER — araç çubuğu hizalama
   ─────────────────────────────────────────── */
@@ -52,6 +60,33 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
     /* Sayfa tepesindeki boşluk */
     .stock-out-row {
         margin-top: 1.25rem;
+    }
+
+    .detail-row {
+        display: none;
+        background: #fdfdfd;
+    }
+
+    .detail-container {
+        padding: 15px;
+        border-left: 4px solid #ffc107;
+        margin: 10px;
+        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.02);
+    }
+
+    .expand-icon {
+        transition: transform 0.3s;
+        color: #adb5bd;
+    }
+
+    .row-expanded .expand-icon {
+        transform: rotate(90deg);
+        color: #ffc107;
+    }
+
+    .badge-item-count {
+        font-size: 0.85rem;
+        padding: 5px 10px;
     }
 
     /* ───────────────────────────────────────────
@@ -229,42 +264,48 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
     }
 </style>
 
-<div class="row stock-out-row">
+<div class="row">
     <div class="col-12">
-        <div class="card card-primary card-outline">
+        <div class="card card-warning card-outline">
             <div class="card-header">
-                <h3 class="card-title text-bold"><i class="fas fa-sign-out-alt me-2"></i> Depodan Çıkış Listesi</h3>
-                <div class="card-tools d-flex">
-                    <select id="perPage" class="form-select form-select-sm me-2" style="width:auto">
+                <h3 class="card-title text-bold"><i class="fas fa-list-ul me-2"></i> Sipariş Bazlı Çıkış Listesi</h3>
+                <div class="card-tools d-flex gap-2">
+                    <select id="perPage" class="form-select form-select-sm" style="width:auto">
                         <option value="10" selected>10</option>
                         <option value="25">25</option>
                         <option value="50">50</option>
                         <option value="100">100</option>
                     </select>
                     <div class="input-group input-group-sm me-2" style="width: 200px;">
-                        <input type="text" id="searchBox" class="form-control" placeholder="Ara...">
+                        <input type="text" id="searchBox" class="form-control" placeholder="Müşteri veya depo ara...">
                         <span class="input-group-text"><i class="fas fa-search"></i></span>
                     </div>
-                    <a href="?page=stock_out_orders" class="btn btn-secondary btn-sm px-3 shadow-sm">
-                        <i class="fas fa-list-ul me-1"></i> Sipariş Bazlı Liste
-                    </a>
+                    <a href="?page=stock_out" class="btn btn-secondary btn-sm px-3 shadow-sm">
+                        <i class="fas fa-list me-1" style="margin-right: 5px;"></i>Satır Bazlı Liste</a>
+                    <button class="btn btn-primary btn-sm px-3 shadow-sm" onclick="openAddModal()">
+                        <i class="fas fa-plus me-1" style="margin-right: 5px;"></i>Yeni Çıkış Ekle
+                    </button>
                 </div>
             </div>
             <div class="card-body p-0 table-responsive">
-                <table class="table table-hover table-striped m-0 table-valign-middle">
+                <table class="table table-hover m-0 table-valign-middle" id="ordersTable">
                     <thead class="bg-light text-muted small text-uppercase">
                         <tr>
-                            <th style="width:60px" class="ps-3">#</th>
-                            <th>Ürün</th>
+                            <th style="width:50px" class="ps-3 text-center">#</th>
+                            <th>Müşteri / Muhatap</th>
                             <th>Depo</th>
-                            <th>Alan / Müşteri</th>
-                            <th class="num-align">Miktar</th>
-                            <th class="num-align">Toplam (EUR)</th>
-                            <th style="width:120px">Tarih</th>
-                            <th style="width:80px" class="text-center pe-3">Detay</th>
+                            <th class="num-align">Kalem Sayısı</th>
+                            <th class="num-align">Toplam Tutar</th>
+                            <th>Tarih</th>
+                            <th style="width:60px" class="text-center pe-3">Detay</th>
                         </tr>
                     </thead>
-                    <tbody id="tableBody"></tbody>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="8" class="text-center p-4"><i class="fas fa-spinner fa-spin"></i> Yükleniyor...
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
             <div class="card-footer clearfix">
@@ -390,94 +431,41 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
     </div>
 </div>
 
-<!-- View Modal -->
-<div class="modal fade" id="viewModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-xl-custom">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-eye me-2"></i> Çıkış Kaydı Detayı</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="viewBody">
-                <!-- Detay İçeriği JS ile dolacak -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-warning me-auto" id="btnMoveToEdit" style="display:none">
-                    <i class="fas fa-edit me-1"></i> Düzenle
-                </button>
-                <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">Kapat</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <script>
     var curPage = 1, curPerPage = 10, curSearch = '', searchTimer;
     var apiUrl = '<?= BASE_URL ?>/api/stock_out.php';
     var lines = [];
 
+
     function esc(v) { return $('<span>').text(v || '').html(); }
 
     function load() {
-        $.get(apiUrl, { action: 'list', page: curPage, per_page: curPerPage, search: curSearch }, function (r) {
-            if (!r.success || !r.data.data) return;
+        $.get(apiUrl, { action: 'list_grouped', page: curPage, per_page: curPerPage, search: curSearch }, function (r) {
+            if (!r.success) { showError(r.message); return; }
             var html = '';
             $.each(r.data.data, function (i, d) {
-                var muhatap = '—';
-                if (d.requester_name) muhatap = '<i class="fas fa-user me-1 opacity-50"></i> ' + esc(d.requester_name + ' ' + d.requester_surname);
-                else if (d.customer) muhatap = '<i class="fas fa-building me-1 opacity-50"></i> ' + esc(d.customer);
-
-                html += '<tr>' +
-                    '<td class="ps-3">' + d.id + '</td>' +
-                    '<td><b>' + esc(d.product) + '</b></td>' +
-                    '<td>' + esc(d.warehouse) + '</td>' +
-                    '<td>' + muhatap + '</td>' +
-                    '<td class="num-align">' + (+d.quantity) + ' <small class="text-muted">' + esc(d.unit) + '</small></td>' +
-                    '<td class="num-align"><strong>' + formatTurkish(parseFloat(d.total_price).toFixed(2)) + '</strong> <small>EUR</small></td>' +
-                    '<td><small>' + d.created_at + '</small></td>' +
-                    '<td class="text-center pe-3"><button class="btn btn-xs btn-outline-primary" onclick="viewRow(' + d.id + ')"><i class="fas fa-eye"></i></button></td>' +
+                html += '<tr class="order-row" onclick="toggleDetail(\'' + d.batch_id + '\', this)">' +
+                    '<td class="ps-3 text-center"><i class="fas fa-chevron-right expand-icon"></i></td>' +
+                    '<td><div class="fw-bold text-primary">' + esc(d.customer_name || '—') + '</div></td>' +
+                    '<td><i class="fas fa-warehouse me-1 opacity-50"></i> ' + esc(d.warehouse_name) + '</td>' +
+                    '<td class="num-align"><span class="badge bg-light border text-dark ms-2 badge-item-count">' + d.item_count + ' Ürün</span></td>' +
+                    '<td class="num-align"><strong class="text-dark">' + formatTurkish(parseFloat(d.total_eur).toFixed(2)) + '</strong> <small>EUR</small></td>' +
+                    '<td><span class="text-muted small"><i class="far fa-calendar-alt me-1"></i> ' + d.created_at_fmt + '</span></td>' +
+                    '<td class="text-center pe-3"><button class="btn btn-xs btn-outline-warning"><i class="fas fa-eye"></i></button></td>' +
+                    '</tr>' +
+                    '<tr class="detail-row" id="detail-' + d.batch_id + '">' +
+                    '<td colspan="7">' +
+                    '<div class="detail-container">' +
+                    '<div class="mb-3"><strong><i class="fas fa-info-circle me-1 text-warning"></i> İşlem Notu:</strong> <span class="text-muted">' + esc(d.note || '—') + '</span></div>' +
+                    '<div id="cont-' + d.batch_id + '"><div class="text-center p-2"><i class="fas fa-spinner fa-spin"></i></div></div>' +
+                    '</div>' +
+                    '</td>' +
                     '</tr>';
             });
-            $('#tableBody').html(html || '<tr><td colspan="8" class="text-center text-muted p-4">Kayıt bulunamadı</td></tr>');
-            $('#totalCount').text('Toplam: ' + r.data.total + ' kayıt');
+            $('#tableBody').html(html || '<tr><td colspan="8" class="text-center text-muted p-4">Henüz gruplandırılmış kayıt bulunmuyor.</td></tr>');
+            $('#totalCount').text('Toplam: ' + r.data.total + ' sipariş');
             renderPag(r.data.total);
-        }, 'json');
-    }
-
-    function renderPag(total) {
-        var pages = Math.ceil(total / curPerPage);
-        if (pages <= 1) { $('#pagination').html(''); return; }
-        var html = '<ul class="pagination pagination-sm">', s = Math.max(1, curPage - 2), e = Math.min(pages, curPage + 2);
-        if (curPage > 1) html += '<li class="page-item"><a class="page-link" data-p="' + (curPage - 1) + '" href="#">&laquo;</a></li>';
-        for (var p = s; p <= e; p++) html += '<li class="page-item' + (p === curPage ? ' active' : '') + '"><a class="page-link" data-p="' + p + '" href="#">' + p + '</a></li>';
-        if (curPage < pages) html += '<li class="page-item"><a class="page-link" data-p="' + (curPage + 1) + '" href="#">&raquo;</a></li>';
-        html += '</ul>';
-        $('#pagination').html(html).find('a').on('click', function (e) { e.preventDefault(); curPage = parseInt($(this).data('p')); load(); });
-    }
-
-    function editRow(id) {
-        $.get(apiUrl, { action: 'get', id: id }, function (r) {
-            if (!r.success) { showError(r.message); return; }
-            var d = r.data;
-            lines = [{
-                product_id: d.product_id,
-                product_name: d.product_name,
-                quantity: parseFloat(d.quantity),
-                unit: d.unit,
-                unit_price: parseFloat(d.unit_price),
-                total: parseFloat(d.total_price)
-            }];
-            renderLines();
-            $('#editId').val(d.id);
-            $('#warehouseSelect').val(d.warehouse_id).trigger('change');
-            $('#requesterSelect').val(d.requester_id).trigger('change');
-            $('#customerSelect').val(d.customer_id).trigger('change');
-            $('[name="note"]').val(d.note);
-
-            $('#addModal .modal-title').html('<i class="fas fa-edit me-2"></i> Çıkış Kaydını Düzenle (#' + d.id + ')');
-            $('#btnSubmitText').text('Güncelle');
-            $('#viewModal').modal('hide');
-            $('#addModal').modal('show');
         }, 'json');
     }
 
@@ -500,7 +488,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
             totalSum += l.total;
             html += '<tr>' +
                 '<td>' + esc(l.product_name) + '</td>' +
-                '<td class="num-align">' + (+l.quantity) + ' ' + esc(l.unit) + '</td>' +
+                '<td class="num-align">' + formatQty(l.quantity) + ' ' + esc(l.unit) + '</td>' +
                 '<td class="num-align">' + formatTurkish(l.unit_price.toFixed(4)) + '</td>' +
                 '<td class="num-align"><strong>' + formatTurkish(l.total.toFixed(2)) + '</strong></td>' +
                 '<td class="text-center"><button type="button" class="btn btn-xs btn-link text-danger p-0" onclick="removeLine(' + i + ')"><i class="fas fa-times"></i></button></td>' +
@@ -512,51 +500,58 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
 
     function removeLine(i) { lines.splice(i, 1); renderLines(); }
 
-    function viewRow(id) {
-        $('#viewBody').html('<div class="text-center p-4"><i class="fas fa-spinner fa-spin fa-2x"></i></div>');
-        $('#viewModal').modal('show');
-        $.get(apiUrl, { action: 'get', id: id }, function (r) {
-            if (!r.success) { $('#viewBody').html('<div class="alert alert-danger">' + r.message + '</div>'); return; }
-            var d = r.data;
-            var html = '<div class="modal-section-label"><i class="fas fa-map-marker-alt"></i> Konum & Muhatap Bilgileri</div>' +
-                '<div class="row g-3 mb-4">' +
-                '<div class="col-md-4"><label class="form-label small text-muted mb-1">Depo</label><div class="fw-bold"><i class="fas fa-warehouse me-1 opacity-50"></i> ' + esc(d.warehouse_name) + '</div></div>' +
-                '<div class="col-md-4"><label class="form-label small text-muted mb-1">Talep Eden</label><div class="fw-bold"><i class="fas fa-user me-1 opacity-50"></i> ' + esc(d.requester_name ? d.requester_name + ' ' + d.requester_surname : '—') + '</div></div>' +
-                '<div class="col-md-4"><label class="form-label small text-muted mb-1">Müşteri</label><div class="fw-bold"><i class="fas fa-handshake me-1 opacity-50"></i> ' + esc(d.customer_name || '—') + '</div></div>' +
-                '</div>' +
-                '<div class="modal-section-label mt-4"><i class="fas fa-boxes"></i> Ürün Bilgileri</div>' +
-                '<div class="table-responsive mb-4">' +
-                '<table class="table table-sm table-bordered m-0">' +
-                '<thead class="bg-light small"><tr>' +
-                '<th>Ürün</th>' +
-                '<th style="width:150px" class="num-align">Miktar</th>' +
-                '<th style="width:150px" class="num-align">Birim (EUR)</th>' +
-                '<th style="width:150px" class="num-align">Toplam</th>' +
-                '</tr></thead>' +
-                '<tbody><tr>' +
-                '<td>' + esc(d.product_name) + '</td>' +
-                '<td class="num-align">' + (+d.quantity) + ' ' + esc(d.unit) + '</td>' +
-                '<td class="num-align">' + formatTurkish(parseFloat(d.unit_price).toFixed(4)) + '</td>' +
-                '<td class="num-align"><strong>' + formatTurkish(parseFloat(d.total_price).toFixed(2)) + '</strong></td>' +
-                '</tr></tbody>' +
-                '<tfoot class="bg-light fw-bold">' +
-                '<tr><td colspan="3" class="num-align">TOPLAM:</td><td class="num-align">' + formatTurkish(parseFloat(d.total_price).toFixed(2)) + ' EUR</td></tr>' +
-                '</tfoot>' +
-                '</table>' +
-                '</div>' +
-                '<div class="modal-section-label mt-4"><i class="fas fa-info-circle"></i> İşlem Notu & Tarih</div>' +
-                '<div class="row g-3">' +
-                '<div class="col-md-9"><div class="bg-light p-2 rounded border" style="min-height:50px">' + esc(d.note || '—') + '</div></div>' +
-                '<div class="col-md-3 text-end"><label class="form-label small text-muted mb-1">İşlem Tarihi</label><div class="small fw-bold text-muted">' + d.created_at + '</div></div>' +
-                '</div>';
-            $('#viewBody').html(html);
-            $('#btnMoveToEdit').show().off('click').on('click', function () { editRow(d.id); });
+
+    function toggleDetail(batchId, el) {
+        var row = $(el);
+        var detailRow = $('#detail-' + batchId);
+
+        if (detailRow.is(':visible')) {
+            detailRow.hide();
+            row.removeClass('row-expanded');
+        } else {
+            row.addClass('row-expanded');
+            detailRow.show();
+            loadBatchItems(batchId);
+        }
+    }
+
+    function loadBatchItems(batchId) {
+        var cont = $('#cont-' + batchId);
+        if (cont.data('loaded')) return;
+
+        $.get(apiUrl, { action: 'get_batch', batch_id: batchId }, function (r) {
+            if (!r.success) { cont.html('<div class="text-danger">' + r.message + '</div>'); return; }
+
+            var html = '<table class="table table-sm table-bordered m-0 bg-white shadow-sm">' +
+                '<thead class="bg-light"><tr><th>Ürün Adı</th><th class="num-align" style="width:120px">Miktar</th><th class="num-align" style="width:150px">Birim Fiyat</th><th class="num-align" style="width:150px">Toplam</th></tr></thead><tbody>';
+
+            $.each(r.data, function (i, d) {
+                html += '<tr>' +
+                    '<td>' + esc(d.product_name) + '</td>' +
+                    '<td class="num-align">' + formatQty(d.quantity) + ' <small class="text-muted">' + esc(d.unit) + '</small></td>' +
+                    '<td class="num-align">' + formatTurkish(parseFloat(d.unit_price).toFixed(4)) + ' <small>EUR</small></td>' +
+                    '<td class="num-align"><strong>' + formatTurkish(parseFloat(d.total_price).toFixed(2)) + '</strong> <small>EUR</small></td>' +
+                    '</tr>';
+            });
+
+            html += '</tbody></table>';
+            cont.html(html).data('loaded', true);
         }, 'json');
+    }
+
+    function renderPag(total) {
+        var pages = Math.ceil(total / curPerPage);
+        if (pages <= 1) { $('#pagination').html(''); return; }
+        var html = '<ul class="pagination pagination-sm">', s = Math.max(1, curPage - 2), e = Math.min(pages, curPage + 2);
+        if (curPage > 1) html += '<li class="page-item"><a class="page-link" data-p="' + (curPage - 1) + '" href="#">&laquo;</a></li>';
+        for (var p = s; p <= e; p++) html += '<li class="page-item' + (p === curPage ? ' active' : '') + '"><a class="page-link" data-p="' + p + '" href="#">' + p + '</a></li>';
+        if (curPage < pages) html += '<li class="page-item"><a class="page-link" data-p="' + (curPage + 1) + '" href="#">&raquo;</a></li>';
+        html += '</ul>';
+        $('#pagination').html(html).find('a').on('click', function (e) { e.preventDefault(); curPage = parseInt($(this).data('p')); load(); });
     }
 
     $(document).ready(function () {
         load();
-
         // Select2 Styles & Logic
         $('#warehouseSelect').select2({ theme: 'bootstrap-5', placeholder: '— Depo Seçin —', width: '100%', dropdownParent: $('#addModal') });
 
@@ -583,7 +578,12 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
             templateResult: function (i) { if (i.loading) return i.text; var no = '<?= BASE_URL ?>/assets/no-image.png', img = i.image ? '<?= BASE_URL ?>/images/UrunResim/' + i.image : no; return $('<span><img src="' + img + '" class="select2-product-img" onerror="this.src=\'' + no + '\'"> ' + esc(i.text) + '</span>'); }
         });
 
+        $('#warehouseSelect').on('select2:select', function () { $(this).select2('close'); $('#requesterSelect').select2('open'); });
+        $('#requesterSelect').on('select2:select', function () { $(this).select2('close'); $('#customerSelect').select2('open'); });
+        $('#customerSelect').on('select2:select', function () { $(this).select2('close'); $('#productAdd').select2('open'); });
+
         $('#productAdd').on('select2:select', function (e) {
+            $(this).select2('close');
             $('#unitAddLabel').text(e.params.data.unit || 'Adet');
             $('#qtyInput').val('').focus();
         });
@@ -634,6 +634,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
 
         $('#formStockOut').on('submit', function (e) { e.preventDefault(); });
         $('#qtyInput').on('keydown', function (e) { if (e.which == 13) { e.preventDefault(); $('#btnAddLine').trigger('click'); } });
+
 
         $('#searchBox').on('input', function () { clearTimeout(searchTimer); curSearch = $(this).val(); searchTimer = setTimeout(function () { curPage = 1; load(); }, 400); });
         $('#perPage').on('change', function () { curPerPage = parseInt($(this).val()); curPage = 1; load(); });

@@ -36,10 +36,10 @@ if ($googleFont !== 'default' && isset($googleFonts[$googleFont])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>
-        <?= e($pageTitle)?> —
-        <?= e($siteName)?>
+        <?= e($pageTitle) ?> —
+        <?= e($siteName) ?>
     </title>
-    <?= $fontLinkTag?>
+    <?= $fontLinkTag ?>
     <!-- AdminLTE 3 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -51,13 +51,18 @@ if ($googleFont !== 'default' && isset($googleFonts[$googleFont])) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <style>
         :root {
-            --font-family: <?=e($fontFamilyCss)?>;
-            --header-bg: <?=e($headerBg)?>;
-            --header-color: <?=e($headerColor)?>;
+            --font-family:
+                <?= $fontFamilyCss ?>
+            ;
+            --header-bg:
+                <?= e($headerBg) ?>
+            ;
+            --header-color:
+                <?= e($headerColor) ?>
+            ;
         }
 
-        body,
-        * {
+        body {
             font-family: var(--font-family) !important;
         }
 
@@ -82,6 +87,29 @@ if ($googleFont !== 'default' && isset($googleFonts[$googleFont])) {
             min-height: calc(100vh - 120px);
         }
 
+        /* Sidebar ikonlarını soldan hizala ve metne bitiştir */
+        .nav-sidebar .nav-link {
+            display: flex !important;
+            align-items: center !important;
+            padding-left: 1rem !important;
+        }
+
+        .nav-sidebar .nav-icon {
+            margin-right: 0.75rem !important;
+            text-align: left !important;
+            width: auto !important;
+            margin-left: 0 !important;
+            font-size: 1.1rem !important;
+        }
+
+
+        /* Standardize input-group heights and alignment */
+        .input-group-text {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         /* Binler ayıracı gösteren input */
         .price-format {
             text-align: right;
@@ -97,13 +125,154 @@ if ($googleFont !== 'default' && isset($googleFonts[$googleFont])) {
             vertical-align: middle;
         }
 
-        /* Modal geniş */
+        /* Bootstrap Switch Custom Styling */
+        .form-switch .form-check-input {
+            cursor: pointer;
+            width: 2.5em;
+            height: 1.25em;
+        }
+
+        /* Standardize status badges (pill style) */
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .status-badge.active {
+            background: #ecfdf5;
+            color: #059669;
+            border-color: #a7f3d0;
+        }
+
+        .status-badge.active:hover {
+            background: #d1fae5;
+            border-color: #6ee7b7;
+        }
+
+        .status-badge.inactive {
+            background: #fef2f2;
+            color: #dc2626;
+            border-color: #fecaca;
+        }
+
+        .status-badge.inactive:hover {
+            background: #fee2e2;
+            border-color: #fca5a5;
+        }
+
+        /* Modal Status Button Group (Segmented Toggle) */
+        .status-btn-group {
+            display: flex;
+            background: #edf2f7;
+            padding: 4px;
+            border-radius: 10px;
+            gap: 4px;
+            width: fit-content;
+        }
+
+        .status-btn-item {
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            color: #718096;
+            background: transparent;
+        }
+
+        .status-btn-item.active-state {
+            background: #fff;
+            color: #059669;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .status-btn-item.inactive-state {
+            background: #fff;
+            color: #dc2626;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
         .modal-xl {
             max-width: 95%;
         }
 
         .swal2-popup {
             font-family: var(--font-family) !important;
+        }
+
+        /* Sayısal alanları sağa hizalama zorlaması */
+        .num-align {
+            text-align: right !important;
+        }
+
+        /* Genel Form ve Buton Boşlukları (Bitişik elemanları ayır) */
+        .table td .btn+.btn,
+        .table td .badge+.badge,
+        .table td .status-badge+.status-badge {
+            margin-left: 0.35rem;
+        }
+
+        .input-group+.btn,
+        .btn+.input-group,
+        .btn+.btn {
+            margin-left: 0.25rem;
+        }
+
+        /* ───────────────────────────────────────────
+           GLOBAL CARD HEADER VE ARAÇ ÇUBUĞU HİZALAMA
+        ─────────────────────────────────────────── */
+        .card-header .card-title {
+            font-size: 1.75rem !important;
+            display: flex;
+            align-items: center;
+        }
+
+        .card-header .card-title i {
+            font-size: 1.5rem;
+            margin-right: 5px;
+            /* İkon ve yazı arası 5px */
+        }
+
+        .card-header .card-tools {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Tüm header araçlarını aynı yüksekliğe sabitle (Input, Select, Butonlar) */
+        .card-header .card-tools .form-select-sm,
+        .card-header .card-tools .input-group-sm .form-control,
+        .card-header .card-tools .input-group-sm .input-group-text,
+        .card-header .card-tools .btn-sm {
+            height: 32px !important;
+            line-height: inherit;
+            font-size: 0.8125rem;
+            padding-top: 0;
+            padding-bottom: 0;
+            box-sizing: border-box;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* input-group-text (büyüteç) özelleştirmesi */
+        .card-header .card-tools .input-group-sm .input-group-text {
+            background: #f4f6f9;
+            border-color: #ced4da;
+            color: #6c757d;
+            padding: 0 10px;
         }
     </style>
 </head>
@@ -120,9 +289,9 @@ if ($googleFont !== 'default' && isset($googleFonts[$googleFont])) {
                     </a>
                 </li>
                 <li class="nav-item d-none d-sm-inline-block">
-                    <a href="<?= BASE_URL?>/index.php" class="nav-link fw-bold" style="color:var(--header-color)">
+                    <a href="<?= BASE_URL ?>/index.php" class="nav-link fw-bold" style="color:var(--header-color)">
                         <i class="fas fa-warehouse me-1"></i>
-                        <?= e($siteName)?>
+                        <?= e($siteName) ?>
                     </a>
                 </li>
             </ul>
@@ -132,25 +301,25 @@ if ($googleFont !== 'default' && isset($googleFonts[$googleFont])) {
                         data-bs-toggle="dropdown">
                         <span style="color:var(--header-color)">
                             <i class="fas fa-user-circle me-1"></i>
-                            <?= e(currentUser()['name'])?>
+                            <?= e(currentUser()['name']) ?>
                             <span class="badge ms-1
                         <?= currentUser()['role'] === ROLE_ADMIN ? 'bg-danger' :
-    (currentUser()['role'] === ROLE_USER ? 'bg-info' : 'bg-warning')?>">
+                            (currentUser()['role'] === ROLE_USER ? 'bg-info' : 'bg-warning') ?>">
                                 <?= currentUser()['role'] === ROLE_ADMIN ? 'Admin' :
-    (currentUser()['role'] === ROLE_USER ? 'Yönetici' : 'Talep Eden')?>
+                                    (currentUser()['role'] === ROLE_USER ? 'Yönetici' : 'Talep Eden') ?>
                             </span>
                         </span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li>
                             <h6 class="dropdown-header">
-                                <?= e(currentUser()['email'])?>
+                                <?= e(currentUser()['email']) ?>
                             </h6>
                         </li>
                         <li>
                             <hr class="dropdown-divider">
                         </li>
-                        <li><a class="dropdown-item text-danger" href="<?= BASE_URL?>/logout.php">
+                        <li><a class="dropdown-item text-danger" href="<?= BASE_URL ?>/logout.php">
                                 <i class="fas fa-sign-out-alt me-2"></i> Çıkış Yap
                             </a></li>
                     </ul>

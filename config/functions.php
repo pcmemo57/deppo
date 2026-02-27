@@ -10,7 +10,7 @@ require_once __DIR__ . '/database.php';
  */
 function e(mixed $val): string
 {
-    return htmlspecialchars((string)$val, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    return htmlspecialchars((string) $val, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 }
 
 function sanitize(string $input): string
@@ -24,6 +24,11 @@ function sanitize(string $input): string
 function formatPrice(float $amount, int $decimals = 2): string
 {
     return number_format($amount, $decimals, ',', '.');
+}
+
+function formatQty(float $qty): string
+{
+    return number_format($qty, 0, ',', '.');
 }
 
 /**
@@ -47,7 +52,7 @@ function set_setting(string $key, string $value): void
     Database::execute(
         'INSERT INTO tbl_dp_settings (setting_key, setting_value) VALUES (?, ?)
          ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)',
-    [$key, $value]
+        [$key, $value]
     );
 }
 
@@ -88,7 +93,7 @@ function hasMovement(string $table, string $idColumn, int $id): bool
     foreach ($movements[$table] as [$refTable, $refCol]) {
         $count = Database::fetchOne(
             "SELECT COUNT(*) AS cnt FROM `$refTable` WHERE `$refCol` = ?",
-        [$id]
+            [$id]
         );
         if ($count && $count['cnt'] > 0)
             return true;
@@ -125,14 +130,14 @@ function toEur(float $amount, string $currency): float
     if ($currency === 'EUR')
         return $amount;
     if ($currency === 'USD') {
-        $usdRate = (float)get_setting('usd_rate', '1');
-        $eurRate = (float)get_setting('eur_rate', '1');
+        $usdRate = (float) get_setting('usd_rate', '1');
+        $eurRate = (float) get_setting('eur_rate', '1');
         if ($eurRate <= 0)
             return $amount;
         return $amount / $eurRate * $usdRate;
     }
     // TL
-    $eurRate = (float)get_setting('eur_rate', '1');
+    $eurRate = (float) get_setting('eur_rate', '1');
     if ($eurRate <= 0)
         return $amount;
     return $amount / $eurRate;
@@ -141,7 +146,7 @@ function toEur(float $amount, string $currency): float
 /**
  * Mail gönderme (PHPMailer wrapper)
  */
-function send_mail(string $to, string $subject, string $body, bool $isHtml = true): bool
+function send_mail(string $to, string $subject, string $body, bool $isHtml = true, array $embeddedImages = []): bool
 {
     require_once ROOT_PATH . '/PHPMailer/src/PHPMailer.php';
     require_once ROOT_PATH . '/PHPMailer/src/SMTP.php';
@@ -155,17 +160,24 @@ function send_mail(string $to, string $subject, string $body, bool $isHtml = tru
         $mail->Username = get_setting('mail_user', '');
         $mail->Password = get_setting('mail_pass', '');
         $mail->SMTPSecure = get_setting('mail_secure', 'tls');
-        $mail->Port = (int)get_setting('mail_port', '587');
+        $mail->Port = (int) get_setting('mail_port', '587');
         $mail->CharSet = 'UTF-8';
         $mail->setFrom(get_setting('mail_from', get_setting('mail_user', '')), get_setting('mail_from_name', APP_NAME));
         $mail->addAddress($to);
         $mail->isHTML($isHtml);
+
+        // Ekli Resimler (CID)
+        foreach ($embeddedImages as $cid => $path) {
+            if (file_exists($path)) {
+                $mail->addEmbeddedImage($path, $cid);
+            }
+        }
+
         $mail->Subject = $subject;
         $mail->Body = $body;
         $mail->send();
         return true;
-    }
-    catch (\Exception $e) {
+    } catch (\Exception $e) {
         error_log('Mail hatası: ' . $mail->ErrorInfo);
         return false;
     }
@@ -209,4 +221,49 @@ function hashPassword(string $password): string
 function verifyPassword(string $password, string $hash): bool
 {
     return password_verify($password, $hash);
+}
+/**
+ * Resmi boyutlandır — Thumbnail oluşturma
+ */
+function resize_image(string $src, string $dst, int $width, int $height): bool
+{
+    $info = @getimagesize($src);
+    if (!$info) return false;
+    $type = $info[2];
+
+    switch ($type) {
+        case IMAGETYPE_JPEG: $img = @imagecreatefromjpeg($src); break;
+        case IMAGETYPE_PNG:  $img = @imagecreatefrompng($src); break;
+        case IMAGETYPE_GIF:  $img = @imagecreatefromgif($src); break;
+        case IMAGETYPE_WEBP: $img = @imagecreatefromwebp($src); break;
+        default: return false;
+    }
+
+    if (!$img) return false;
+
+    $w = imagesx($img);
+    $h = imagesy($img);
+    $ratio = max($width / $w, $height / $h);
+    $new_w = (int)($w * $ratio);
+    $new_h = (int)($h * $ratio);
+
+    $thumb = imagecreatetruecolor($width, $height);
+    
+    if ($type === IMAGETYPE_PNG || $type === IMAGETYPE_WEBP) {
+        imagealphablending($thumb, false);
+        imagesavealpha($thumb, true);
+    }
+
+    imagecopyresampled($thumb, $img, (int)(($width - $new_w) / 2), (int)(($height - $new_h) / 2), 0, 0, $new_w, $new_h, $w, $h);
+
+    switch ($type) {
+        case IMAGETYPE_JPEG: imagejpeg($thumb, $dst, 85); break;
+        case IMAGETYPE_PNG:  imagepng($thumb, $dst, 8); break;
+        case IMAGETYPE_GIF:  imagegif($thumb, $dst); break;
+        case IMAGETYPE_WEBP: imagewebp($thumb, $dst, 80); break;
+    }
+
+    imagedestroy($img);
+    imagedestroy($thumb);
+    return true;
 }

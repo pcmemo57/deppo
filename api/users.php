@@ -16,8 +16,8 @@ $table = $type === 'admin' ? 'tbl_dp_admins' : 'tbl_dp_users';
 
 switch ($action) {
     case 'list':
-        $page = max(1, (int)($_GET['page'] ?? 1));
-        $perPage = min(100, max(5, (int)($_GET['per_page'] ?? 25)));
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $perPage = min(100, max(5, (int) ($_GET['per_page'] ?? 10)));
         $search = sanitize($_GET['search'] ?? '');
         $offset = ($page - 1) * $perPage;
 
@@ -35,10 +35,10 @@ switch ($action) {
              FROM `$table` WHERE $where ORDER BY id DESC LIMIT $perPage OFFSET $offset",
             $params
         );
-        jsonResponse(true, '', ['data' => $rows, 'total' => (int)$total]);
+        jsonResponse(true, '', ['data' => $rows, 'total' => (int) $total]);
 
     case 'get':
-        $id = (int)($_GET['id'] ?? 0);
+        $id = (int) ($_GET['id'] ?? 0);
         $row = Database::fetchOne("SELECT id, name, email, is_active FROM `$table` WHERE id=? AND hidden=0", [$id]);
         if (!$row)
             jsonResponse(false, 'Kayıt bulunamadı.');
@@ -48,7 +48,7 @@ switch ($action) {
         $name = sanitize($_POST['name'] ?? '');
         $email = sanitize($_POST['email'] ?? '');
         $pass = $_POST['password'] ?? '';
-        $active = (int)($_POST['is_active'] ?? 1);
+        $active = (int) ($_POST['is_active'] ?? 1);
 
         if (!$name || !$email || !$pass)
             jsonResponse(false, 'Ad, e-posta ve şifre zorunludur.');
@@ -63,16 +63,16 @@ switch ($action) {
 
         Database::insert(
             "INSERT INTO `$table` (name, email, password, is_active) VALUES (?, ?, ?, ?)",
-        [$name, $email, hashPassword($pass), $active]
+            [$name, $email, hashPassword($pass), $active]
         );
         jsonResponse(true, 'Kullanıcı eklendi.');
 
     case 'edit_user':
-        $id = (int)($_POST['id'] ?? 0);
+        $id = (int) ($_POST['id'] ?? 0);
         $name = sanitize($_POST['name'] ?? '');
         $email = sanitize($_POST['email'] ?? '');
         $pass = $_POST['password'] ?? '';
-        $active = (int)($_POST['is_active'] ?? 1);
+        $active = (int) ($_POST['is_active'] ?? 1);
 
         if (!$id || !$name || !$email)
             jsonResponse(false, 'Ad ve e-posta zorunludur.');
@@ -84,23 +84,26 @@ switch ($action) {
         if ($pass) {
             if (strlen($pass) < 6)
                 jsonResponse(false, 'Şifre en az 6 karakter olmalıdır.');
-            Database::execute("UPDATE `$table` SET name=?, email=?, password=?, is_active=? WHERE id=?",
-            [$name, $email, hashPassword($pass), $active, $id]);
-        }
-        else {
-            Database::execute("UPDATE `$table` SET name=?, email=?, is_active=? WHERE id=?",
-            [$name, $email, $active, $id]);
+            Database::execute(
+                "UPDATE `$table` SET name=?, email=?, password=?, is_active=? WHERE id=?",
+                [$name, $email, hashPassword($pass), $active, $id]
+            );
+        } else {
+            Database::execute(
+                "UPDATE `$table` SET name=?, email=?, is_active=? WHERE id=?",
+                [$name, $email, $active, $id]
+            );
         }
         jsonResponse(true, 'Kullanıcı güncellendi.');
 
     case 'toggle_user':
-        $id = (int)($_POST['id'] ?? 0);
-        $status = (int)($_POST['status'] ?? 0);
+        $id = (int) ($_POST['id'] ?? 0);
+        $status = (int) ($_POST['status'] ?? 0);
         Database::execute("UPDATE `$table` SET is_active=? WHERE id=?", [$status, $id]);
         jsonResponse(true, $status ? 'Kullanıcı aktifleştirildi.' : 'Kullanıcı pasifize edildi.');
 
     case 'delete_user':
-        $id = (int)($_POST['id'] ?? 0);
+        $id = (int) ($_POST['id'] ?? 0);
         if (hasMovement($table, 'id', $id)) {
             // Hareket görenleri gizle
             Database::execute("UPDATE `$table` SET hidden=1 WHERE id=?", [$id]);

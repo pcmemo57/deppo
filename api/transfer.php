@@ -60,6 +60,7 @@ switch ($action) {
             );
         }
         jsonResponse(true, 'Transfer tamamlandı.');
+        break;
 
     case 'recent':
         $rows = Database::fetchAll(
@@ -72,10 +73,11 @@ switch ($action) {
              ORDER BY t.created_at DESC LIMIT 10"
         );
         jsonResponse(true, '', $rows);
+        break;
 
     case 'list':
         $page = max(1, (int)($_GET['page'] ?? 1));
-        $perPage = min(100, max(5, (int)($_GET['per_page'] ?? 25)));
+        $perPage = min(100, max(5, (int)($_GET['per_page'] ?? 10)));
         $search = sanitize($_GET['search'] ?? '');
         $offset = ($page - 1) * $perPage;
         $where = "1=1";
@@ -87,7 +89,8 @@ switch ($action) {
         $total = Database::fetchOne(
             "SELECT COUNT(*) AS c FROM tbl_dp_transfers t
              JOIN tbl_dp_warehouses sw ON sw.id=t.source_warehouse_id
-             JOIN tbl_dp_warehouses tw ON tw.id=t.target_warehouse_id WHERE $where", $params
+             JOIN tbl_dp_warehouses tw ON tw.id=t.target_warehouse_id WHERE $where",
+            $params
         )['c'] ?? 0;
         $rows = Database::fetchAll(
             "SELECT t.id, sw.name AS source, tw.name AS target, t.note,
@@ -96,9 +99,11 @@ switch ($action) {
              FROM tbl_dp_transfers t
              JOIN tbl_dp_warehouses sw ON sw.id=t.source_warehouse_id
              JOIN tbl_dp_warehouses tw ON tw.id=t.target_warehouse_id
-             WHERE $where ORDER BY t.created_at DESC LIMIT $perPage OFFSET $offset", $params
+             WHERE $where ORDER BY t.created_at DESC LIMIT $perPage OFFSET $offset",
+            $params
         );
         jsonResponse(true, '', ['data' => $rows, 'total' => (int)$total]);
+        break;
 
     case 'get_items':
         $id = (int)($_GET['id'] ?? 0);
@@ -106,9 +111,11 @@ switch ($action) {
             "SELECT ti.quantity, p.name AS product, p.unit
              FROM tbl_dp_transfer_items ti
              JOIN tbl_dp_products p ON p.id=ti.product_id
-             WHERE ti.transfer_id=?", [$id]
+             WHERE ti.transfer_id=?",
+        [$id]
         );
         jsonResponse(true, '', $rows);
+        break;
 
     default:
         jsonResponse(false, 'Geçersiz işlem.');

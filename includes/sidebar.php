@@ -7,9 +7,9 @@ $role = currentUser()['role'];
 ?>
 <!-- Sidebar -->
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
-    <a href="<?= BASE_URL?>/index.php" class="brand-link text-center">
-        <i class="fas fa-warehouse brand-image" style="font-size:1.8rem; opacity:.9"></i>
-        <span class="brand-text font-weight-bold ml-2">DEPPO</span>
+    <a href="<?= BASE_URL?>/index.php" class="brand-link">
+        <i class="fas fa-warehouse brand-image ml-3" style="font-size:1.5rem; opacity:.8"></i>
+        <span class="brand-text font-weight-light ml-2">DEPPO</span>
     </a>
     <div class="sidebar">
         <div class="user-panel mt-3 pb-3 mb-3 d-flex align-items-center">
@@ -56,20 +56,13 @@ else: ?>
 
                 <!-- STOK HAREKETLERİ -->
                 <li
-                    class="nav-item has-treeview <?= in_array($currentPage, ['stock_in', 'stock_in_list', 'stock_out', 'transfer', 'transfer_history']) ? 'menu-open' : ''?>">
+                    class="nav-item has-treeview <?= in_array($currentPage, ['stock_in', 'stock_in_list', 'stock_out', 'stock_out_orders', 'transfer', 'transfer_history']) ? 'menu-open' : ''?>">
                     <a href="#"
-                        class="nav-link <?= in_array($currentPage, ['stock_in', 'stock_in_list', 'stock_out', 'transfer', 'transfer_history']) ? 'active' : ''?>">
+                        class="nav-link <?= in_array($currentPage, ['stock_in', 'stock_in_list', 'stock_out', 'stock_out_orders', 'transfer', 'transfer_history']) ? 'active' : ''?>">
                         <i class="nav-icon fas fa-exchange-alt"></i>
                         <p>Stok Hareketleri <i class="right fas fa-angle-left"></i></p>
                     </a>
                     <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="<?= BASE_URL?>/index.php?page=stock_in"
-                                class="nav-link <?= $currentPage === 'stock_in' ? 'active' : ''?>">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Depoya Ürün Girişi</p>
-                            </a>
-                        </li>
                         <li class="nav-item">
                             <a href="<?= BASE_URL?>/index.php?page=stock_in_list"
                                 class="nav-link <?= $currentPage === 'stock_in_list' ? 'active' : ''?>">
@@ -78,8 +71,8 @@ else: ?>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="<?= BASE_URL?>/index.php?page=stock_out"
-                                class="nav-link <?= $currentPage === 'stock_out' ? 'active' : ''?>">
+                            <a href="<?= BASE_URL?>/index.php?page=stock_out_orders"
+                                class="nav-link <?= $currentPage === 'stock_out_orders' ? 'active' : ''?>">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Depodan Çıkış</p>
                             </a>
@@ -89,13 +82,6 @@ else: ?>
                                 class="nav-link <?= $currentPage === 'transfer' ? 'active' : ''?>">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Depolar Arası Transfer</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="<?= BASE_URL?>/index.php?page=transfer_history"
-                                class="nav-link <?= $currentPage === 'transfer_history' ? 'active' : ''?>">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Transfer Geçmişi</p>
                             </a>
                         </li>
                     </ul>
