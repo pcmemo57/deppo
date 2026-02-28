@@ -119,7 +119,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
   }
 
   /* Sayfa tepesindeki boşluk */
-  .stock-list-row {
+  .stock-in-row {
     margin-top: 1.25rem;
   }
 
@@ -456,7 +456,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
 <!-- ═══════════════════════════════════════════════
      ANA SAYFA
 ═══════════════════════════════════════════════ -->
-<div class="row stock-list-row">
+<div class="row stock-in-row">
   <div class="col-12">
     <div class="card card-primary card-outline">
       <div class="card-header">
@@ -500,6 +500,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
               <th class="num-align">Birim Fiyat</th>
               <th class="num-align">EUR Fiyat</th>
               <th style="width:100px">Tarih</th>
+              <th style="width:120px">İşlemi Yapan</th>
               <th style="width:100px" class="text-center pe-3">İşlem</th>
             </tr>
           </thead>
@@ -613,6 +614,22 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
             <div class="input-icon-wrap">
               <i class="fas fa-calendar-alt field-icon"></i>
               <input type="text" id="vDate" class="form-control" disabled>
+            </div>
+          </div>
+        </div>
+        <div class="row g-3 mb-1 mt-1">
+          <div class="col-md-6">
+            <label class="form-label">İşlemi Yapan</label>
+            <div class="input-icon-wrap">
+              <i class="fas fa-user field-icon"></i>
+              <input type="text" id="vUser" class="form-control" disabled>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Son Güncelleyen</label>
+            <div class="input-icon-wrap">
+              <i class="fas fa-user-edit field-icon"></i>
+              <input type="text" id="vUpdatedUser" class="form-control" disabled>
             </div>
           </div>
         </div>
@@ -754,7 +771,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
           </div>
           <div class="row g-3">
             <div class="col-12">
-              <textarea name="note" class="form-control" rows="2"
+              <textarea name="note" id="note" class="form-control" rows="2"
                 placeholder="İsteğe bağlı açıklama girebilirsiniz..."></textarea>
             </div>
           </div>
@@ -975,10 +992,48 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
     }, 'json');
   }
 
-  /* ─── Ürün seçilince birimi güncelle ─── */
+  /* ─── Ürün seçilince birimi güncelle ve miktara odaklan ─── */
   $('#productSelect').on('select2:select', function (e) {
     $('#unitLabel').text(e.params.data.unit || 'Adet');
+    $(this).select2('close');
+    setTimeout(() => { $('#quantity').focus().select(); }, 50);
   });
+
+  /* ─── Depo seçilince ürünü aç ─── */
+  $('#warehouseSelect').on('select2:select', function () {
+    $(this).select2('close');
+    setTimeout(() => { $('#productSelect').select2('open'); }, 50);
+  });
+
+  /* ─── Miktar girilince tedarikçiyi aç ─── */
+  $('#quantity').on('keydown', function (e) {
+    if (e.which == 13) {
+      e.preventDefault();
+      $('#supplierSelect').select2('open');
+    }
+  });
+
+  /* ─── Tedarikçi seçilince birim fiyata odaklan ─── */
+  $('#supplierSelect').on('select2:select', function () {
+    $(this).select2('close');
+    setTimeout(() => { $('#unitPrice').focus().select(); }, 50);
+  });
+
+  /* ─── Birim fiyat girilince para birimini aç ─── */
+  $('#unitPrice').on('keydown', function (e) {
+    if (e.which == 13) {
+      e.preventDefault();
+      $('#currency').select2('open');
+    }
+  });
+
+  /* ─── Para birimi seçilince nota odaklan ─── */
+  $('#currency').on('select2:select', function () {
+    $(this).select2('close');
+    setTimeout(() => { $('#note').focus(); }, 50);
+  });
+
+  /* Düzenleme modunda birimi güncelle */
   $('#editProduct').on('select2:select', function (e) {
     $('#editUnitLabel').text(e.params.data.unit || 'Adet');
   });
@@ -1028,6 +1083,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         html += '<td class="num-align">' + formatTurkish(d.unit_price, 2) + ' ' + esc(d.currency) + '</td>';
         html += '<td class="num-align">' + formatTurkish(d.price_eur, 2) + '</td>';
         html += '<td>' + (d.created_at ? d.created_at.split(' ')[0] : '—') + '</td>';
+        html += '<td><small class="text-muted">' + esc(d.created_by_name || '—') + '</small></td>';
         html += '<td class="text-center pe-3">';
         html += '<div class="d-flex gap-1 justify-content-center">';
         html += '<button class="btn btn-xs btn-outline-secondary shadow-sm" onclick="viewRow(' + d.id + ')" title="Görüntüle"><i class="fas fa-eye"></i></button>';
@@ -1073,6 +1129,8 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
       $('#vCurrency').val(d.currency || '—');
       $('#vEur').val(formatTurkish(d.price_eur, 2) + ' EUR');
       $('#vDate').val(d.created_at || '—');
+      $('#vUser').val(d.created_by_name || '—');
+      $('#vUpdatedUser').val(d.updated_by_name || '—');
       $('#vNote').val(d.note || '');
       $('#viewModal').modal('show');
     }, 'json');

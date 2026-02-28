@@ -61,6 +61,21 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         color: #ffc107;
     }
 
+    /* Sayfa tepesindeki boşluk */
+    .transfer-history-row {
+        margin-top: 1.25rem;
+    }
+
+    .select2-product-img {
+        width: 26px;
+        height: 26px;
+        object-fit: cover;
+        border-radius: 5px;
+        margin-right: 6px;
+        vertical-align: middle;
+        border: 1px solid #e2e8f0;
+    }
+
     /* ───────────────────────────────────────────
      MODAL GENEL (Premium Style)
   ─────────────────────────────────────────── */
@@ -235,7 +250,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.12) !important;
     }
 </style>
-<div class="row">
+<div class="row transfer-history-row">
     <div class="col-12">
         <div class="card card-warning card-outline">
             <div class="card-header">
@@ -266,6 +281,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                             <th>Kaynak Depo</th>
                             <th>Hedef Depo</th>
                             <th class="num-align">Kalem Sayısı</th>
+                            <th>İşlemi Yapan</th>
                             <th>Tarih</th>
                             <th style="width:60px" class="text-center pe-3">Detay</th>
                         </tr>
@@ -419,14 +435,16 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                     '<td><div class="fw-bold text-primary">' + esc(d.source) + '</div></td>' +
                     '<td><div class="fw-bold text-danger">' + esc(d.target) + '</div></td>' +
                     '<td class="num-align"><span class="badge bg-light border text-dark ms-2" style="font-size:0.85rem; padding:5px 10px;">' + d.item_count + ' Ürün</span></td>' +
+                    '<td><small class="text-muted">' + esc(d.created_by_name || '—') + '</small></td>' +
                     '<td><span class="text-muted small"><i class="far fa-calendar-alt me-1"></i> ' + d.created_at + '</span></td>' +
                     '<td class="text-center pe-3"><button class="btn btn-xs btn-outline-warning"><i class="fas fa-eye"></i></button></td>' +
                     '</tr>' +
                     '<tr class="detail-row" id="detail-' + d.id + '">' +
                     '<td colspan="6">' +
                     '<div class="detail-container">' +
-                    '<div class="mb-3"><strong><i class="fas fa-info-circle me-1 text-warning"></i> Transfer Notu:</strong> <span class="text-muted">' + esc(d.note || '—') + '</span></div>' +
-                    '<div id="cont-' + d.id + '"><div class="text-center p-2"><i class="fas fa-spinner fa-spin"></i></div></div>' +
+                    '<div class="row"><div class="col-md-9"><strong><i class="fas fa-info-circle me-1 text-warning"></i> Transfer Notu:</strong> <span class="text-muted">' + esc(d.note || '—') + '</span></div>' +
+                    '<div class="col-md-3 text-end"><small class="text-muted">İşlemi Yapan: ' + esc(d.created_by_name || '—') + '</small></div></div>' +
+                    '<div id="cont-' + d.id + '" class="mt-2"><div class="text-center p-2"><i class="fas fa-spinner fa-spin"></i></div></div>' +
                     '</div>' +
                     '</td>' +
                     '</tr>';
@@ -517,6 +535,14 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
             dropdownParent: $('#transferModal')
         });
 
+        var productTemplate = function (i) {
+            if (i.loading) return i.text;
+            var no = '<?= BASE_URL ?>/assets/no-image.png';
+            var img = i.image ? '<?= BASE_URL ?>/images/UrunResim/' + i.image : no;
+            return $('<span><img src="' + img + '" class="select2-product-img" onerror="this.src=\'' + no + '\'"> ' +
+                $('<span>').text(i.text).html() + '</span>');
+        };
+
         $('#productSelect').select2({
             theme: 'bootstrap-4',
             placeholder: '— Ürün arayın —',
@@ -524,10 +550,20 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
             dropdownParent: $('#transferModal'),
             ajax: {
                 url: '<?= BASE_URL ?>/api/products.php',
-                data: function (p) { return { action: 'search_select2', q: p.term || '' }; },
-                processResults: function (d) { return { results: d.results }; },
+                data: function (p) {
+                    return {
+                        action: 'search_select2',
+                        q: p.term || ''
+                    };
+                },
+                processResults: function (d) {
+                    return {
+                        results: d.results
+                    };
+                },
                 delay: 300
-            }
+            },
+            templateResult: productTemplate
         });
 
         $('#fromWarehouse').on('select2:select', function () { $(this).select2('close'); $('#toWarehouse').select2('open'); });
@@ -575,6 +611,9 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                 showError('Sistem hatası oluştu.');
             });
         });
+
+        $('#formTransfer').on('submit', function (e) { e.preventDefault(); });
+        $('#transferQty').on('keydown', function (e) { if (e.which == 13) { e.preventDefault(); $('#btnAddTransferLine').trigger('click'); } });
 
         $('#searchBox').on('input', function () { clearTimeout(searchTimer); curSearch = $(this).val(); searchTimer = setTimeout(function () { curPage = 1; load(); }, 400); });
         $('#perPage').on('change', function () { curPerPage = parseInt($(this).val()); curPage = 1; load(); });

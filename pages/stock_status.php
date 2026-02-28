@@ -60,26 +60,28 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
 <!-- Warehouse Selection Modal -->
 <div class="modal fade" id="warehouseModal" tabindex="-1">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title"><i class="fas fa-warehouse me-2"></i>Depo Seçimi</h5>
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+            <div class="modal-header bg-primary text-white border-0 py-3">
+                <h5 class="modal-title fw-bold"><i class="fas fa-warehouse me-3"></i>Depo Seçimi</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-0">
                 <ul class="list-group list-group-flush">
                     <?php foreach ($warehouses as $w): ?>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span>
-                                <?= e($w['name']) ?>
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-4 warehouse-item" 
+                            style="cursor: pointer; transition: background 0.2s;" 
+                            onclick="toggleWarehouse(<?= (int)$w['id'] ?>)">
+                            <span class="fw-500 text-dark d-flex align-items-center">
+                                <i class="fas fa-store me-3 text-muted small opacity-75"></i><?= e($w['name']) ?>
                             </span>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input wh-switch" type="checkbox" role="switch"
+                            <div class="premium-switch">
+                                <input class="wh-switch d-none" type="checkbox" 
                                     value="<?= e($w['id']) ?>" data-name="<?= e($w['name']) ?>" id="wh_<?= e($w['id']) ?>"
                                     checked>
+                                <label class="switch-label mb-0"></label>
                             </div>
                         </li>
-                        <?php
-                    endforeach; ?>
+                    <?php endforeach; ?>
                 </ul>
             </div>
             <div class="modal-footer">
@@ -119,10 +121,64 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
     </div>
 </div>
 
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="background: transparent; border: none; box-shadow: none;">
+            <div class="modal-header border-0" style="padding: 0; position: absolute; right: 0; top: 0; z-index: 10;">
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"
+                    style="background-color: rgba(0,0,0,0.5); padding: 10px; margin: 10px; border-radius: 50%;"></button>
+            </div>
+            <div class="modal-body p-0 text-center">
+                <img id="fullSizeImage" src="" class="img-fluid rounded shadow" style="max-height: 85vh;">
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .premium-switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 22px;
+        vertical-align: middle;
+        pointer-events: none; /*li clicks only*/
+    }
+    .premium-switch .switch-label {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #e4e9f0;
+        transition: .3s;
+        border-radius: 22px;
+    }
+    .premium-switch .switch-label:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .3s;
+        border-radius: 50%;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .wh-switch:checked + .switch-label { background-color: #1a56db; }
+    .wh-switch:checked + .switch-label:before { transform: translateX(22px); }
+    
+    .warehouse-item:hover { background-color: #f0f7ff !important; }
+    .fw-500 { font-weight: 500; font-size: 0.95rem; }
+</style>
 <script>
     var curPage = 1, curPerPage = 10, curSearch = '', searchTimer, currentData = [], currentCols = [];
     var apiUrl = '<?= BASE_URL ?>/api/stock_status.php';
     function esc(v) { return $('<span>').text(v || '').html(); }
+
+    function showImagePreview(src) {
+        if (!src) return;
+        $('#fullSizeImage').attr('src', src);
+        $('#imagePreviewModal').modal('show');
+    }
 
     function getSelectedWarehouses() {
         var ids = [];
@@ -137,6 +193,11 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         });
         if (!badges) badges = '<span class="text-muted small">Herhangi bir depo seçilmedi</span>';
         $('#selectedWarehouses').html(badges);
+    }
+
+    function toggleWarehouse(id) {
+        var cb = $('#wh_' + id);
+        cb.prop('checked', !cb.prop('checked')).trigger('change');
     }
 
     function load() {
@@ -174,8 +235,13 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                     var qty = row.stocks[col] || 0;
                     if (qty <= 0) return; // Sıfır stoklu kayıtları gösterme
 
-                    html += '<tr><td class="text-muted">' + (rowIndex++) + '</td><td>';
-                    if (row.image) { html += '<img src="<?= BASE_URL ?>/images/UrunResim/' + encodeURIComponent(row.image) + '" style="width:32px;height:32px;object-fit:cover;border-radius:4px;margin-right:6px;" onerror="this.remove()">'; }
+                    var rowIndexText = rowIndex++;
+                    var imgSrc = row.image ? '<?= BASE_URL ?>/images/UrunResim/' + encodeURIComponent(row.image) : '';
+
+                    html += '<tr><td class="text-muted">' + rowIndexText + '</td><td>';
+                    if (row.image) { 
+                        html += '<img src="' + imgSrc + '" style="width:32px;height:32px;object-fit:cover;border-radius:4px;margin-right:6px;cursor:pointer;" onerror="this.remove()" onclick="showImagePreview(\'' + imgSrc + '\')" title="Büyütmek için tıklayın">'; 
+                    }
                     html += '<strong>' + esc(row.product) + '</strong></td>';
                     html += '<td><span class="badge bg-light text-dark border"><i class="fas fa-warehouse text-muted me-1"></i> ' + esc(col) + '</span></td>';
                     html += '<td class="num-align text-bold text-success">' + formatQty(qty) + ' <small class="text-muted fw-normal">' + esc(row.unit || 'Adet') + '</small></td>';

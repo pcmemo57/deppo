@@ -114,7 +114,19 @@ $footerText = get_setting('footer_text', '© 2026 Depo Yönetim Sistemi');
      */
     function formatQty(val) {
         if (val === null || val === undefined || val === '') return '';
-        var num = typeof val === 'number' ? val : parseFloat(String(val).replace(/\./g, '').replace(',', '.'));
+        var num;
+        if (typeof val === 'number') {
+            num = val;
+        } else {
+            var str = String(val).trim();
+            if (str.indexOf(',') !== -1) {
+                // Türkçe format (virgül var): 1.000,00 -> 1000.00
+                num = parseFloat(str.replace(/\./g, '').replace(',', '.'));
+            } else {
+                // Standart float (virgül yok): "1.000" veya "1000" -> 1.0 veya 1000.0
+                num = parseFloat(str);
+            }
+        }
         if (isNaN(num)) return val;
         return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num);
     }

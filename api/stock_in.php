@@ -36,19 +36,21 @@ switch ($action) {
         // EUR'a çevir
         $priceEur = toEur($unitPrice, $currency);
 
-        $userId = currentUser()['id'];
+        $user = currentUser();
+        $userId = $user['id'];
+        $userName = $user['name'];
 
         Database::insert(
-            "INSERT INTO tbl_dp_stock_in (warehouse_id, product_id, supplier_id, quantity, unit_price, currency, price_eur, note, created_by)
-             VALUES (?,?,?,?,?,?,?,?,?)",
-            [$warehouseId, $productId, $supplierId, $quantity, $unitPrice, $currency, $priceEur, $note, $userId]
+            "INSERT INTO tbl_dp_stock_in (warehouse_id, product_id, supplier_id, quantity, unit_price, currency, price_eur, note, created_by, created_by_name)
+             VALUES (?,?,?,?,?,?,?,?,?,?)",
+            [$warehouseId, $productId, $supplierId, $quantity, $unitPrice, $currency, $priceEur, $note, $userId, $userName]
         );
         jsonResponse(true, 'Stok girişi kaydedildi.');
 
     case 'recent':
         $rows = Database::fetchAll(
             "SELECT si.id, p.name AS product, w.name AS warehouse, si.quantity, p.unit,
-                    si.unit_price, si.currency, DATE_FORMAT(si.created_at,'%d.%m.%Y %H:%i') AS created_at
+                    si.unit_price, si.currency, si.created_by_name, DATE_FORMAT(si.created_at,'%d.%m.%Y %H:%i') AS created_at
              FROM tbl_dp_stock_in si
              JOIN tbl_dp_products p ON p.id=si.product_id
              JOIN tbl_dp_warehouses w ON w.id=si.warehouse_id
@@ -81,7 +83,7 @@ switch ($action) {
 
         $rows = Database::fetchAll(
             "SELECT si.id, p.name AS product, p.unit, w.name AS warehouse, s.name AS supplier,
-                    si.quantity, si.unit_price, si.currency, si.price_eur, si.note,
+                    si.quantity, si.unit_price, si.currency, si.price_eur, si.note, si.created_by_name, si.updated_by_name,
                     DATE_FORMAT(si.created_at,'%d.%m.%Y %H:%i') AS created_at
              FROM tbl_dp_stock_in si
              JOIN tbl_dp_products p ON p.id=si.product_id
@@ -125,9 +127,13 @@ switch ($action) {
             jsonResponse(false, 'Zorunlu alanlar eksik.');
         $priceEur = toEur($unitPrice, $currency);
 
+        $user = currentUser();
+        $userId = $user['id'];
+        $userName = $user['name'];
+
         Database::execute(
-            "UPDATE tbl_dp_stock_in SET warehouse_id=?,product_id=?,supplier_id=?,quantity=?,unit_price=?,currency=?,price_eur=?,note=? WHERE id=?",
-            [$warehouseId, $productId, $supplierId, $quantity, $unitPrice, $currency, $priceEur, $note, $id]
+            "UPDATE tbl_dp_stock_in SET warehouse_id=?,product_id=?,supplier_id=?,quantity=?,unit_price=?,currency=?,price_eur=?,note=?, updated_by=?, updated_by_name=? WHERE id=?",
+            [$warehouseId, $productId, $supplierId, $quantity, $unitPrice, $currency, $priceEur, $note, $userId, $userName, $id]
         );
         jsonResponse(true, 'Kayıt güncellendi.');
 

@@ -260,6 +260,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                             <th>Alan / Müşteri</th>
                             <th class="num-align">Miktar</th>
                             <th class="num-align">Toplam (EUR)</th>
+                            <th style="width:120px">İşlemi Yapan</th>
                             <th style="width:120px">Tarih</th>
                             <th style="width:80px" class="text-center pe-3">Detay</th>
                         </tr>
@@ -434,6 +435,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                     '<td>' + muhatap + '</td>' +
                     '<td class="num-align">' + (+d.quantity) + ' <small class="text-muted">' + esc(d.unit) + '</small></td>' +
                     '<td class="num-align"><strong>' + formatTurkish(parseFloat(d.total_price).toFixed(2)) + '</strong> <small>EUR</small></td>' +
+                    '<td><small>' + esc(d.created_by_name || '—') + '</small></td>' +
                     '<td><small>' + d.created_at + '</small></td>' +
                     '<td class="text-center pe-3"><button class="btn btn-xs btn-outline-primary" onclick="viewRow(' + d.id + ')"><i class="fas fa-eye"></i></button></td>' +
                     '</tr>';
@@ -544,9 +546,10 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                 '</tfoot>' +
                 '</table>' +
                 '</div>' +
-                '<div class="modal-section-label mt-4"><i class="fas fa-info-circle"></i> İşlem Notu & Tarih</div>' +
+                '<div class="modal-section-label mt-4"><i class="fas fa-info-circle"></i> İşlem Bilgileri</div>' +
                 '<div class="row g-3">' +
-                '<div class="col-md-9"><div class="bg-light p-2 rounded border" style="min-height:50px">' + esc(d.note || '—') + '</div></div>' +
+                '<div class="col-md-6"><label class="form-label small text-muted mb-1">Not</label><div class="bg-light p-2 rounded border" style="min-height:50px">' + esc(d.note || '—') + '</div></div>' +
+                '<div class="col-md-3"><label class="form-label small text-muted mb-1">İşlemi Yapan</label><div class="small fw-bold text-muted">' + esc(d.created_by_name || '—') + '</div><label class="form-label small text-muted mt-2 mb-1">Güncelleyen</label><div class="small fw-bold text-muted">' + esc(d.updated_by_name || '—') + '</div></div>' +
                 '<div class="col-md-3 text-end"><label class="form-label small text-muted mb-1">İşlem Tarihi</label><div class="small fw-bold text-muted">' + d.created_at + '</div></div>' +
                 '</div>';
             $('#viewBody').html(html);

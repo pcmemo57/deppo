@@ -264,7 +264,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
     }
 </style>
 
-<div class="row">
+<div class="row stock-out-row">
     <div class="col-12">
         <div class="card card-warning card-outline">
             <div class="card-header">
@@ -296,6 +296,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                             <th>Depo</th>
                             <th class="num-align">Kalem Sayısı</th>
                             <th class="num-align">Toplam Tutar</th>
+                            <th>İşlemi Yapan</th>
                             <th>Tarih</th>
                             <th style="width:60px" class="text-center pe-3">Detay</th>
                         </tr>
@@ -451,6 +452,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                     '<td><i class="fas fa-warehouse me-1 opacity-50"></i> ' + esc(d.warehouse_name) + '</td>' +
                     '<td class="num-align"><span class="badge bg-light border text-dark ms-2 badge-item-count">' + d.item_count + ' Ürün</span></td>' +
                     '<td class="num-align"><strong class="text-dark">' + formatTurkish(parseFloat(d.total_eur).toFixed(2)) + '</strong> <small>EUR</small></td>' +
+                    '<td><small class="text-muted">' + esc(d.created_by_name || '—') + '</small></td>' +
                     '<td><span class="text-muted small"><i class="far fa-calendar-alt me-1"></i> ' + d.created_at_fmt + '</span></td>' +
                     '<td class="text-center pe-3"><button class="btn btn-xs btn-outline-warning"><i class="fas fa-eye"></i></button></td>' +
                     '</tr>' +

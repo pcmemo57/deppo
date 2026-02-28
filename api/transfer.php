@@ -11,8 +11,8 @@ $action = sanitize($_POST['action'] ?? $_GET['action'] ?? '');
 
 switch ($action) {
     case 'add':
-        $sourceId = (int)($_POST['source_warehouse_id'] ?? 0);
-        $targetId = (int)($_POST['target_warehouse_id'] ?? 0);
+        $sourceId = (int) ($_POST['source_warehouse_id'] ?? 0);
+        $targetId = (int) ($_POST['target_warehouse_id'] ?? 0);
         $note = sanitize($_POST['note'] ?? '');
         $lines = json_decode($_POST['lines'] ?? '[]', true);
 
@@ -23,21 +23,23 @@ switch ($action) {
         if (empty($lines))
             jsonResponse(false, 'En az 1 ürün gerekli.');
 
-        $userId = currentUser()['id'];
+        $currentUser = currentUser();
+        $userId = $currentUser['id'];
+        $userName = $currentUser['name'];
         $transferId = Database::insert(
-            "INSERT INTO tbl_dp_transfers (source_warehouse_id, target_warehouse_id, note, created_by) VALUES (?,?,?,?)",
-        [$sourceId, $targetId, $note, $userId]
+            "INSERT INTO tbl_dp_transfers (source_warehouse_id, target_warehouse_id, note, created_by, created_by_name) VALUES (?,?,?,?,?)",
+            [$sourceId, $targetId, $note, $userId, $userName]
         );
 
         foreach ($lines as $line) {
-            $productId = (int)($line['product_id'] ?? 0);
-            $quantity = (float)($line['quantity'] ?? 0);
+            $productId = (int) ($line['product_id'] ?? 0);
+            $quantity = (float) ($line['quantity'] ?? 0);
             if (!$productId || $quantity <= 0)
                 continue;
 
             Database::insert(
                 "INSERT INTO tbl_dp_transfer_items (transfer_id, product_id, quantity) VALUES (?,?,?)",
-            [$transferId, $productId, $quantity]
+                [$transferId, $productId, $quantity]
             );
 
             // Kaynak depodan çıkar → hedef depoya giriş
@@ -45,18 +47,18 @@ switch ($action) {
             Database::insert(
                 "INSERT INTO tbl_dp_stock_out (warehouse_id,product_id,quantity,unit_price,total_price,note,created_by)
                  VALUES (?,?,?,0,0,?,?)",
-            [$sourceId, $productId, $quantity, "Transfer #$transferId", $userId]
+                [$sourceId, $productId, $quantity, "Transfer #$transferId", $userId]
             );
             // Hedef: En son EUR fiyatı bul, stock_in kaydı
             $lastPrice = Database::fetchOne(
                 "SELECT price_eur FROM tbl_dp_stock_in WHERE product_id=? ORDER BY created_at DESC LIMIT 1",
-            [$productId]
+                [$productId]
             );
             $priceEur = $lastPrice ? $lastPrice['price_eur'] : 0;
             Database::insert(
                 "INSERT INTO tbl_dp_stock_in (warehouse_id,product_id,quantity,unit_price,currency,price_eur,note,created_by)
                  VALUES (?,?,?,?,?,?,?,?)",
-            [$targetId, $productId, $quantity, $priceEur, 'EUR', $priceEur, "Transfer #$transferId", $userId]
+                [$targetId, $productId, $quantity, $priceEur, 'EUR', $priceEur, "Transfer #$transferId", $userId]
             );
         }
         jsonResponse(true, 'Transfer tamamlandı.');
@@ -64,7 +66,7 @@ switch ($action) {
 
     case 'recent':
         $rows = Database::fetchAll(
-            "SELECT t.id, sw.name AS source, tw.name AS target,
+            "SELECT t.id, sw.name AS source, tw.name AS target, t.created_by_name,
                     (SELECT COUNT(*) FROM tbl_dp_transfer_items WHERE transfer_id=t.id) AS item_count,
                     DATE_FORMAT(t.created_at,'%d.%m.%Y %H:%i') AS created_at
              FROM tbl_dp_transfers t
@@ -76,15 +78,19 @@ switch ($action) {
         break;
 
     case 'list':
-        $page = max(1, (int)($_GET['page'] ?? 1));
-        $perPage = min(100, max(5, (int)($_GET['per_page'] ?? 10)));
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $perPage = min(100, max(5, (int) ($_GET['per_page'] ?? 10)));
         $search = sanitize($_GET['search'] ?? '');
         $offset = ($page - 1) * $perPage;
         $where = "1=1";
         $params = [];
         if ($search) {
-            $where .= " AND (sw.name LIKE ? OR tw.name LIKE ?)";
-            $params = ["%$search%", "%$search%"];
+            $where .= " AND (sw.name LIKE ? OR tw.name LIKE ? OR t.note LIKE ? OR EXISTS (
+                SELECT 1 FROM tbl_dp_transfer_items ti 
+                JOIN tbl_dp_products p ON p.id = ti.product_id 
+                WHERE ti.transfer_id = t.id AND p.name LIKE ?
+            ))";
+            $params = ["%$search%", "%$search%", "%$search%", "%$search%"];
         }
         $total = Database::fetchOne(
             "SELECT COUNT(*) AS c FROM tbl_dp_transfers t
@@ -102,17 +108,20 @@ switch ($action) {
              WHERE $where ORDER BY t.created_at DESC LIMIT $perPage OFFSET $offset",
             $params
         );
-        jsonResponse(true, '', ['data' => $rows, 'total' => (int)$total]);
+        foreach ($rows as &$r) {
+            $r['created_by_name'] = Database::fetchOne("SELECT created_by_name FROM tbl_dp_transfers WHERE id=?", [$r['id']])['created_by_name'] ?? '—';
+        }
+        jsonResponse(true, '', ['data' => $rows, 'total' => (int) $total]);
         break;
 
     case 'get_items':
-        $id = (int)($_GET['id'] ?? 0);
+        $id = (int) ($_GET['id'] ?? 0);
         $rows = Database::fetchAll(
             "SELECT ti.quantity, p.name AS product, p.unit
              FROM tbl_dp_transfer_items ti
              JOIN tbl_dp_products p ON p.id=ti.product_id
              WHERE ti.transfer_id=?",
-        [$id]
+            [$id]
         );
         jsonResponse(true, '', $rows);
         break;
