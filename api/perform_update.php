@@ -20,6 +20,10 @@ if ($test_return !== 0) {
     ]);
 }
 
+// Git Güvenlik Ayarı
+$currentDir = str_replace('\\', '/', ROOT_PATH);
+exec("git config --global --add safe.directory $currentDir 2>&1");
+
 // 1. Git pull komutunu çalıştır
 $force = isset($_GET['force']) && $_GET['force'] === '1';
 

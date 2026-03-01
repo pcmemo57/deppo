@@ -36,6 +36,11 @@ $repoUrl = "https://github.com/pcmemo57/deppo.git";
 $is_git_repo = is_dir(__DIR__ . '/../.git');
 
 chdir(__DIR__ . '/..');
+$currentDir = str_replace('\\', '/', getcwd());
+
+// Git Güvenlik Ayarı (Farklı kullanıcı sahipliği hatasını çözmek için)
+log_msg("--- Git güvenlik ayarları yapılandırılıyor...");
+exec("git config --global --add safe.directory $currentDir 2>&1", $sec_out, $sec_res);
 
 $commands = [];
 if (!$is_git_repo) {
