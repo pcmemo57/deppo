@@ -11,7 +11,12 @@ Bu projeyi başka bir bilgisayara kurmak için aşağıdaki adımları takip edi
    - Bu klasörün tamamını (deppo klasörünü), hedef bilgisayardaki 
      C:\xampp\htdocs\ (veya Mac'te /Applications/XAMPP/htdocs/) klasörüne kopyalayın.
 
-3. KURULUM EKRANINI ÇALIŞTIRMA:
+3. OTOMATİK HAZIRLIK (ÖNERİLEN):
+   - Windows kullanıyorsanız: deppo klasöründeki "setup_windows.bat" dosyasına çift tıklayın.
+   - Mac kullanıyorsanız: Terminali açın, deppo klasörüne gidin ve "bash setup_mac.sh" komutunu çalıştırın.
+   - Bu araçlar Git'in yüklü olup olmadığını kontrol eder ve eksikse kurulumda yardımcı olur.
+
+4. KURULUM EKRANINI ÇALIŞTIRMA:
    - Tarayıcınızı açın ve şu adrese gidin: 
      http://localhost/deppo/setup/install.php
 
