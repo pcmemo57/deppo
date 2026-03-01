@@ -173,14 +173,60 @@ class Database
             </div>
 
             <?php
-            // Git Kontrolü
+            // Git Kontrolü ve Senkronizasyon
             exec('git --version', $git_test, $git_return);
+            $is_git_repo = is_dir(__DIR__ . '/../.git');
+
             if ($git_return !== 0): ?>
                 <div class="alert alert-warning">
                     <h5><i class="fas fa-exclamation-triangle me-2"></i> Git Eksik!</h5>
-                    <p class="small mb-0">Bu bilgisayarda <b>Git</b> kurulu görünmüyor. Sistem kurulabilir ancak "Otomatik
-                        Güncelleme" özelliği çalışmayacaktır. Sorunsuz bir deneyim için Git kurmanızı öneririz.</p>
+                    <p class="small mb-0">Bu bilgisayarda <b>Git</b> kurulu görünmüyor. "Otomatik Güncelleme" için
+                        <b>setup_windows.bat</b> dosyasını yönetici olarak çalıştırın.</p>
                 </div>
+            <?php elseif (!$is_git_repo || isset($_GET['sync'])): ?>
+                <div id="sync-container" class="alert alert-info shadow-sm border-0" style="background: #eef2ff;">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-cloud-download-alt text-primary fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="mb-0 text-primary">Dosya Senkronizasyonu</h5>
+                            <p class="small mb-0 text-muted">Sistemin GitHub'daki en güncel haliyle eşleşmesi önerilir.</p>
+                        </div>
+                    </div>
+
+                    <button id="start-sync" class="btn btn-primary btn-sm px-4 shadow-sm mb-3">
+                        Şimdi İndir / Güncelle
+                    </button>
+
+                    <div id="sync-log-wrapper" class="d-none">
+                        <p class="small text-muted mb-2">Canlı Güncelleme Günlüğü:</p>
+                        <iframe id="sync-frame"
+                            style="width: 100%; height: 200px; border: 1px solid #ccc; border-radius: 8px; background: #000;"></iframe>
+                        <div class="mt-3">
+                            <a href="install.php" class="btn btn-success btn-sm d-none" id="sync-done">
+                                <i class="fas fa-check me-1"></i> Senkronizasyon Tamam, Devam Et
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    document.getElementById('start-sync').onclick = function () {
+                        this.classList.add('d-none');
+                        document.getElementById('sync-log-wrapper').classList.remove('d-none');
+                        document.getElementById('sync-frame').src = 'sync_git.php';
+
+                        // İframe içeriğini kontrol et (Basit bir çözüm)
+                        const checkSync = setInterval(() => {
+                            const frame = document.getElementById('sync-frame');
+                            if (frame.contentDocument.body.innerText.includes('TEBRİKLER')) {
+                                document.getElementById('sync-done').classList.remove('d-none');
+                                clearInterval(checkSync);
+                            }
+                        }, 2000);
+                    };
+                </script>
             <?php endif; ?>
 
             <?php if ($error): ?>
