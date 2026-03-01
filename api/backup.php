@@ -43,15 +43,39 @@ switch ($action) {
         $filename = 'backup_' . date('Y-m-d_H-i-s') . '.sql';
         $path = $backupDir . $filename;
 
-        // XAMPP mysql/bin yolunu kontrol et (macOS varsayılan)
-        $mysqldumpPath = '/Applications/XAMPP/xamppfiles/bin/mysqldump';
-        if (!file_exists($mysqldumpPath)) {
-            $mysqldumpPath = 'mysqldump'; // PATH'de varsa
+        // Binary yolu bulma (Cross-Platform)
+        $dumpBinary = 'mysqldump';
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            // Windows XAMPP varsayılan yolları
+            $paths = [
+                'C:/xampp/mysql/bin/mysqldump.exe',
+                'D:/xampp/mysql/bin/mysqldump.exe',
+                'mysqldump'
+            ];
+            foreach ($paths as $p) {
+                if (file_exists($p) || @shell_exec("where $p")) {
+                    $dumpBinary = $p;
+                    break;
+                }
+            }
+        } else {
+            // macOS / Linux yolları
+            $paths = [
+                '/Applications/XAMPP/xamppfiles/bin/mysqldump',
+                '/opt/lampp/bin/mysqldump',
+                'mysqldump'
+            ];
+            foreach ($paths as $p) {
+                if (file_exists($p) || @shell_exec("which $p")) {
+                    $dumpBinary = $p;
+                    break;
+                }
+            }
         }
 
         $command = sprintf(
             '%s --user=%s --password=%s --host=%s %s > %s 2>&1',
-            escapeshellarg($mysqldumpPath),
+            escapeshellarg($dumpBinary),
             escapeshellarg(DB_USER),
             escapeshellarg(DB_PASS),
             escapeshellarg(DB_HOST),
@@ -61,10 +85,14 @@ switch ($action) {
 
         exec($command, $output, $returnVar);
 
-        if ($returnVar === 0) {
+        if ($returnVar === 0 && file_exists($path) && filesize($path) > 0) {
             jsonResponse(true, 'Yedekleme başarıyla oluşturuldu: ' . $filename);
         } else {
-            jsonResponse(false, 'Yedekleme başarısız oldu.', ['error' => implode("\n", $output)]);
+            $err = implode("\n", $output);
+            if (!file_exists($path) || filesize($path) == 0) {
+                $err .= "\nDosya oluşturulamadı veya boş.";
+            }
+            jsonResponse(false, 'Yedekleme başarısız oldu.', ['error' => $err, 'command' => $command]);
         }
         break;
 
@@ -76,14 +104,37 @@ switch ($action) {
             jsonResponse(false, 'Geçersiz dosya.');
         }
 
-        $mysqlPath = '/Applications/XAMPP/xamppfiles/bin/mysql';
-        if (!file_exists($mysqlPath)) {
-            $mysqlPath = 'mysql'; // PATH'de varsa
+        // Binary yolu bulma (Cross-Platform)
+        $mysqlBinary = 'mysql';
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            $paths = [
+                'C:/xampp/mysql/bin/mysql.exe',
+                'D:/xampp/mysql/bin/mysql.exe',
+                'mysql'
+            ];
+            foreach ($paths as $p) {
+                if (file_exists($p) || @shell_exec("where $p")) {
+                    $mysqlBinary = $p;
+                    break;
+                }
+            }
+        } else {
+            $paths = [
+                '/Applications/XAMPP/xamppfiles/bin/mysql',
+                '/opt/lampp/bin/mysql',
+                'mysql'
+            ];
+            foreach ($paths as $p) {
+                if (file_exists($p) || @shell_exec("which $p")) {
+                    $mysqlBinary = $p;
+                    break;
+                }
+            }
         }
 
         $command = sprintf(
             '%s --user=%s --password=%s --host=%s %s < %s 2>&1',
-            escapeshellarg($mysqlPath),
+            escapeshellarg($mysqlBinary),
             escapeshellarg(DB_USER),
             escapeshellarg(DB_PASS),
             escapeshellarg(DB_HOST),
@@ -96,7 +147,7 @@ switch ($action) {
         if ($returnVar === 0) {
             jsonResponse(true, 'Veritabanı başarıyla geri yüklendi.');
         } else {
-            jsonResponse(false, 'Geri yükleme başarısız oldu.', ['error' => implode("\n", $output)]);
+            jsonResponse(false, 'Geri yükleme başarısız oldu.', ['error' => implode("\n", $output), 'command' => $command]);
         }
         break;
 
