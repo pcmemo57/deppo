@@ -50,9 +50,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
     }
 
     /* Sayfa tepesindeki boşluk */
-    .stock-out-row {
-        margin-top: 1.25rem;
-    }
+    .stock-out-row {}
 
     /* ───────────────────────────────────────────
      MODAL GENEL (Premium Style)
@@ -119,63 +117,6 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         gap: 6px;
     }
 
-    /* Form label */
-    .form-label {
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: #374151;
-        margin-bottom: 6px;
-        display: block;
-    }
-
-    /* Input & Select */
-    #addModal .form-control,
-    #addModal .form-select,
-    #viewModal .form-control,
-    #viewModal .form-select {
-        border: 1.5px solid #d1d9e6;
-        border-radius: 8px;
-        padding: 9px 13px;
-        font-size: 0.88rem;
-        color: #1f2937;
-        background: #fff;
-        transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    #addModal .form-control:focus,
-    #addModal .form-select:focus,
-    #viewModal .form-control:focus,
-    #viewModal .form-select:focus {
-        border-color: #1a56db;
-        box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.12);
-        outline: none;
-    }
-
-    /* İkonlu input wrapper */
-    .input-icon-wrap {
-        position: relative;
-    }
-
-    .input-icon-wrap .field-icon {
-        position: absolute;
-        left: 11px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #9aa5be;
-        font-size: 0.82rem;
-        z-index: 5;
-        pointer-events: none;
-    }
-
-    .input-icon-wrap .form-control,
-    .input-icon-wrap .form-select {
-        padding-left: 32px;
-    }
-
-    .input-icon-wrap textarea.form-control {
-        padding-left: 13px;
-    }
-
     /* Butonlar */
     .btn-modal-cancel {
         background: transparent;
@@ -213,20 +154,6 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         transform: translateY(-1px);
         color: #fff;
     }
-
-    /* Select2 boostrap-5 focus styling */
-    .select2-container--bootstrap-5.select2-container--focus .select2-selection,
-    .select2-container--bootstrap-5.select2-container--open .select2-selection {
-        border-color: #1a56db !important;
-        box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.12) !important;
-    }
-
-    .select2-container--bootstrap-5 .select2-selection {
-        border: 1.5px solid #d1d9e6 !important;
-        border-radius: 8px !important;
-        min-height: 40px !important;
-        padding: 5px 10px 5px 32px !important;
-    }
 </style>
 
 <div class="row stock-out-row">
@@ -261,7 +188,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                             <th class="num-align">Miktar</th>
                             <th class="num-align">Toplam (EUR)</th>
                             <th style="width:120px">İşlemi Yapan</th>
-                            <th style="width:120px">Tarih</th>
+                            <th style="width:120px" class="num-align">Tarih</th>
                             <th style="width:80px" class="text-center pe-3">Detay</th>
                         </tr>
                     </thead>
@@ -284,7 +211,8 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="fas fa-sign-out-alt me-2"></i> Yeni Stok Çıkışı</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i
+                        class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
                 <form id="formStockOut">
@@ -397,7 +325,8 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="fas fa-eye me-2"></i> Çıkış Kaydı Detayı</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i
+                        class="fas fa-times"></i></button>
             </div>
             <div class="modal-body" id="viewBody">
                 <!-- Detay İçeriği JS ile dolacak -->
@@ -433,15 +362,15 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                     '<td><b>' + esc(d.product) + '</b></td>' +
                     '<td>' + esc(d.warehouse) + '</td>' +
                     '<td>' + muhatap + '</td>' +
-                    '<td class="num-align">' + (+d.quantity) + ' <small class="text-muted">' + esc(d.unit) + '</small></td>' +
+                    '<td class="num-align">' + formatQty(d.quantity) + ' <small class="text-muted">' + esc(d.unit) + '</small></td>' +
                     '<td class="num-align"><strong>' + formatTurkish(parseFloat(d.total_price).toFixed(2)) + '</strong> <small>EUR</small></td>' +
                     '<td><small>' + esc(d.created_by_name || '—') + '</small></td>' +
-                    '<td><small>' + d.created_at + '</small></td>' +
-                    '<td class="text-center pe-3"><button class="btn btn-xs btn-outline-primary" onclick="viewRow(' + d.id + ')"><i class="fas fa-eye"></i></button></td>' +
+                    <td class="num-align"><small>' + d.created_at + '</small></td>' +
+                '<td class="text-center pe-3"><button class="btn btn-xs btn-outline-primary" onclick="viewRow(' + d.id + ')"><i class="fas fa-eye"></i></button></td>' +
                     '</tr>';
             });
-            $('#tableBody').html(html || '<tr><td colspan="8" class="text-center text-muted p-4">Kayıt bulunamadı</td></tr>');
-            $('#totalCount').text('Toplam: ' + r.data.total + ' kayıt');
+            $('#tableBody').html(html || '<tr><td colspan="9" class="text-center text-muted p-4">Kayıt bulunamadı</td></tr>');
+            $('#totalCount').text('Toplam: ' + formatQty(r.data.total) + ' kayıt');
             renderPag(r.data.total);
         }, 'json');
     }

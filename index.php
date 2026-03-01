@@ -52,6 +52,7 @@ $pageTitles = [
     'transfer' => 'Depolar Arası Transfer',
     'transfer_history' => 'Transfer Geçmişi',
     'stock_status' => 'Stok Durumu',
+    'product_history' => 'Ürün Hareket Geçmişi',
 ];
 $pageTitle = $pageTitles[$currentPage] ?? 'Sayfa';
 

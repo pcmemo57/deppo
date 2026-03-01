@@ -58,9 +58,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
     }
 
     /* Sayfa tepesindeki boşluk */
-    .stock-out-row {
-        margin-top: 1.25rem;
-    }
+    .stock-out-row {}
 
     .detail-row {
         display: none;
@@ -82,6 +80,51 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
     .row-expanded .expand-icon {
         transform: rotate(90deg);
         color: #ffc107;
+    }
+
+    /* Görsel Gruplandırma (Dashed Border) */
+    .orders-table tr.row-expanded>td {
+        border-top: 2px dashed #ffc107 !important;
+        background: #fffdf5 !important;
+    }
+
+    .orders-table tr.row-expanded>td:first-child {
+        border-left: 2px dashed #ffc107 !important;
+    }
+
+    .orders-table tr.row-expanded>td:last-child {
+        border-right: 2px dashed #ffc107 !important;
+    }
+
+    .orders-table tr.detail-row.show-detail>td {
+        border-bottom: 2px dashed #ffc107 !important;
+        background: #fffdf5 !important;
+        border-top: none !important;
+    }
+
+    .orders-table tr.detail-row.show-detail>td:first-child {
+        border-left: 2px dashed #ffc107 !important;
+    }
+
+    .orders-table tr.detail-row.show-detail>td:last-child {
+        border-right: 2px dashed #ffc107 !important;
+    }
+
+    /* Detay içindeki tablo standart kalsın */
+    .detail-container table {
+        border-collapse: collapse !important;
+    }
+
+    .detail-container table td,
+    .detail-container table th {
+        border: 1px solid #dee2e6 !important;
+        /* Standart border */
+    }
+
+    .detail-container {
+        padding: 10px 15px;
+        margin: 5px 0;
+        border-left: 3px solid #ffc107;
     }
 
     .badge-item-count {
@@ -152,63 +195,6 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         display: flex;
         align-items: center;
         gap: 6px;
-    }
-
-    /* Form label */
-    .form-label {
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: #374151;
-        margin-bottom: 6px;
-        display: block;
-    }
-
-    /* Input & Select */
-    #addModal .form-control,
-    #addModal .form-select,
-    #viewModal .form-control,
-    #viewModal .form-select {
-        border: 1.5px solid #d1d9e6;
-        border-radius: 8px;
-        padding: 9px 13px;
-        font-size: 0.88rem;
-        color: #1f2937;
-        background: #fff;
-        transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    #addModal .form-control:focus,
-    #addModal .form-select:focus,
-    #viewModal .form-control:focus,
-    #viewModal .form-select:focus {
-        border-color: #1a56db;
-        box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.12);
-        outline: none;
-    }
-
-    /* İkonlu input wrapper */
-    .input-icon-wrap {
-        position: relative;
-    }
-
-    .input-icon-wrap .field-icon {
-        position: absolute;
-        left: 11px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #9aa5be;
-        font-size: 0.82rem;
-        z-index: 5;
-        pointer-events: none;
-    }
-
-    .input-icon-wrap .form-control,
-    .input-icon-wrap .form-select {
-        padding-left: 32px;
-    }
-
-    .input-icon-wrap textarea.form-control {
-        padding-left: 13px;
     }
 
     /* Butonlar */
@@ -288,7 +274,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                 </div>
             </div>
             <div class="card-body p-0 table-responsive">
-                <table class="table table-hover m-0 table-valign-middle" id="ordersTable">
+                <table class="table table-hover m-0 table-valign-middle orders-table" id="ordersTable">
                     <thead class="bg-light text-muted small text-uppercase">
                         <tr>
                             <th style="width:50px" class="ps-3 text-center">#</th>
@@ -297,7 +283,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                             <th class="num-align">Kalem Sayısı</th>
                             <th class="num-align">Toplam Tutar</th>
                             <th>İşlemi Yapan</th>
-                            <th>Tarih</th>
+                            <th class="num-align">Tarih</th>
                             <th style="width:60px" class="text-center pe-3">Detay</th>
                         </tr>
                     </thead>
@@ -325,7 +311,8 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="fas fa-sign-out-alt me-2"></i> Yeni Stok Çıkışı</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i
+                        class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
                 <form id="formStockOut">
@@ -450,14 +437,14 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                     '<td class="ps-3 text-center"><i class="fas fa-chevron-right expand-icon"></i></td>' +
                     '<td><div class="fw-bold text-primary">' + esc(d.customer_name || '—') + '</div></td>' +
                     '<td><i class="fas fa-warehouse me-1 opacity-50"></i> ' + esc(d.warehouse_name) + '</td>' +
-                    '<td class="num-align"><span class="badge bg-light border text-dark ms-2 badge-item-count">' + d.item_count + ' Ürün</span></td>' +
+                    '<td class="num-align"><span class="badge bg-light border text-dark ms-2 badge-item-count">' + formatQty(d.item_count) + ' Ürün</span></td>' +
                     '<td class="num-align"><strong class="text-dark">' + formatTurkish(parseFloat(d.total_eur).toFixed(2)) + '</strong> <small>EUR</small></td>' +
                     '<td><small class="text-muted">' + esc(d.created_by_name || '—') + '</small></td>' +
-                    '<td><span class="text-muted small"><i class="far fa-calendar-alt me-1"></i> ' + d.created_at_fmt + '</span></td>' +
+                    '<td class="num-align"><span class="text-muted small"><i class="far fa-calendar-alt me-1"></i> ' + d.created_at_fmt + '</span></td>' +
                     '<td class="text-center pe-3"><button class="btn btn-xs btn-outline-warning"><i class="fas fa-eye"></i></button></td>' +
                     '</tr>' +
                     '<tr class="detail-row" id="detail-' + d.batch_id + '">' +
-                    '<td colspan="7">' +
+                    '<td colspan="8">' +
                     '<div class="detail-container">' +
                     '<div class="mb-3"><strong><i class="fas fa-info-circle me-1 text-warning"></i> İşlem Notu:</strong> <span class="text-muted">' + esc(d.note || '—') + '</span></div>' +
                     '<div id="cont-' + d.batch_id + '"><div class="text-center p-2"><i class="fas fa-spinner fa-spin"></i></div></div>' +
@@ -466,7 +453,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                     '</tr>';
             });
             $('#tableBody').html(html || '<tr><td colspan="8" class="text-center text-muted p-4">Henüz gruplandırılmış kayıt bulunmuyor.</td></tr>');
-            $('#totalCount').text('Toplam: ' + r.data.total + ' sipariş');
+            $('#totalCount').text('Toplam: ' + formatQty(r.data.total) + ' sipariş');
             renderPag(r.data.total);
         }, 'json');
     }
@@ -508,11 +495,11 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         var detailRow = $('#detail-' + batchId);
 
         if (detailRow.is(':visible')) {
-            detailRow.hide();
+            detailRow.hide().removeClass('show-detail');
             row.removeClass('row-expanded');
         } else {
             row.addClass('row-expanded');
-            detailRow.show();
+            detailRow.show().addClass('show-detail');
             loadBatchItems(batchId);
         }
     }

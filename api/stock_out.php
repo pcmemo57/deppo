@@ -60,6 +60,95 @@ switch ($action) {
                 [$batchId, $warehouseId, $requesterId, $customerId, $productId, $quantity, $unitPrice, $totalPrice, $note, $userId, $userName]
             );
         }
+
+        // --- E-posta Bildirimi ---
+        if ($requesterId) {
+            $requester = Database::fetchOne("SELECT name, surname, email FROM tbl_dp_requesters WHERE id=?", [$requesterId]);
+            if ($requester && !empty($requester['email'])) {
+                $warehouse = Database::fetchOne("SELECT name FROM tbl_dp_warehouses WHERE id=?", [$warehouseId]);
+                $warehouseName = $warehouse['name'] ?? '—';
+
+                $items = Database::fetchAll(
+                    "SELECT so.*, p.name AS product_name, p.unit 
+                     FROM tbl_dp_stock_out so
+                     JOIN tbl_dp_products p ON p.id=so.product_id
+                     WHERE so.batch_id=?",
+                    [$batchId]
+                );
+
+                $customerName = '—';
+                if ($customerId) {
+                    $customer = Database::fetchOne("SELECT name FROM tbl_dp_customers WHERE id=?", [$customerId]);
+                    $customerName = $customer['name'] ?? '—';
+                }
+
+                if (!empty($items)) {
+                    $totalEur = 0;
+                    $tableRows = "";
+                    foreach ($items as $item) {
+                        $totalEur += (float) $item['total_price'];
+                        $tableRows .= "
+                            <tr style='border-bottom: 1px solid #eee;'>
+                                <td style='padding: 10px; border: 1px solid #e5e7eb;'>" . e($item['product_name']) . "</td>
+                                <td style='padding: 10px; border: 1px solid #e5e7eb; text-align: right;'>" . formatQty($item['quantity']) . " " . e($item['unit']) . "</td>
+                                <td style='padding: 10px; border: 1px solid #e5e7eb; text-align: right;'>" . number_format($item['unit_price'], 2, ',', '.') . " €</td>
+                                <td style='padding: 10px; border: 1px solid #e5e7eb; text-align: right; font-weight: bold;'>" . number_format($item['total_price'], 2, ',', '.') . " €</td>
+                            </tr>
+                        ";
+                    }
+
+                    $subject = "📦 Stok Çıkışı Bilgilendirmesi: " . $batchId;
+                    $body = "
+                        <div style='font-family: sans-serif; max-width: 650px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;'>
+                            <div style='background-color: #343a40; color: #ffffff; padding: 20px; text-align: center;'>
+                                <h2 style='margin: 0;'>" . e(get_setting('site_name', APP_NAME)) . "</h2>
+                            </div>
+                            <div style='padding: 30px;'>
+                                <p style='font-size: 16px; color: #374151;'>Sayın <strong>{$requester['name']} {$requester['surname']}</strong>,</p>
+                                <p style='color: #6b7280; line-height: 1.5;'>Adınıza gerçekleştirilen stok çıkış işlemi aşağıda listelenmiştir.</p>
+                                
+                                <div style='margin: 20px 0; padding: 15px; background-color: #f8fafc; border-left: 4px solid #3b82f6;'>
+                                    <p style='margin: 0; font-size: 14px;'><strong>Depo:</strong> $warehouseName</p>
+                                    <p style='margin: 5px 0 0 0; font-size: 14px;'><strong>Müşteri:</strong> $customerName</p>
+                                    <p style='margin: 5px 0 0 0; font-size: 14px;'><strong>İşlem No:</strong> $batchId</p>
+                                    <p style='margin: 5px 0 0 0; font-size: 14px;'><strong>Not:</strong> " . ($note ?: '—') . "</p>
+                                </div>
+
+                                <table style='width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px;'>
+                                    <thead>
+                                        <tr style='background-color: #f1f5f9;'>
+                                            <th style='padding: 12px; border: 1px solid #e5e7eb; text-align: left;'>Ürün</th>
+                                            <th style='padding: 12px; border: 1px solid #e5e7eb; text-align: right;'>Miktar</th>
+                                            <th style='padding: 12px; border: 1px solid #e5e7eb; text-align: right;'>Birim Fiyat</th>
+                                            <th style='padding: 12px; border: 1px solid #e5e7eb; text-align: right;'>Toplam (EUR)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        $tableRows
+                                    </tbody>
+                                    <tfoot>
+                                        <tr style='background-color: #f8fafc;'>
+                                            <td colspan='3' style='padding: 12px; border: 1px solid #e5e7eb; text-align: right; font-weight: bold;'>GENEL TOPLAM</td>
+                                            <td style='padding: 12px; border: 1px solid #e5e7eb; text-align: right; font-weight: bold; color: #1e40af; font-size: 16px;'>" . number_format($totalEur, 2, ',', '.') . " €</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                                
+                                <div style='margin-top: 30px; padding: 15px; background-color: #eff6ff; border-radius: 6px; color: #1e40af; font-size: 14px;'>
+                                    Bu işlem neticesinde stok kayıtları güncellenmiştir.
+                                </div>
+                            </div>
+                            <div style='background-color: #f3f4f6; color: #9ca3af; padding: 15px; text-align: center; font-size: 12px;'>
+                                Bu e-posta otomatik olarak gönderilmiştir. Lütfen yanıtlamayınız.
+                            </div>
+                        </div>
+                    ";
+
+                    send_mail($requester['email'], $subject, $body);
+                }
+            }
+        }
+
         jsonResponse(true, 'Çıkış kaydedildi.');
 
     case 'edit':
@@ -214,9 +303,13 @@ switch ($action) {
             jsonResponse(false, 'Batch ID eksik.');
 
         $items = Database::fetchAll(
-            "SELECT so.*, p.name AS product_name, p.unit
+            "SELECT so.*, p.name AS product_name, p.unit, w.name AS warehouse_name,
+                    c.name AS customer_name, r.name AS requester_name, r.surname AS requester_surname
              FROM tbl_dp_stock_out so
              JOIN tbl_dp_products p ON p.id=so.product_id
+             LEFT JOIN tbl_dp_warehouses w ON w.id=so.warehouse_id
+             LEFT JOIN tbl_dp_customers c ON c.id=so.customer_id
+             LEFT JOIN tbl_dp_requesters r ON r.id=so.requester_id
              WHERE so.batch_id=?",
             [$batchId]
         );

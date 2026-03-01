@@ -119,9 +119,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
   }
 
   /* Sayfa tepesindeki boşluk */
-  .stock-in-row {
-    margin-top: 1.25rem;
-  }
+  .stock-in-row {}
 
   #addStockModal .modal-title,
   #editModal .modal-title,
@@ -165,157 +163,6 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
     display: flex;
     align-items: center;
     gap: 6px;
-  }
-
-  /* Form label */
-  #addStockModal .form-label,
-  #editModal .form-label {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 6px;
-    display: block;
-  }
-
-  .form-label .req {
-    color: #e53e3e;
-    margin-left: 2px;
-  }
-
-  /* Input & Select */
-  #addStockModal .form-control,
-  #addStockModal .form-select,
-  #editModal .form-control,
-  #editModal .form-select {
-    border: 1.5px solid #d1d9e6;
-    border-radius: 8px;
-    padding: 9px 13px;
-    font-size: 0.88rem;
-    color: #1f2937;
-    background: #fff;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-
-  #addStockModal .form-control:focus,
-  #addStockModal .form-select:focus,
-  #editModal .form-control:focus,
-  #editModal .form-select:focus {
-    border-color: #1a56db;
-    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.12);
-    outline: none;
-  }
-
-  /* İkonlu input wrapper */
-  .input-icon-wrap {
-    position: relative;
-  }
-
-  .input-icon-wrap .field-icon {
-    position: absolute;
-    left: 11px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #9aa5be;
-    font-size: 0.82rem;
-    z-index: 5;
-    pointer-events: none;
-  }
-
-  .input-icon-wrap .form-control,
-  .input-icon-wrap .form-select {
-    padding-left: 32px;
-  }
-
-  .input-icon-wrap textarea.form-control {
-    padding-left: 13px;
-    /* textarea'da ikon olmayacak */
-  }
-
-  /* Adet + birim */
-  .qty-group {
-    display: flex;
-  }
-
-  .qty-group .form-control {
-    border-radius: 8px 0 0 8px;
-    flex: 1;
-  }
-
-  .qty-group .unit-badge {
-    background: #e8edf5;
-    border: 1.5px solid #d1d9e6;
-    border-left: none;
-    border-radius: 0 8px 8px 0;
-    padding: 0 14px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #4a5568;
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
-    min-width: 56px;
-    justify-content: center;
-  }
-
-  /* Fiyat satırı */
-  .price-row {
-    display: grid;
-    grid-template-columns: 1fr 150px;
-    gap: 12px;
-    align-items: end;
-  }
-
-  /* EUR notu */
-  .conversion-note {
-    font-size: 0.78rem;
-    color: #2b6cb0;
-    background: #ebf4ff;
-    border: 1px solid #bee3f8;
-    border-radius: 6px;
-    padding: 6px 10px;
-    margin-top: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  /* Textarea */
-  #addStockModal textarea.form-control,
-  #editModal textarea.form-control {
-    resize: none;
-    border-radius: 8px;
-    min-height: 72px;
-  }
-
-  /* Select2 uyumu — ikonlu wrapper içinde */
-  #addStockModal .input-icon-wrap .select2-container,
-  #editModal .input-icon-wrap .select2-container {
-    width: 100% !important;
-  }
-
-  #addStockModal .select2-container--bootstrap-5 .select2-selection,
-  #editModal .select2-container--bootstrap-5 .select2-selection {
-    border: 1.5px solid #d1d9e6 !important;
-    border-radius: 8px !important;
-    min-height: 40px !important;
-    padding: 6px 10px 6px 32px !important;
-    font-size: 0.88rem !important;
-    background: #fff !important;
-  }
-
-  #addStockModal .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered,
-  #editModal .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
-    padding-left: 0 !important;
-    line-height: 1.6 !important;
-    color: #1f2937 !important;
-  }
-
-  #addStockModal .select2-container--bootstrap-5.select2-container--focus .select2-selection,
-  #addStockModal .select2-container--bootstrap-5.select2-container--open .select2-selection,
-  #editModal .select2-container--bootstrap-5.select2-container--focus .select2-selection,
-  #editModal .select2-container--bootstrap-5.select2-container--open .select2-selection {
-    border-color: #1a56db !important;
-    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.12) !important;
   }
 
   /* Modal butonları */
@@ -499,7 +346,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
               <th class="num-align">Adet</th>
               <th class="num-align">Birim Fiyat</th>
               <th class="num-align">EUR Fiyat</th>
-              <th style="width:100px">Tarih</th>
+              <th style="width:100px" class="num-align">Tarih</th>
               <th style="width:120px">İşlemi Yapan</th>
               <th style="width:100px" class="text-center pe-3">İşlem</th>
             </tr>
@@ -530,7 +377,8 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         <h5 class="modal-title text-white">
           <i class="fas fa-eye me-2 opacity-75"></i>Giriş Kaydı Detayı
         </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i
+            class="fas fa-times"></i></button>
       </div>
 
       <div class="modal-body">
@@ -669,7 +517,8 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         <h5 class="modal-title text-white" id="addStockModalLabel">
           <i class="fas fa-plus-circle me-2 opacity-75"></i>Yeni Stok Girişi
         </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i
+            class="fas fa-times"></i></button>
       </div>
 
       <div class="modal-body">
@@ -804,7 +653,8 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         <h5 class="modal-title text-white">
           <i class="fas fa-edit me-2 opacity-75"></i>Girişi Düzenle
         </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i
+            class="fas fa-times"></i></button>
       </div>
 
       <div class="modal-body">
@@ -1082,7 +932,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         html += '<td class="num-align">' + formatQty(d.quantity) + '</td>';
         html += '<td class="num-align">' + formatTurkish(d.unit_price, 2) + ' ' + esc(d.currency) + '</td>';
         html += '<td class="num-align">' + formatTurkish(d.price_eur, 2) + '</td>';
-        html += '<td>' + (d.created_at ? d.created_at.split(' ')[0] : '—') + '</td>';
+        html += '<td class="num-align">' + (d.created_at ? d.created_at.split(' ')[0] : '—') + '</td>';
         html += '<td><small class="text-muted">' + esc(d.created_by_name || '—') + '</small></td>';
         html += '<td class="text-center pe-3">';
         html += '<div class="d-flex gap-1 justify-content-center">';
@@ -1091,8 +941,8 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         html += '</div></td>';
         html += '</tr>';
       });
-      $('#tableBody').html(html || '<tr><td colspan="9" class="text-center text-muted p-4">Kayıt bulunamadı</td></tr>');
-      $('#totalCount').text('Toplam: ' + r.data.total + ' kayıt');
+      $('#tableBody').html(html || '<tr><td colspan="10" class="text-center text-muted p-4">Kayıt bulunamadı</td></tr>');
+      $('#totalCount').text('Toplam: ' + formatQty(r.data.total) + ' kayıt');
       renderPag(r.data.total);
     }, 'json');
   }

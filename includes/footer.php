@@ -36,10 +36,10 @@ $footerText = get_setting('footer_text', '© 2026 Depo Yönetim Sistemi');
 <script>
     // Global SweetAlert tema
     const Toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
+        toast: false,
+        position: 'center',
         showConfirmButton: false,
-        timer: 3000,
+        timer: 2000,
         timerProgressBar: true,
     });
 

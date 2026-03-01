@@ -47,13 +47,14 @@ switch ($action) {
         }
 
         Database::insert(
-            "INSERT INTO `$table` (name,code,unit,description,image,is_active) VALUES (?,?,?,?,?,?)",
+            "INSERT INTO `$table` (name,code,unit,description,image,stock_alarm,is_active) VALUES (?,?,?,?,?,?,?)",
             [
                 $name,
                 sanitize($_POST['code'] ?? ''),
                 sanitize($_POST['unit'] ?? 'Adet'),
                 sanitize($_POST['description'] ?? ''),
                 $imageFile,
+                (int) ($_POST['stock_alarm'] ?? 0),
                 (int) ($_POST['is_active'] ?? 1)
             ]
         );
@@ -82,13 +83,14 @@ switch ($action) {
         }
 
         Database::execute(
-            "UPDATE `$table` SET name=?,code=?,unit=?,description=?,image=?,is_active=? WHERE id=?",
+            "UPDATE `$table` SET name=?,code=?,unit=?,description=?,image=?,stock_alarm=?,is_active=? WHERE id=?",
             [
                 $name,
                 sanitize($_POST['code'] ?? ''),
                 sanitize($_POST['unit'] ?? 'Adet'),
                 sanitize($_POST['description'] ?? ''),
                 $imageFile,
+                (int) ($_POST['stock_alarm'] ?? 0),
                 (int) ($_POST['is_active'] ?? 1),
                 $id
             ]

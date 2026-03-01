@@ -217,6 +217,84 @@ if ($googleFont !== 'default' && isset($googleFonts[$googleFont])) {
             text-align: right !important;
         }
 
+        /* ══════════════════════════════════════════
+           GLOBAL FORM VE PREMIUM INPUT STİLLERİ
+        ══════════════════════════════════════════ */
+        .form-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .form-control,
+        .form-select {
+            border: 1.5px solid #d1d9e6 !important;
+            border-radius: 8px !important;
+            padding: 9px 13px;
+            font-size: 0.88rem;
+            color: #1f2937;
+            background: #fff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #1a56db !important;
+            box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.12) !important;
+            outline: none;
+        }
+
+        /* İkonlu input wrapper */
+        .input-icon-wrap {
+            position: relative;
+        }
+
+        .input-icon-wrap .field-icon {
+            position: absolute;
+            left: 11px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9aa5be;
+            font-size: 0.82rem;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .input-icon-wrap .form-control,
+        .input-icon-wrap .form-select {
+            padding-left: 32px !important;
+        }
+
+        .input-icon-wrap textarea.form-control {
+            padding-left: 13px !important;
+        }
+
+        /* Select2 Bootstrap 5 Custom Styling (Global) */
+        .select2-container--bootstrap-5 .select2-selection {
+            border: 1.5px solid #d1d9e6 !important;
+            border-radius: 8px !important;
+            min-height: 40px !important;
+            padding: 6px 10px 6px 32px !important;
+            font-size: 0.88rem !important;
+            background: #fff !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            padding-left: 0 !important;
+            line-height: normal !important;
+            color: #1f2937 !important;
+        }
+
+        .select2-container--bootstrap-5.select2-container--focus .select2-selection,
+        .select2-container--bootstrap-5.select2-container--open .select2-selection {
+            border-color: #1a56db !important;
+            box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.12) !important;
+        }
+
         /* Genel Form ve Buton Boşlukları (Bitişik elemanları ayır) */
         .table td .btn+.btn,
         .table td .badge+.badge,
@@ -273,6 +351,29 @@ if ($googleFont !== 'default' && isset($googleFonts[$googleFont])) {
             border-color: #ced4da;
             color: #6c757d;
             padding: 0 10px;
+        }
+
+        /* Tüm butonlarda ikon ve metin arası 5px boşluk (Modern Flexbox Gap Çözümü) */
+        .btn {
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        /* blok butonlar için display: flex */
+        .btn.w-100,
+        .btn.btn-block {
+            display: flex !important;
+        }
+
+        /* Buton içindeki ikonların varsayılan marjinlerini sıfırla (Çakışmaları önlemek için) */
+        .btn i,
+        .btn .fas,
+        .btn .far,
+        .btn .fab,
+        .btn .fa {
+            margin: 0 !important;
         }
     </style>
 </head>

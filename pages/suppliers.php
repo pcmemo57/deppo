@@ -147,14 +147,6 @@ requireRole(ROLE_ADMIN, ROLE_USER);
         pointer-events: none;
     }
 
-    .input-icon-wrap .form-control {
-        padding-left: 32px;
-    }
-
-    .input-icon-wrap textarea.form-control {
-        padding-left: 13px;
-    }
-
     /* Butonlar */
     .btn-modal-cancel {
         background: transparent;
@@ -251,7 +243,8 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                 <h5 class="modal-title" id="modalTitle">
                     <i class="fas fa-truck-loading me-2 opacity-75"></i> Tedarikçi Yönetimi
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i
+                        class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
                 <form id="crudForm" autocomplete="off">
@@ -370,7 +363,7 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                     '</td></tr>';
             });
             $('#tableBody').html(html || '<tr><td colspan="7" class="text-center text-muted p-4">Kayıt bulunamadı</td></tr>');
-            $('#totalCount').text('Toplam: ' + r.data.total + ' kayıt');
+            $('#totalCount').text('Toplam: ' + formatQty(r.data.total) + ' kayıt');
             renderPag(r.data.total);
         }, 'json');
     }

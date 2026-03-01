@@ -10,7 +10,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         <div class="card card-primary card-outline">
             <div class="card-header">
                 <h3 class="card-title text-bold"><i class="fas fa-chart-bar me-2"></i>Stok Durumu</h3>
-                <div class="card-tools d-flex gap-2 align-items-center">
+                <div class="card-tools d-flex gap-1 align-items-center">
                     <select id="perPage" class="form-select form-select-sm" style="width:auto">
                         <option value="10" selected>10</option>
                         <option value="25">25</option>
@@ -29,10 +29,10 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                         <i class="fas fa-warehouse me-1" style="margin-right: 5px"></i>Depo Seç
                     </button>
                     <button class="btn btn-success btn-sm" id="btnExcel" title="Excel İndir">
-                        <i class="fas fa-file-excel"></i>
+                        <i class="fas fa-file-excel" style="margin-right: 5px"></i>Excel Çıktısı
                     </button>
                     <button class="btn btn-info btn-sm text-white" id="btnEmail" title="E-posta Gönder">
-                        <i class="fas fa-envelope"></i>
+                        <i class="fas fa-envelope" style="margin-right: 5px"></i>E-posta Gönder
                     </button>
                 </div>
             </div>
@@ -63,7 +63,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
             <div class="modal-header bg-primary text-white border-0 py-3">
                 <h5 class="modal-title fw-bold"><i class="fas fa-warehouse me-3"></i>Depo Seçimi</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body p-0">
                 <ul class="list-group list-group-flush">
@@ -99,7 +99,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
                 <h5 class="modal-title">Stok Listesini E-posta Gönder</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
@@ -134,6 +134,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
             </div>
         </div>
     </div>
+</div>
 </div>
 <style>
     .premium-switch {
@@ -209,22 +210,22 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
             return;
         }
 
-        $('#stockBody').html('<tr><td colspan="4" class="text-center p-4"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Yükleniyor...</td></tr>');
+        $('#stockBody').html('<tr><td colspan="5" class="text-center p-4"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Yükleniyor...</td></tr>');
 
         $.get(apiUrl, { action: 'list', page: curPage, per_page: curPerPage, search: curSearch, warehouses: whs.join(',') }, function (r) {
             if (!r.success) {
-                $('#stockBody').html('<tr><td colspan="4" class="text-center text-danger p-3"><i class="fas fa-exclamation-triangle me-2"></i>Hata: ' + esc(r.message || 'Veri alınamadı') + '</td></tr>');
+                $('#stockBody').html('<tr><td colspan="5" class="text-center text-danger p-3"><i class="fas fa-exclamation-triangle me-2"></i>Hata: ' + esc(r.message || 'Veri alınamadı') + '</td></tr>');
                 return;
             }
             if (!r.data || !r.data.data) {
-                $('#stockBody').html('<tr><td colspan="4" class="text-center text-muted p-3">Veri bulunamadı</td></tr>');
+                $('#stockBody').html('<tr><td colspan="5" class="text-center text-muted p-3">Veri bulunamadı</td></tr>');
                 return;
             }
             currentData = r.data.data;
             currentCols = r.data.columns;
 
             // Thead
-            var headHtml = '<tr><th style="width:60px">#</th><th>Ürün</th><th>Depo</th><th class="num-align" style="width:120px">Kalan Miktar</th></tr>';
+            var headHtml = '<tr><th style="width:60px">#</th><th>Ürün</th><th>Depo</th><th class="num-align" style="width:120px">Kalan Miktar</th><th style="width:80px" class="text-center">İşlemler</th></tr>';
             $('#stockHead').html(headHtml);
 
             // Tbody
@@ -245,15 +246,32 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                     html += '<strong>' + esc(row.product) + '</strong></td>';
                     html += '<td><span class="badge bg-light text-dark border"><i class="fas fa-warehouse text-muted me-1"></i> ' + esc(col) + '</span></td>';
                     html += '<td class="num-align text-bold text-success">' + formatQty(qty) + ' <small class="text-muted fw-normal">' + esc(row.unit || 'Adet') + '</small></td>';
+                    
+                    // İşlemler
+                    // find warehouse id by name from r.data.warehouses (I should add this to api response)
+                    // Or just use the switch logic
+                    var whId = 0;
+                    $('.wh-switch').each(function(){ if($(this).data('name') == col) whId = $(this).val(); });
+
+                    html += '<td class="text-center">' +
+                            '<button class="btn btn-xs btn-outline-info" onclick="showHistory(' + row.product_id + ', \'' + esc(row.product) + '\')" title="Tüm Geçmişi Gör">' +
+                            '<i class="fas fa-users"></i>' +
+                            '</button>' +
+                            '</td>';
                     html += '</tr>';
                 });
             });
-            $('#stockBody').html(html || '<tr><td colspan="4" class="text-center text-muted p-3">Kayıt bulunamadı</td></tr>');
-            $('#totalCount').text('Toplam: ' + r.data.total + ' ürün');
+            $('#stockBody').html(html || '<tr><td colspan="5" class="text-center text-muted p-3">Kayıt bulunamadı</td></tr>');
+            $('#totalCount').text('Toplam: ' + formatQty(r.data.total) + ' ürün');
             renderPag(r.data.total);
         }, 'json');
     }
     function offset() { return (curPage - 1) * curPerPage; }
+
+    function showHistory(productId, productName) {
+        window.location.href = '<?= BASE_URL ?>/index.php?page=product_history&product_id=' + productId;
+    }
+
     function renderPag(total) { var pages = Math.ceil(total / curPerPage); if (pages <= 1) { $('#pagination').html(''); return; } var html = '<ul class="pagination pagination-sm">', s = Math.max(1, curPage - 2), e = Math.min(pages, curPage + 2); if (curPage > 1) html += '<li class="page-item"><a class="page-link" data-p="' + (curPage - 1) + '" href="#">&laquo;</a></li>'; for (var p = s; p <= e; p++)html += '<li class="page-item' + (p === curPage ? ' active' : '') + '"><a class="page-link" data-p="' + p + '" href="#">' + p + '</a></li>'; if (curPage < pages) html += '<li class="page-item"><a class="page-link" data-p="' + (curPage + 1) + '" href="#">&raquo;</a></li>'; html += '</ul>'; $('#pagination').html(html).find('a').on('click', function (e) { e.preventDefault(); curPage = parseInt($(this).data('p')); load(); }); }
 
     // Excel export (client-side XLSX)

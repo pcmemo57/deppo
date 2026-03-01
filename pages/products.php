@@ -59,7 +59,8 @@ requireRole(ROLE_ADMIN, ROLE_USER);
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title" id="modalTitle">Ürün Ekle</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i
+                        class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
                 <form id="crudForm" enctype="multipart/form-data">
@@ -100,6 +101,14 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                                 <div class="col-md-6">
                                     <div class="mb-3"><label class="form-label">Ürün Kodu</label>
                                         <input type="text" name="code" class="form-control" placeholder="SKU-001">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Alarm Seviyesi (Stok Az) <i
+                                                class="fas fa-bell text-warning ms-1"></i></label>
+                                        <input type="number" name="stock_alarm" class="form-control" value="0" min="0">
+                                        <small class="text-muted">0 girilirse alarm oluşmaz.</small>
                                     </div>
                                 </div>
                                 <div class="col-md-12">
@@ -183,15 +192,15 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                 html += '<td><img src="' + imgSrc + '" style="width:50px;height:50px;object-fit:cover;border-radius:6px; cursor:pointer;" onerror="this.src=\'' + noImg + '\'" onclick="showImagePreview(\'' + imgSrc + '\')" title="Büyütmek için tıklayın"></td>';
                 html += '<td><strong>' + esc(u.name) + '</strong></td>';
                 html += '<td><code>' + esc(u.code || '—') + '</code></td>';
-                html += '<td>' + esc(u.unit) + '</td>';
+                html += '<td>' + esc(u.unit) + ' <br><small class="text-muted">Alarm: ' + (u.stock_alarm > 0 ? u.stock_alarm : 'Kapalı') + '</small></td>';
                 html += '<td>' + esc(u.description || '—').substring(0, 60) + (u.description && u.description.length > 60 ? '...' : '') + '</td>';
                 html += '<td>';
                 html += '<button class="btn btn-xs btn-info me-1" onclick="editRow(' + u.id + ')"><i class="fas fa-edit"></i></button>';
                 html += '<button class="btn btn-xs btn-danger" onclick="deleteRow(' + u.id + ')"><i class="fas fa-trash"></i></button>';
                 html += '</td></tr>';
             });
-            $('#tableBody').html(html || '<tr><td colspan="8" class="text-center text-muted p-3">Kayıt bulunamadı</td></tr>');
-            $('#totalCount').text('Toplam: ' + r.data.total + ' kayıt');
+            $('#tableBody').html(html || '<tr><td colspan="7" class="text-center text-muted p-3">Kayıt bulunamadı</td></tr>');
+            $('#totalCount').text('Toplam: ' + formatQty(r.data.total) + ' kayıt');
             renderPag(r.data.total);
         }, 'json');
     }
@@ -209,7 +218,9 @@ requireRole(ROLE_ADMIN, ROLE_USER);
             var u = r.data;
             $('#formAction').val('edit'); $('#formId').val(u.id);
             $('[name="name"]').val(u.name); $('[name="code"]').val(u.code);
-            $('[name="unit"]').val(u.unit).trigger('change'); $('[name="description"]').val(u.description);
+            $('[name="unit"]').val(u.unit).trigger('change');
+            $('[name="stock_alarm"]').val(u.stock_alarm);
+            $('[name="description"]').val(u.description);
             setStatus(u.is_active);
             var imgSrc = u.image ? '<?= BASE_URL ?>/images/UrunResim/' + u.image : noImg;
             $('#previewImg').attr('src', imgSrc);

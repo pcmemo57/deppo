@@ -54,7 +54,7 @@ requireRole(ROLE_ADMIN);
                                         <th style="width:60px" class="ps-3">#</th>
                                         <th>Ad Soyad</th>
                                         <th>E-posta</th>
-                                        <th>Son Giriş</th>
+                                        <th class="num-align">Son Giriş</th>
                                         <th style="width:100px">Durum</th>
                                         <th style="width:120px" class="text-center pe-3">İşlem</th>
                                     </tr>
@@ -63,7 +63,6 @@ requireRole(ROLE_ADMIN);
                             </table>
                         </div>
                         <div class="p-3 border-top clearfix bg-light">
-                            <div id="paginationAdmins" class="float-end m-0"></div>
                         </div>
                     </div>
 
@@ -97,7 +96,7 @@ requireRole(ROLE_ADMIN);
                                         <th style="width:60px" class="ps-3">#</th>
                                         <th>Ad Soyad</th>
                                         <th>E-posta</th>
-                                        <th>Son Giriş</th>
+                                        <th class="num-align">Son Giriş</th>
                                         <th style="width:100px">Durum</th>
                                         <th style="width:120px" class="text-center pe-3">İşlem</th>
                                     </tr>
@@ -121,7 +120,8 @@ requireRole(ROLE_ADMIN);
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="modalUserTitle">Kullanıcı Ekle</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i
+                        class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
                 <form id="formUser">
@@ -193,7 +193,7 @@ requireRole(ROLE_ADMIN);
                 html += '<td>' + u.id + '</td>';
                 html += '<td>' + $('<span>').text(u.name).html() + '</td>';
                 html += '<td>' + $('<span>').text(u.email).html() + '</td>';
-                html += '<td>' + (u.last_login ? u.last_login : '<span class="text-muted">—</span>') + '</td>';
+                html += '<td class="num-align">' + (u.last_login ? u.last_login : '<span class="text-muted">—</span>') + '</td>';
                 html += '<td>' + (u.is_active == 1 ? '<span class="status-badge active" onclick="toggleUser(\'admin\',' + u.id + ',1)"><i class="fas fa-check"></i> AKTİF</span>' : '<span class="status-badge inactive" onclick="toggleUser(\'admin\',' + u.id + ',0)"><i class="fas fa-times"></i> PASİF</span>') + '</td>';
                 html += '<td>';
                 html += '<button class="btn btn-xs btn-info me-1" onclick="editUser(\'admin\',' + u.id + ')"><i class="fas fa-edit"></i></button>';
@@ -214,7 +214,7 @@ requireRole(ROLE_ADMIN);
                 html += '<td>' + u.id + '</td>';
                 html += '<td>' + $('<span>').text(u.name).html() + '</td>';
                 html += '<td>' + $('<span>').text(u.email).html() + '</td>';
-                html += '<td>' + (u.last_login ? u.last_login : '<span class="text-muted">—</span>') + '</td>';
+                html += '<td class="num-align">' + (u.last_login ? u.last_login : '<span class="text-muted">—</span>') + '</td>';
                 html += '<td>' + (u.is_active == 1 ? '<span class="status-badge active" onclick="toggleUser(\'user\',' + u.id + ',1)"><i class="fas fa-check"></i> AKTİF</span>' : '<span class="status-badge inactive" onclick="toggleUser(\'user\',' + u.id + ',0)"><i class="fas fa-times"></i> PASİF</span>') + '</td>';
                 html += '<td>';
                 html += '<button class="btn btn-xs btn-info me-1" onclick="editUser(\'user\',' + u.id + ')"><i class="fas fa-edit"></i></button>';

@@ -228,39 +228,58 @@ function verifyPassword(string $password, string $hash): bool
 function resize_image(string $src, string $dst, int $width, int $height): bool
 {
     $info = @getimagesize($src);
-    if (!$info) return false;
+    if (!$info)
+        return false;
     $type = $info[2];
 
     switch ($type) {
-        case IMAGETYPE_JPEG: $img = @imagecreatefromjpeg($src); break;
-        case IMAGETYPE_PNG:  $img = @imagecreatefrompng($src); break;
-        case IMAGETYPE_GIF:  $img = @imagecreatefromgif($src); break;
-        case IMAGETYPE_WEBP: $img = @imagecreatefromwebp($src); break;
-        default: return false;
+        case IMAGETYPE_JPEG:
+            $img = @imagecreatefromjpeg($src);
+            break;
+        case IMAGETYPE_PNG:
+            $img = @imagecreatefrompng($src);
+            break;
+        case IMAGETYPE_GIF:
+            $img = @imagecreatefromgif($src);
+            break;
+        case IMAGETYPE_WEBP:
+            $img = @imagecreatefromwebp($src);
+            break;
+        default:
+            return false;
     }
 
-    if (!$img) return false;
+    if (!$img)
+        return false;
 
     $w = imagesx($img);
     $h = imagesy($img);
     $ratio = max($width / $w, $height / $h);
-    $new_w = (int)($w * $ratio);
-    $new_h = (int)($h * $ratio);
+    $new_w = (int) ($w * $ratio);
+    $new_h = (int) ($h * $ratio);
 
     $thumb = imagecreatetruecolor($width, $height);
-    
+
     if ($type === IMAGETYPE_PNG || $type === IMAGETYPE_WEBP) {
         imagealphablending($thumb, false);
         imagesavealpha($thumb, true);
     }
 
-    imagecopyresampled($thumb, $img, (int)(($width - $new_w) / 2), (int)(($height - $new_h) / 2), 0, 0, $new_w, $new_h, $w, $h);
+    imagecopyresampled($thumb, $img, (int) (($width - $new_w) / 2), (int) (($height - $new_h) / 2), 0, 0, $new_w, $new_h, $w, $h);
 
     switch ($type) {
-        case IMAGETYPE_JPEG: imagejpeg($thumb, $dst, 85); break;
-        case IMAGETYPE_PNG:  imagepng($thumb, $dst, 8); break;
-        case IMAGETYPE_GIF:  imagegif($thumb, $dst); break;
-        case IMAGETYPE_WEBP: imagewebp($thumb, $dst, 80); break;
+        case IMAGETYPE_JPEG:
+            imagejpeg($thumb, $dst, 85);
+            break;
+        case IMAGETYPE_PNG:
+            imagepng($thumb, $dst, 8);
+            break;
+        case IMAGETYPE_GIF:
+            imagegif($thumb, $dst);
+            break;
+        case IMAGETYPE_WEBP:
+            imagewebp($thumb, $dst, 80);
+            break;
     }
 
     imagedestroy($img);

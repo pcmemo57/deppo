@@ -31,7 +31,9 @@ $googleFontList = [
                     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-currency"><i
                                 class="fas fa-money-bill-wave me-1"></i>Döviz Kurları</a></li>
                     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-general"><i
-                                class="fas fa-cog me-1"></i>Genel</a></li>
+                                 class="fas fa-cog me-1"></i>Genel</a></li>
+                    <li class="nav-item"><a class="nav-link text-danger" data-bs-toggle="tab" href="#tab-data-mgmt"><i
+                                 class="fas fa-trash-alt me-1"></i>Veri Yönetimi</a></li>
                 </ul>
             </div>
             <div class="card-body">
@@ -45,49 +47,69 @@ $googleFontList = [
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label class="form-label">SMTP Host</label>
-                                        <input type="text" name="mail_host" class="form-control"
-                                            value="<?= e(get_setting('mail_host', 'smtp.gmail.com'))?>"
-                                            placeholder="smtp.gmail.com">
+                                        <div class="input-icon-wrap">
+                                            <i class="fas fa-server field-icon"></i>
+                                            <input type="text" name="mail_host" class="form-control"
+                                                value="<?= e(get_setting('mail_host', 'smtp.gmail.com'))?>"
+                                                placeholder="smtp.gmail.com">
+                                        </div>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">SMTP Port</label>
-                                        <input type="number" name="mail_port" class="form-control"
-                                            value="<?= e(get_setting('mail_port', '587'))?>" placeholder="587">
+                                        <div class="input-icon-wrap">
+                                            <i class="fas fa-plug field-icon"></i>
+                                            <input type="number" name="mail_port" class="form-control"
+                                                value="<?= e(get_setting('mail_port', '587'))?>" placeholder="587">
+                                        </div>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">Şifreleme</label>
-                                        <select name="mail_secure" class="form-select">
-                                            <?php foreach (['tls' => 'TLS', 'ssl' => 'SSL', '' => 'Yok'] as $v => $l): ?>
-                                            <option value="<?= e($v)?>"
-                                                <?=get_setting('mail_secure', 'tls') === $v ? 'selected' : ''?>>
-                                                <?= e($l)?>
-                                            </option>
-                                            <?php
-endforeach; ?>
-                                        </select>
+                                        <div class="input-icon-wrap">
+                                            <i class="fas fa-lock field-icon"></i>
+                                            <select name="mail_secure" class="form-select select2-simple">
+                                                <?php foreach (['tls' => 'TLS', 'ssl' => 'SSL', '' => 'Yok'] as $v => $l): ?>
+                                                <option value="<?= e($v)?>"
+                                                    <?=get_setting('mail_secure', 'tls') === $v ? 'selected' : ''?>>
+                                                    <?= e($l)?>
+                                                </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label class="form-label">SMTP Kullanıcı (E-posta)</label>
-                                        <input type="email" name="mail_user" class="form-control"
-                                            value="<?= e(get_setting('mail_user', ''))?>">
+                                        <div class="input-icon-wrap">
+                                            <i class="fas fa-user-tag field-icon"></i>
+                                            <input type="email" name="mail_user" class="form-control"
+                                                value="<?= e(get_setting('mail_user', ''))?>">
+                                        </div>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">SMTP Şifre</label>
-                                        <input type="password" name="mail_pass" class="form-control"
-                                            placeholder="••••••••" autocomplete="new-password">
+                                        <div class="input-icon-wrap">
+                                            <i class="fas fa-key field-icon"></i>
+                                            <input type="password" name="mail_pass" class="form-control"
+                                                placeholder="••••••••" autocomplete="new-password">
+                                        </div>
                                         <small class="text-muted">Değiştirmek istemiyorsanız boş bırakın.</small>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">Gönderen Ad</label>
-                                        <input type="text" name="mail_from_name" class="form-control"
-                                            value="<?= e(get_setting('mail_from_name', APP_NAME))?>">
+                                        <div class="input-icon-wrap">
+                                            <i class="fas fa-signature field-icon"></i>
+                                            <input type="text" name="mail_from_name" class="form-control"
+                                                value="<?= e(get_setting('mail_from_name', APP_NAME))?>">
+                                        </div>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">Gönderen E-posta</label>
-                                        <input type="email" name="mail_from" class="form-control"
-                                            value="<?= e(get_setting('mail_from', ''))?>">
+                                        <div class="input-icon-wrap">
+                                            <i class="fas fa-at field-icon"></i>
+                                            <input type="email" name="mail_from" class="form-control"
+                                                value="<?= e(get_setting('mail_from', ''))?>">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -147,8 +169,11 @@ endforeach; ?>
                                         <div class="card-body">
                                             <div class="mb-3">
                                                 <label class="form-label">Footer Metni</label>
-                                                <input type="text" name="footer_text" class="form-control"
-                                                    value="<?= e(get_setting('footer_text', ''))?>">
+                                                <div class="input-icon-wrap">
+                                                    <i class="fas fa-quote-left field-icon"></i>
+                                                    <input type="text" name="footer_text" class="form-control"
+                                                        value="<?= e(get_setting('footer_text', ''))?>">
+                                                </div>
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label">Arkaplan Rengi</label>
@@ -180,15 +205,17 @@ endforeach; ?>
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label class="form-label">Google Font Seçimi</label>
-                                        <select name="google_font" class="form-select">
-                                            <?php foreach ($googleFontList as $fontKey => $fontLabel): ?>
-                                            <option value="<?= e($fontKey)?>"
-                                                <?=get_setting('google_font', 'default') === $fontKey ? 'selected' : ''?>>
-                                                <?= e($fontLabel)?>
-                                            </option>
-                                            <?php
-endforeach; ?>
-                                        </select>
+                                        <div class="input-icon-wrap">
+                                            <i class="fas fa-font field-icon"></i>
+                                            <select name="google_font" class="form-select select2-simple">
+                                                <?php foreach ($googleFontList as $fontKey => $fontLabel): ?>
+                                                <option value="<?= e($fontKey)?>"
+                                                    <?=get_setting('google_font', 'default') === $fontKey ? 'selected' : ''?>>
+                                                    <?= e($fontLabel)?>
+                                                </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -270,14 +297,95 @@ endforeach; ?>
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label class="form-label">Site Adı</label>
-                                        <input type="text" name="site_name" class="form-control"
-                                            value="<?= e(get_setting('site_name', APP_NAME))?>">
+                                        <div class="input-icon-wrap">
+                                            <i class="fas fa-globe field-icon"></i>
+                                            <input type="text" name="site_name" class="form-control"
+                                                value="<?= e(get_setting('site_name', APP_NAME))?>">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                             <button type="submit" class="btn btn-primary"><i
                                     class="fas fa-save me-1"></i>Kaydet</button>
                         </form>
+                    </div>
+
+                    <!-- ═══════════ VERİ YÖNETİMİ ═══════════ -->
+                    <div class="tab-pane fade" id="tab-data-mgmt">
+                        <div class="card card-outline card-danger">
+                            <div class="card-header">
+                                <h6 class="m-0 text-danger text-bold"><i class="fas fa-exclamation-triangle me-1"></i> Kritik Bölge</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-warning border-left-warning shadow-sm">
+                                    <h5><strong>DİKKAT!</strong> Tüm Verileri Silme İşlemi</h5>
+                                    <p class="mb-0">Bu işlem; ürünleri, stok hareketlerini, müşterileri, tedarikçileri ve tüm diğer operasyonel verileri <strong>kalıcı olarak silecektir.</strong></p>
+                                    <p class="mb-0 mt-1">Admin kullanıcıları, program kullanıcıları ve sistem ayarları bu işlemden <strong>etkinmez.</strong></p>
+                                </div>
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="bg-light p-3 rounded d-flex align-items-center shadow-sm border">
+                                    <div class="form-check form-switch mb-0 d-flex align-items-center">
+                                        <input class="form-check-input" type="checkbox" id="selectAllCats" style="transform: scale(1.4); margin-right: 15px;" onchange="toggleAllSelection(this)">
+                                        <label class="form-check-label fw-bold mb-0 text-primary ms-2" for="selectAllCats" style="cursor:pointer; font-size: 1.1rem; margin-left: 20px;">Tümünü Seç</label>
+                                    </div>
+                                    <div class="ms-auto">
+                                        <p class="text-muted mb-0 small" style="margin-left: 20px;"><i class="fas fa-info-circle me-1"></i> Silmek istediğiniz alanları aşağıdan işaretleyin.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input sel-del-check" type="checkbox" value="stock_in" id="checkStockIn">
+                                    <label class="form-check-label" for="checkStockIn">Depo Giriş Hareketleri</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input sel-del-check" type="checkbox" value="stock_out" id="checkStockOut">
+                                    <label class="form-check-label" for="checkStockOut">Depo Çıkış Hareketleri</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input sel-del-check" type="checkbox" value="entrusted" id="checkEntrusted">
+                                    <label class="form-check-label" for="checkEntrusted">Emanet İşlemleri</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input sel-del-check" type="checkbox" value="transfers" id="checkTransfers">
+                                    <label class="form-check-label" for="checkTransfers">Transferler</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input sel-del-check" type="checkbox" value="products" id="checkProducts">
+                                    <label class="form-check-label" for="checkProducts">Ürün Tanımları</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input sel-del-check" type="checkbox" value="customers" id="checkCustomers">
+                                    <label class="form-check-label" for="checkCustomers">Müşteri Tanımları</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input sel-del-check" type="checkbox" value="suppliers" id="checkSuppliers">
+                                    <label class="form-check-label" for="checkSuppliers">Tedarikçi Tanımları</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input sel-del-check" type="checkbox" value="requesters" id="checkRequesters">
+                                    <label class="form-check-label" for="checkRequesters">Talep Eden Kişiler</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input sel-del-check" type="checkbox" value="warehouses" id="checkWarehouses">
+                                    <label class="form-check-label" for="checkWarehouses">Depo Tanımları</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-danger btn-lg p-3 shadow-sm border-0" onclick="clearSelectiveData()">
+                                <i class="fas fa-trash-alt me-2"></i> Seçilen Verileri Kalıcı Olarak Sil
+                            </button>
+                        </div>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
@@ -287,6 +395,15 @@ endforeach; ?>
 </div>
 
 <script>
+    $(document).ready(function() {
+        // Select2 Simple Init
+        $('.select2-simple').select2({
+            theme: 'bootstrap-5',
+            dropdownParent: $('body'),
+            minimumResultsForSearch: Infinity
+        });
+    });
+
     // Color picker ↔ hex input senkronizasyonu
     $('input[type="color"]').on('input', function () {
         var hexInput = $(this).next('input[type="text"]');
@@ -298,7 +415,8 @@ endforeach; ?>
             $(this).prev('input[type="color"]').val(val);
             // Hidden alanı da güncelle
             var n = $(this).attr('name').replace('_hex', '');
-            $(this).closest('form').find('input[name="' + n + '"]').val(val);
+            data = data.filter(function (d) { return d.name !== n; });
+            data.push({ name: n, value: $(this).val() });
         }
     });
 
@@ -359,4 +477,77 @@ endforeach; ?>
             btn.html('<i class="fas fa-sync-alt me-1"></i>TCMB\'den Kurları Güncelle').prop('disabled', false);
         });
     });
+
+    // Veri Yönetimi (Seçmeli Silme)
+    function toggleAllSelection(el) {
+        $('.sel-del-check').prop('checked', $(el).is(':checked'));
+    }
+
+    function clearSelectiveData() {
+        var selected = [];
+        $('.sel-del-check:checked').each(function() {
+            selected.push($(this).val());
+        });
+
+        if (selected.length === 0) {
+            Swal.fire('Uyarı', 'Lütfen silinecek en az bir kategori seçin.', 'warning');
+            return;
+        }
+
+        var text = selected.length === $('.sel-del-check').length 
+                   ? "Sistemdeki TÜM veriler (seçili kategoriler) kalıcı olarak silinecektir!" 
+                   : "Seçilen kategorilerdeki veriler kalıcı olarak silinecektir!";
+
+        Swal.fire({
+            title: 'Emin misiniz?',
+            text: text,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Evet, Sil!',
+            cancelButtonText: 'Vazgeç'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Onay Gerekli',
+                    text: 'İşlemi onaylamak için "SIL" yazın:',
+                    input: 'text',
+                    inputAttributes: { autocapitalize: 'off' },
+                    showCancelButton: true,
+                    confirmButtonText: 'Onayla',
+                    cancelButtonText: 'İptal',
+                    showLoaderOnConfirm: true,
+                    preConfirm: (inputValue) => {
+                        if (inputValue !== 'SIL') {
+                            Swal.showValidationMessage('Hatalı onay kelimesi!');
+                            return false;
+                        }
+                        return $.post('<?= BASE_URL ?>/api/system_tasks.php', {
+                            task: 'clear_selective_data',
+                            categories: JSON.stringify(selected)
+                        }).then(response => {
+                            if (!response.success) {
+                                throw new Error(response.message || 'Bir hata oluştu');
+                            }
+                            return response;
+                        }).catch(error => {
+                            Swal.showValidationMessage(`İşlem Başarısız: ${error}`);
+                        });
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                }).then((res) => {
+                    if (res.isConfirmed) {
+                        Swal.fire({
+                            title: 'Başarılı!',
+                            text: 'Veriler temizlendi.',
+                            icon: 'success'
+                        }).then(() => {
+                            location.reload();
+                        });
+                    }
+                });
+            }
+        });
+    }
 </script>

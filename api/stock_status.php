@@ -82,7 +82,14 @@ function getStockData(array $warehouseIds, string $search = '', int $page = 1, i
 
         $data = [];
         foreach ($products as $p) {
-            $row = ['product' => $p['name'], 'image' => $p['image'], 'unit' => $p['unit'], 'stocks' => [], 'total' => 0];
+            $row = [
+                'product_id' => $p['id'],
+                'product' => $p['name'],
+                'image' => $p['image'],
+                'unit' => $p['unit'],
+                'stocks' => [],
+                'total' => 0
+            ];
             foreach ($warehouseIds as $wid) {
                 $in = $inMap[$wid][$p['id']] ?? 0;
                 $out = $outMap[$wid][$p['id']] ?? 0;
@@ -195,6 +202,71 @@ switch ($action) {
             jsonResponse(false, 'E-posta işlemi sırasında hata oluştu: ' . $e->getMessage());
         }
 
-    default:
-        jsonResponse(false, 'Geçersiz işlem.');
+    case 'get_history':
+        $productId = (int) ($_GET['product_id'] ?? 0);
+        $warehouseId = (int) ($_GET['warehouse_id'] ?? 0);
+        $search = sanitize($_GET['search'] ?? '');
+
+        if (!$productId) {
+            jsonResponse(false, 'Ürün ID eksik.');
+        }
+
+        $searchWhere = "";
+        $searchParams = [];
+        if ($search) {
+            $searchWhere = " AND (note LIKE ? OR EXISTS (SELECT 1 FROM tbl_dp_suppliers WHERE id = i.supplier_id AND name LIKE ?))";
+        }
+
+        // Girişler ve Çıkışlar UNION
+        // Not: Transferler ve Emanetler zaten bu tablolara kayıt atıyor.
+        $query = "
+            (SELECT 'Giriş' AS type, i.id AS record_id, NULL AS batch_id, i.quantity, i.note, i.created_at,
+                    (SELECT name FROM tbl_dp_suppliers WHERE id = i.supplier_id) AS contact,
+                    (SELECT name FROM tbl_dp_admins WHERE id = i.created_by) AS creator,
+                    w.name AS warehouse_name
+             FROM tbl_dp_stock_in i
+             JOIN tbl_dp_warehouses w ON w.id = i.warehouse_id
+             WHERE i.product_id = ? " . ($warehouseId ? "AND i.warehouse_id = ?" : "") .
+            ($search ? " AND (i.note LIKE ? OR EXISTS (SELECT 1 FROM tbl_dp_suppliers s WHERE s.id = i.supplier_id AND s.name LIKE ?))" : "") . ")
+            UNION ALL
+            (SELECT 'Çıkış' AS type, o.id AS record_id, o.batch_id, o.quantity, o.note, o.created_at,
+                    COALESCE(
+                        (SELECT CONCAT(name, ' ', surname) FROM tbl_dp_requesters WHERE id = o.requester_id),
+                        (SELECT name FROM tbl_dp_customers WHERE id = o.customer_id)
+                    ) AS contact,
+                    (SELECT name FROM tbl_dp_admins WHERE id = o.created_by) AS creator,
+                    w.name AS warehouse_name
+             FROM tbl_dp_stock_out o
+             JOIN tbl_dp_warehouses w ON w.id = o.warehouse_id
+             WHERE o.product_id = ? " . ($warehouseId ? "AND o.warehouse_id = ?" : "") .
+            ($search ? " AND (o.note LIKE ? OR EXISTS (SELECT 1 FROM tbl_dp_customers c WHERE c.id = o.customer_id AND c.name LIKE ?) OR EXISTS (SELECT 1 FROM tbl_dp_requesters r WHERE r.id = o.requester_id AND (r.name LIKE ? OR r.surname LIKE ?)))" : "") . ")
+            ORDER BY created_at DESC
+        ";
+
+        $params = [$productId];
+        if ($warehouseId)
+            $params[] = $warehouseId;
+        if ($search) {
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+        }
+        $params[] = $productId; // Second part of UNION
+        if ($warehouseId)
+            $params[] = $warehouseId;
+        if ($search) {
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+        }
+
+        $rows = Database::fetchAll($query, $params);
+
+        foreach ($rows as &$r) {
+            $r['created_at_fmt'] = date('d.m.Y H:i', strtotime($r['created_at']));
+            $r['quantity_fmt'] = formatQty($r['quantity']);
+        }
+
+        jsonResponse(true, '', $rows);
+        break;
 }
