@@ -21,7 +21,14 @@ if ($test_return !== 0) {
 }
 
 // 1. Git pull komutunu çalıştır
-$command = 'git pull origin main 2>&1';
+$force = isset($_GET['force']) && $_GET['force'] === '1';
+
+if ($force) {
+    $command = 'git fetch --all && git reset --hard origin/main 2>&1';
+} else {
+    $command = 'git pull origin main 2>&1';
+}
+
 $output = [];
 $return_var = 0;
 

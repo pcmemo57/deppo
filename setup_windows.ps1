@@ -47,6 +47,32 @@ try {
         Write-Host "[+] Kurulum tamamlandı." -ForegroundColor Green
     }
 }
+# 2.5 Git Senkronizasyon ve Çakışma Giderici
+Write-Host "`n[+] Git Senkronizasyonu kontrol ediliyor..." -ForegroundColor Cyan
+try {
+    # Önce fetch yapmaya çalış
+    git fetch --all
+    
+    # Durumu kontrol et
+    $status = git status --porcelain
+    if ($status) {
+        Write-Host "[!] Yerel dizinde degisiklikler veya cakismalar algilandi." -ForegroundColor Yellow
+        Write-Host "Bu durum genellikle dosyaların manuel kopyalanmasından kaynaklanır."
+        $choice = Read-Host "Yerel dosyalari SİLİP GitHub ile tam esitlensin mi? (E/H)"
+        if ($choice -eq "E" -or $choice -eq "e") {
+            Write-Host "[+] Yerel dosyalar temizleniyor ve GitHub ile esitleniyor..." -ForegroundColor Cyan
+            git reset --hard origin/main
+            git clean -fd
+            Write-Host "[+] Senkronizasyon basarili!" -ForegroundColor Green
+        } else {
+            Write-Host "[!] Senkronizasyon atlandi. Guncelleme sirasinda hata alabilirsiniz." -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "[+] Git dizini temiz ve güncel." -ForegroundColor Green
+    }
+} catch {
+    Write-Host "[!] Git senkronizasyonu sirasinda bir hata olustu. (Git deposu henüz kurulmamis olabilir)" -ForegroundColor Gray
+}
 
 # 3. Klasör İzinleri (XAMPP htdocs için güvenli yaklaşım)
 Write-Host "`n[+] Klasör yapısı kontrol ediliyor..." -ForegroundColor Cyan

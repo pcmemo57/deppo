@@ -122,6 +122,13 @@ requireRole(ROLE_ADMIN);
                         $('#btnCheckUpdate').prop('disabled', false);
                         $('#update-log').text(r.data.output);
                         $('#update-log-container').removeClass('d-none');
+
+                        // Çakışma hatası varsa Zorla Güncelle butonu göster
+                        if (r.message.includes('değişiklikler güncellemeye engel oluyor')) {
+                            $('#btnPerformUpdate').addClass('d-none');
+                            $('#btnForceUpdate').removeClass('d-none');
+                        }
+
                         showError(r.message);
                     }
                 }, 'json').fail(function () {
@@ -129,6 +136,28 @@ requireRole(ROLE_ADMIN);
                     $('#btnCheckUpdate').prop('disabled', false);
                     showError('Güncelleme sırasında bir ağ hatası oluştu.');
                 });
+            });
+        });
+
+        $('#btnForceUpdate').on('click', function () {
+            confirmAction('DİKKAT: Bu işlem yerel bilgisayardaki tüm dosya değişikliklerini SİLECEK ve buluttaki (GitHub) haliyle birebir eşitleyecektir. Emin misiniz?', function () {
+                const btn = $('#btnForceUpdate');
+                btn.prop('disabled', true).html('<i class="fas fa-exclamation-triangle fa-spin me-1"></i> Zorla Güncelleniyor...');
+
+                $.get('<?= BASE_URL ?>/api/perform_update.php?force=1', function (r) {
+                    if (r.success) {
+                        $('#update-log').text(r.data.output);
+                        $('#update-log-container').removeClass('d-none');
+                        showSuccess('Sistem başarıyla sıfırlandı ve güncellendi!');
+                        setTimeout(function () {
+                            location.reload();
+                        }, 3000);
+                    } else {
+                        btn.prop('disabled', false).html('<i class="fas fa-exclamation-triangle me-1"></i> Çakışmaları Gider ve Zorla Güncelle');
+                        $('#update-log').text(r.data.output);
+                        showError(r.message);
+                    }
+                }, 'json');
             });
         });
     });
