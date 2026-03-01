@@ -12,8 +12,8 @@ if (currentUser()['role'] !== ROLE_ADMIN) {
     jsonResponse(false, 'Bu işlem için yetkiniz yok.');
 }
 
-// GitHub'dan config.php dosyasını çekerek versiyonu kontrol et
-$repo_url = "https://raw.githubusercontent.com/pcmemo57/deppo/main/config/config.php";
+// GitHub'dank config.php dosyasını çekerek versiyonu kontrol et (Cache engellemek için zaman damgası ekliyoruz)
+$repo_url = "https://raw.githubusercontent.com/pcmemo57/deppo/main/config/config.php?t=" . time();
 
 $ctx = stream_context_create([
     'http' => [
