@@ -172,6 +172,17 @@ class Database
                 <p class="text-muted">Sistem Kurulumu</p>
             </div>
 
+            <?php
+            // Git Kontrolü
+            exec('git --version', $git_test, $git_return);
+            if ($git_return !== 0): ?>
+                <div class="alert alert-warning">
+                    <h5><i class="fas fa-exclamation-triangle me-2"></i> Git Eksik!</h5>
+                    <p class="small mb-0">Bu bilgisayarda <b>Git</b> kurulu görünmüyor. Sistem kurulabilir ancak "Otomatik
+                        Güncelleme" özelliği çalışmayacaktır. Sorunsuz bir deneyim için Git kurmanızı öneririz.</p>
+                </div>
+            <?php endif; ?>
+
             <?php if ($error): ?>
                 <div class="alert alert-danger"><?php echo $error; ?></div>
             <?php endif; ?>
