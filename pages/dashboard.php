@@ -52,6 +52,17 @@ $lowStockProducts = Database::fetchAll("
 ");
 ?>
 
+<!-- Test Amaçlı Güncelleme Uyarısı -->
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-info shadow-sm border-left-info animate__animated animate__fadeIn">
+            <h5><i class="icon fas fa-check-circle"></i> Sistem Başarıyla Güncellendi! (v1.0.7)</h5>
+            <p class="mb-0">Bu mesajı görüyorsanız, GitHub üzerinden yapılan otomatik güncelleme testi başarıyla
+                tamamlanmış demektir. Yeni özelliklerin tadını çıkarın!</p>
+        </div>
+    </div>
+</div>
+
 <!-- İstatistik Kartları -->
 <?php if (!empty($lowStockProducts)): ?>
     <div class="row">
