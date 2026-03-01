@@ -47,43 +47,6 @@ try {
         Write-Host "[+] Kurulum tamamlandı." -ForegroundColor Green
     }
 }
-# 2.5 Git Senkronizasyon ve Çakışma Giderici
-Write-Host "`n[+] Git Senkronizasyonu kontrol ediliyor..." -ForegroundColor Cyan
-$repoUrl = "https://github.com/pcmemo57/deppo.git"
-
-try {
-    # .git klasörü var mı kontrol et
-    if (-not (Test-Path ".git")) {
-        Write-Host "[!] Bu klasör bir Git deposu degil (Muhtemelen manuel kopyalandi)." -ForegroundColor Yellow
-        $choice = Read-Host "Bu klasörü GitHub ile baglayip temiz kurulum yapilsin mi? (E/H)"
-        if ($choice -eq "E" -or $choice -eq "e") {
-            Write-Host "[+] Git baslatiliyor ve GitHub'a baglaniyor..." -ForegroundColor Cyan
-            git init
-            git remote add origin $repoUrl
-            git fetch --all
-            git reset --hard origin/main
-            git clean -fd
-            Write-Host "[+] Kurulum ve Senkronizasyon basarili!" -ForegroundColor Green
-        }
-    } else {
-        # Zaten git deposu ise fetch ve sync kontrolü yap
-        git fetch --all
-        $status = git status --porcelain
-        if ($status) {
-            Write-Host "[!] Yerel dizinde degisiklikler veya cakismalar algilandi." -ForegroundColor Yellow
-            $choice = Read-Host "Yerel dosyalari SİLİP GitHub ile tam esitlensin mi? (E/H)"
-            if ($choice -eq "E" -or $choice -eq "e") {
-                git reset --hard origin/main
-                git clean -fd
-                Write-Host "[+] Senkronizasyon basarili!" -ForegroundColor Green
-            }
-        } else {
-            Write-Host "[+] Git dizini temiz ve güncel." -ForegroundColor Green
-        }
-    }
-} catch {
-    Write-Host "[!] Git islemi sirasinda bir hata olustu: $($_.Exception.Message)" -ForegroundColor Red
-}
 
 # 3. Klasör İzinleri (XAMPP htdocs için güvenli yaklaşım)
 Write-Host "`n[+] Klasör yapısı kontrol ediliyor..." -ForegroundColor Cyan
