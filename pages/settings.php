@@ -19,23 +19,117 @@ $googleFontList = [
 ];
 ?>
 
+<style>
+    /* ══════════════════════════════════════════
+       CUSTOM SEGMENTED TABS STYLING
+    ══════════════════════════════════════════ */
+    .settings-card {
+        border: none !important;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05) !important;
+        border-radius: 12px !important;
+        overflow: hidden;
+    }
+
+    .settings-tabs-wrapper {
+        background: #f8fafc;
+        padding: 10px 15px 0 15px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .nav-segmented {
+        display: flex;
+        background: #e2e8f0;
+        padding: 4px;
+        border-radius: 10px;
+        border: none !important;
+        gap: 2px;
+        width: fit-content;
+        margin-bottom: 10px;
+    }
+
+    .nav-segmented .nav-item {
+        margin: 0;
+    }
+
+    .nav-segmented .nav-link {
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 8px 18px !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        color: #64748b !important;
+        background: transparent !important;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .nav-segmented .nav-link i {
+        font-size: 0.95rem;
+        opacity: 0.8;
+    }
+
+    .nav-segmented .nav-link:hover {
+        color: #1e293b !important;
+        background: rgba(255,255,255,0.4) !important;
+    }
+
+    .nav-segmented .nav-link.active {
+        background: #fff !important;
+        color: #1a56db !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
+    }
+
+    /* Özel renkli tablar */
+    .nav-segmented .nav-link.tab-danger.active {
+        color: #dc2626 !important;
+    }
+    
+    .nav-segmented .nav-link.tab-backup.active {
+        color: #059669 !important;
+    }
+
+    .card-tabs .card-body {
+        padding: 25px !important;
+    }
+</style>
+
 <div class="row">
     <div class="col-12">
-        <div class="card card-primary card-tabs">
-            <div class="card-header p-0 border-bottom-0">
-                <ul class="nav nav-tabs" id="settingsTabs" role="tablist">
-                    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-mail"><i
-                                class="fas fa-envelope me-1"></i>Mail Ayarları</a></li>
-                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-appearance"><i
-                                class="fas fa-paint-brush me-1"></i>Görünüm</a></li>
-                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-currency"><i
-                                class="fas fa-money-bill-wave me-1"></i>Döviz Kurları</a></li>
-                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-general"><i
-                                 class="fas fa-cog me-1"></i>Genel</a></li>
-                    <li class="nav-item"><a class="nav-link text-danger" data-bs-toggle="tab" href="#tab-data-mgmt"><i
-                                 class="fas fa-trash-alt me-1"></i>Veri Yönetimi</a></li>
-                    <li class="nav-item"><a class="nav-link bg-light" data-bs-toggle="tab" href="#tab-backup"><i
-                                 class="fas fa-database me-1"></i>Yedekleme</a></li>
+        <div class="card card-primary card-tabs settings-card">
+            <div class="settings-tabs-wrapper">
+                <ul class="nav nav-tabs nav-segmented" id="settingsTabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#tab-mail">
+                            <i class="fas fa-envelope"></i>Mail Ayarları
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tab-appearance">
+                            <i class="fas fa-paint-brush"></i>Görünüm
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tab-currency">
+                            <i class="fas fa-money-bill-wave"></i>Döviz Kurları
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tab-general">
+                            <i class="fas fa-cog"></i>Genel
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link tab-danger" data-bs-toggle="tab" href="#tab-data-mgmt">
+                            <i class="fas fa-trash-alt text-danger"></i>Veri Yönetimi
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link tab-backup" data-bs-toggle="tab" href="#tab-backup">
+                            <i class="fas fa-database text-success"></i>Yedekleme
+                        </a>
+                    </li>
                 </ul>
             </div>
             <div class="card-body">
