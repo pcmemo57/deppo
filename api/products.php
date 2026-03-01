@@ -16,14 +16,20 @@ $offset = ($page - 1) * $perPage;
 
 switch ($action) {
     case 'list':
-        $where = 'hidden=0';
+        $where = 'p.hidden=0';
         $params = [];
         if ($search) {
-            $where .= " AND (name LIKE ? OR code LIKE ?)";
+            $where .= " AND (p.name LIKE ? OR p.code LIKE ?)";
             $params = ["%$search%", "%$search%"];
         }
-        $total = Database::fetchOne("SELECT COUNT(*) AS c FROM `$table` WHERE $where", $params)['c'] ?? 0;
-        $rows = Database::fetchAll("SELECT * FROM `$table` WHERE $where ORDER BY name ASC LIMIT $perPage OFFSET $offset", $params);
+        $total = Database::fetchOne("SELECT COUNT(*) AS c FROM `$table` p WHERE $where", $params)['c'] ?? 0;
+        $rows = Database::fetchAll("
+            SELECT p.*, 
+                   (SELECT COALESCE(SUM(quantity), 0) FROM tbl_dp_stock_in WHERE product_id = p.id AND is_active = 1) -
+                   (SELECT COALESCE(SUM(quantity), 0) FROM tbl_dp_stock_out WHERE product_id = p.id) AS total_stock
+            FROM `$table` p 
+            WHERE $where 
+            ORDER BY p.name ASC LIMIT $perPage OFFSET $offset", $params);
         jsonResponse(true, '', ['data' => $rows, 'total' => (int) $total]);
 
     case 'get':
@@ -120,16 +126,22 @@ switch ($action) {
     // Select2 için arama (ürün resimli dropdown)
     case 'search_select2':
         $q = sanitize($_GET['q'] ?? '');
+        $warehouseId = (int) ($_GET['warehouse_id'] ?? 0);
         $rows = Database::fetchAll(
             "SELECT id, name, code, image, unit FROM `$table` WHERE hidden=0 AND is_active=1 AND (name LIKE ? OR code LIKE ?) ORDER BY name LIMIT 30",
             ["%$q%", "%$q%"]
         );
-        $results = array_map(function ($r) {
+        $results = array_map(function ($r) use ($warehouseId) {
+            $stock = 0;
+            if ($warehouseId > 0) {
+                $stock = getProductStock($r['id'], $warehouseId);
+            }
             return [
                 'id' => $r['id'],
                 'text' => $r['name'] . ($r['code'] ? ' [' . $r['code'] . ']' : ''),
                 'image' => $r['image'],
-                'unit' => $r['unit']
+                'unit' => $r['unit'],
+                'stock' => $stock
             ];
         }, $rows);
         echo json_encode(['results' => $results]);

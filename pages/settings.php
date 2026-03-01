@@ -399,6 +399,15 @@ $googleFontList = [
                                                 value="<?= e(get_setting('site_name', APP_NAME))?>">
                                         </div>
                                     </div>
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch p-0" style="padding-left: 2.5em !important;">
+                                            <input type="hidden" name="allow_passive_with_stock" value="0">
+                                            <input class="form-check-input" type="checkbox" name="allow_passive_with_stock" value="1" id="allow_passive_stock" 
+                                                <?= get_setting('allow_passive_with_stock', '0') === '1' ? 'checked' : '' ?> style="margin-left: -2.5em;">
+                                            <label class="form-check-label fw-bold" for="allow_passive_stock">Ürün varken depo pasif edilsin mi?</label>
+                                            <div class="small text-muted">Bu ayar kapalıyken, içinde ürün bulunan depolar pasif hale getirilemez.</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <button type="submit" class="btn btn-primary"><i

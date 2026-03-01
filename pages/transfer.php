@@ -542,8 +542,16 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
             if (i.loading) return i.text;
             var no = '<?= BASE_URL ?>/assets/no-image.png';
             var img = i.image ? '<?= BASE_URL ?>/images/UrunResim/' + i.image : no;
+
+            var stockBadge = '';
+            if (i.warehouse_id || $('#fromWarehouse').val()) {
+                var stockText = formatQty(i.stock || 0) + ' ' + (i.unit || 'Adet');
+                var badgeClass = (i.stock > 0) ? 'bg-success' : 'bg-danger';
+                stockBadge = '<span class="badge ' + badgeClass + ' float-end mt-1" style="margin-left: 5px;">' + stockText + '</span>';
+            }
+
             return $('<span><img src="' + img + '" class="select2-product-img" onerror="this.src=\'' + no + '\'"> ' +
-                $('<span>').text(i.text).html() + '</span>');
+                '<span>' + esc(i.text) + '</span>' + stockBadge + '</span>');
         };
 
         $('#productSelect').select2({
@@ -556,7 +564,8 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                 data: function (p) {
                     return {
                         action: 'search_select2',
-                        q: p.term || ''
+                        q: p.term || '',
+                        warehouse_id: $('#fromWarehouse').val() || 0
                     };
                 },
                 processResults: function (d) {
@@ -573,8 +582,10 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         $('#toWarehouse').on('select2:select', function () { $(this).select2('close'); $('#productSelect').select2('open'); });
         $('#productSelect').on('select2:select', function (e) {
             $(this).select2('close');
-            $('#transferUnitLabel').text(e.params.data.unit || 'Adet');
-            $('#transferQty').focus();
+            var data = e.params.data;
+            $('#transferUnitLabel').text(data.unit || 'Adet');
+            $(this).data('current-stock', data.stock || 0);
+            $('#transferQty').focus().attr('placeholder', 'Mevcut: ' + formatQty(data.stock || 0));
         });
 
         $('#btnAddTransferLine').on('click', function () {
@@ -582,6 +593,13 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
             if (!sel || !sel[0] || !sel[0].id) { showError('Lütfen ürün seçin.'); return; }
             var qty = parseFloat($('#transferQty').val());
             if (!qty || qty <= 0) { showError('Geçerli bir miktar girin.'); return; }
+
+            var stock = $('#productSelect').data('current-stock') || 0;
+            if (qty > stock) {
+                showError('Yetersiz stok miktarı! Mevcut stok: ' + formatQty(stock));
+                return;
+            }
+
             var pid = sel[0].id, pname = sel[0].text, unit = sel[0].unit || 'Adet';
             var found = false;
             $.each(transferLines, function (i, l) {

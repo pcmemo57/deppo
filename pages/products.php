@@ -187,12 +187,18 @@ requireRole(ROLE_ADMIN, ROLE_USER);
             var html = '';
             $.each(r.data.data, function (i, u) {
                 var imgSrc = u.image ? '<?= BASE_URL ?>/images/UrunResim/' + encodeURIComponent(u.image) : noImg;
-                html += '<tr>';
+                var isLowStock = (u.stock_alarm > 0 && (u.total_stock || 0) < u.stock_alarm);
+                var alarmText = u.stock_alarm > 0 ? u.stock_alarm : 'Kapalı';
+                var stockClass = isLowStock ? 'text-danger fw-bold' : 'text-muted';
+
+                html += '<tr class="' + (isLowStock ? 'table-warning' : '') + '">';
                 html += '<td>' + u.id + '</td>';
                 html += '<td><img src="' + imgSrc + '" style="width:50px;height:50px;object-fit:cover;border-radius:6px; cursor:pointer;" onerror="this.src=\'' + noImg + '\'" onclick="showImagePreview(\'' + imgSrc + '\')" title="Büyütmek için tıklayın"></td>';
                 html += '<td><strong>' + esc(u.name) + '</strong></td>';
                 html += '<td><code>' + esc(u.code || '—') + '</code></td>';
-                html += '<td>' + esc(u.unit) + ' <br><small class="text-muted">Alarm: ' + (u.stock_alarm > 0 ? u.stock_alarm : 'Kapalı') + '</small></td>';
+                html += '<td>' + esc(u.unit) + ' <br><small class="' + stockClass + '">' +
+                    (isLowStock ? '<i class="fas fa-exclamation-triangle me-1"></i> ' : '') +
+                    'Alarm: ' + alarmText + ' (Stok: ' + formatQty(u.total_stock || 0) + ')</small></td>';
                 html += '<td>' + esc(u.description || '—').substring(0, 60) + (u.description && u.description.length > 60 ? '...' : '') + '</td>';
                 html += '<td>';
                 html += '<button class="btn btn-xs btn-info me-1" onclick="editRow(' + u.id + ')"><i class="fas fa-edit"></i></button>';

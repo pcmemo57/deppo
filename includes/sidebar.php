@@ -4,6 +4,7 @@
  */
 $currentPage = $_GET['page'] ?? 'dashboard';
 $role = currentUser()['role'];
+$warehouseCount = Database::fetchOne("SELECT COUNT(*) as c FROM tbl_dp_warehouses WHERE hidden=0 AND is_active=1")['c'];
 ?>
 <!-- Sidebar -->
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
@@ -88,13 +89,15 @@ $role = currentUser()['role'];
                                     <p>Giriş Listesi</p>
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a href="<?= BASE_URL ?>/index.php?page=transfer"
-                                    class="nav-link <?= $currentPage === 'transfer' ? 'active' : '' ?>">
-                                    <i class="far fa-circle nav-icon"></i>
-                                    <p>Depolar Arası Transfer</p>
-                                </a>
-                            </li>
+                            <?php if ($warehouseCount > 1): ?>
+                                <li class="nav-item">
+                                    <a href="<?= BASE_URL ?>/index.php?page=transfer"
+                                        class="nav-link <?= $currentPage === 'transfer' ? 'active' : '' ?>">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Depolar Arası Transfer</p>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
                             <li class="nav-item">
                                 <a href="<?= BASE_URL ?>/index.php?page=entrusted"
                                     class="nav-link <?= $currentPage === 'entrusted' ? 'active' : '' ?>">

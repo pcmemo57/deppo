@@ -43,8 +43,8 @@ $entrustedList = Database::fetchAll(
 // Stok Alarmı (Kritik Seviye Altındakiler)
 $lowStockProducts = Database::fetchAll("
     SELECT p.id, p.name, p.unit, p.stock_alarm, 
-           (SELECT COALESCE(SUM(si.quantity),0) FROM tbl_dp_stock_in si WHERE si.product_id = p.id) - 
-           (SELECT COALESCE(SUM(so.quantity),0) FROM tbl_dp_stock_out so WHERE so.product_id = p.id) as current_stock
+           (SELECT COALESCE(SUM(quantity), 0) FROM tbl_dp_stock_in WHERE product_id = p.id AND is_active = 1) -
+           (SELECT COALESCE(SUM(quantity), 0) FROM tbl_dp_stock_out WHERE product_id = p.id) AS current_stock
     FROM tbl_dp_products p
     WHERE p.hidden = 0 AND p.is_active = 1 AND p.stock_alarm > 0
       AND EXISTS (SELECT 1 FROM tbl_dp_stock_in si WHERE si.product_id = p.id)
@@ -75,70 +75,101 @@ $lowStockProducts = Database::fetchAll("
     </div>
 <?php endif; ?>
 
+<style>
+    .small-box {
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+        text-decoration: none !important;
+        display: block;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .small-box:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        color: #fff !important;
+    }
+
+    /* Warning box text color fix for consistency */
+    .small-box.bg-warning:hover {
+        color: #1f2d3d !important;
+    }
+
+    .small-box.bg-warning {
+        color: #1f2d3d !important;
+    }
+
+    .small-box .inner {
+        padding: 12px 15px !important;
+    }
+
+    .small-box h3 {
+        font-size: 1.8rem !important;
+        font-weight: 700 !important;
+        margin: 0 !important;
+        white-space: nowrap;
+    }
+
+    .small-box p {
+        font-size: 0.9rem !important;
+        margin: 0 !important;
+        opacity: 0.9;
+    }
+
+    .small-box .icon {
+        position: absolute;
+        top: 5px;
+        right: 15px;
+        z-index: 0;
+        font-size: 50px;
+        color: rgba(0, 0, 0, 0.15);
+        transition: transform 0.3s;
+    }
+
+    .small-box:hover .icon {
+        transform: scale(1.1);
+    }
+</style>
+
 <div class="row">
     <div class="col-lg-3 col-6">
-        <div class="small-box bg-info">
+        <a href="<?= BASE_URL ?>/index.php?page=warehouses" class="small-box bg-info">
             <div class="inner">
-                <h3>
-                    <?= e(formatQty($warehouseCount)) ?>
-                </h3>
+                <h3><?= e(formatQty($warehouseCount)) ?></h3>
                 <p>Aktif Depo</p>
             </div>
             <div class="icon"><i class="fas fa-warehouse"></i></div>
-            <?php if (hasRole(ROLE_ADMIN, ROLE_USER)): ?>
-                <a href="<?= BASE_URL ?>/index.php?page=warehouses" class="small-box-footer">Görüntüle <i
-                        class="fas fa-arrow-circle-right"></i></a>
-                <?php
-            endif; ?>
-        </div>
+        </a>
     </div>
     <div class="col-lg-3 col-6">
-        <div class="small-box bg-success">
+        <a href="<?= BASE_URL ?>/index.php?page=products" class="small-box bg-success">
             <div class="inner">
-                <h3>
-                    <?= e(formatQty($productCount)) ?>
-                </h3>
+                <h3><?= e(formatQty($productCount)) ?></h3>
                 <p>Tanımlı Ürün</p>
             </div>
             <div class="icon"><i class="fas fa-boxes"></i></div>
-            <?php if (hasRole(ROLE_ADMIN, ROLE_USER)): ?>
-                <a href="<?= BASE_URL ?>/index.php?page=products" class="small-box-footer">Görüntüle <i
-                        class="fas fa-arrow-circle-right"></i></a>
-                <?php
-            endif; ?>
-        </div>
+        </a>
     </div>
     <div class="col-lg-3 col-6">
-        <div class="small-box bg-warning">
+        <a href="<?= BASE_URL ?>/index.php?page=customers" class="small-box bg-warning">
             <div class="inner">
-                <h3>
-                    <?= e(formatQty($customerCount)) ?>
-                </h3>
+                <h3><?= e(formatQty($customerCount)) ?></h3>
                 <p>Müşteri</p>
             </div>
             <div class="icon"><i class="fas fa-users"></i></div>
-            <?php if (hasRole(ROLE_ADMIN, ROLE_USER)): ?>
-                <a href="<?= BASE_URL ?>/index.php?page=customers" class="small-box-footer">Görüntüle <i
-                        class="fas fa-arrow-circle-right"></i></a>
-                <?php
-            endif; ?>
-        </div>
+        </a>
     </div>
     <div class="col-lg-3 col-6">
-        <div class="small-box bg-danger">
+        <a href="<?= BASE_URL ?>/index.php?page=suppliers" class="small-box bg-danger">
             <div class="inner">
-                <h3>
-                    <?= e(formatQty($supplierCount)) ?>
-                </h3>
+                <h3><?= e(formatQty($supplierCount)) ?></h3>
                 <p>Tedarikçi</p>
             </div>
             <div class="icon"><i class="fas fa-truck"></i></div>
-            <?php if (hasRole(ROLE_ADMIN, ROLE_USER)): ?>
-                <a href="<?= BASE_URL ?>/index.php?page=suppliers" class="small-box-footer">Görüntüle <i
-                        class="fas fa-arrow-circle-right"></i></a>
-                <?php
-            endif; ?>
-        </div>
+        </a>
     </div>
 </div>
 

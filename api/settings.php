@@ -39,7 +39,7 @@ switch ($action) {
         foreach (['usd_rate', 'eur_rate'] as $key) {
             if (isset($_POST[$key])) {
                 $val = str_replace(['.', ','], ['', '.'], sanitize($_POST[$key]));
-                set_setting($key, (string)(float)$val);
+                set_setting($key, (string) (float) $val);
             }
         }
         jsonResponse(true, 'Döviz kurları kaydedildi.');
@@ -47,6 +47,9 @@ switch ($action) {
     case 'save_general':
         if (isset($_POST['site_name'])) {
             set_setting('site_name', sanitize($_POST['site_name']));
+        }
+        if (isset($_POST['allow_passive_with_stock'])) {
+            set_setting('allow_passive_with_stock', sanitize($_POST['allow_passive_with_stock']));
         }
         jsonResponse(true, 'Genel ayarlar kaydedildi.');
 
@@ -63,17 +66,17 @@ switch ($action) {
         $usd = null;
         $eur = null;
         foreach ($xml->Currency as $cur) {
-            $code = (string)$cur->attributes()->CurrencyCode;
+            $code = (string) $cur->attributes()->CurrencyCode;
             if ($code === 'USD')
-                $usd = (float)$cur->ForexSelling;
+                $usd = (float) $cur->ForexSelling;
             if ($code === 'EUR')
-                $eur = (float)$cur->ForexSelling;
+                $eur = (float) $cur->ForexSelling;
         }
         if (!$usd || !$eur) {
             jsonResponse(false, 'Kur verisi alınamadı.');
         }
-        set_setting('usd_rate', (string)$usd);
-        set_setting('eur_rate', (string)$eur);
+        set_setting('usd_rate', (string) $usd);
+        set_setting('eur_rate', (string) $eur);
         set_setting('currency_updated', date('Y-m-d H:i:s'));
         jsonResponse(true, 'Kurlar güncellendi.', [
             'usd_formatted' => number_format($usd, 2, ',', '.'),
@@ -88,8 +91,7 @@ switch ($action) {
         $sent = send_mail($to, 'Test Maili', '<p>Bu bir test mailidir. Mail ayarları doğru çalışıyor!</p>');
         if ($sent) {
             jsonResponse(true, 'Test maili gönderildi.');
-        }
-        else {
+        } else {
             jsonResponse(false, 'Mail gönderilemedi. Ayarları kontrol edin.');
         }
 

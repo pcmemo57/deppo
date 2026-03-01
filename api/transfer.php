@@ -23,6 +23,18 @@ switch ($action) {
         if (empty($lines))
             jsonResponse(false, 'En az 1 ürün gerekli.');
 
+        foreach ($lines as $line) {
+            $productId = (int) ($line['product_id'] ?? 0);
+            $quantity = (float) ($line['quantity'] ?? 0);
+            if (!$productId || $quantity <= 0)
+                continue;
+
+            $available = getProductStock($productId, $sourceId);
+            if ($quantity > $available) {
+                jsonResponse(false, 'Yetersiz stok miktarı. Ürün ID: ' . $productId . ', Mevcut: ' . $available . ', Talep: ' . $quantity);
+            }
+        }
+
         $currentUser = currentUser();
         $userId = $currentUser['id'];
         $userName = $currentUser['name'];

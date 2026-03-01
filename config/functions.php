@@ -144,6 +144,45 @@ function toEur(float $amount, string $currency): float
 }
 
 /**
+ * Belirli bir depo ve ürün için mevcut stoğu hesapla
+ */
+function getProductStock(int $productId, int $warehouseId = 0): float
+{
+    $whereIn = "product_id = ? AND is_active = 1";
+    $whereOut = "product_id = ?";
+    $paramsIn = [$productId];
+    $paramsOut = [$productId];
+
+    if ($warehouseId > 0) {
+        $whereIn .= " AND warehouse_id = ?";
+        $whereOut .= " AND warehouse_id = ?";
+        $paramsIn[] = $warehouseId;
+        $paramsOut[] = $warehouseId;
+    }
+
+    $in = Database::fetchOne("SELECT SUM(quantity) as qty FROM tbl_dp_stock_in WHERE $whereIn", $paramsIn)['qty'] ?? 0;
+    $out = Database::fetchOne("SELECT SUM(quantity) as qty FROM tbl_dp_stock_out WHERE $whereOut", $paramsOut)['qty'] ?? 0;
+    return (float) round($in - $out, 3);
+}
+
+/**
+ * Deponun tamamen boş olup olmadığını kontrol et
+ * (Her bir ürünün bakiyesinin tam olarak 0 olması gerekir)
+ */
+function isWarehouseEmpty(int $warehouseId): bool
+{
+    $sql = "SELECT COUNT(*) as cnt FROM (
+                SELECT product_id, SUM(q) as stock FROM (
+                    SELECT product_id, quantity as q FROM tbl_dp_stock_in WHERE warehouse_id = ? AND is_active = 1
+                    UNION ALL
+                    SELECT product_id, -quantity as q FROM tbl_dp_stock_out WHERE warehouse_id = ?
+                ) t GROUP BY product_id HAVING ROUND(SUM(q), 3) != 0
+            ) final";
+    $res = Database::fetchOne($sql, [$warehouseId, $warehouseId]);
+    return ($res['cnt'] ?? 0) == 0;
+}
+
+/**
  * Mail gönderme (PHPMailer wrapper)
  */
 function send_mail(string $to, string $subject, string $body, bool $isHtml = true, array $embeddedImages = []): bool

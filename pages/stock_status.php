@@ -169,10 +169,34 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
     
     .warehouse-item:hover { background-color: #f0f7ff !important; }
     .fw-500 { font-weight: 500; font-size: 0.95rem; }
+
+    /* Warehouse Pastel Badge Colors */
+    .wh-badge-0 { background-color: #e3f2fd !important; color: #0d47a1 !important; border: 1px solid #bbdefb !important; } /* Blue */
+    .wh-badge-1 { background-color: #f1f8e9 !important; color: #33691e !important; border: 1px solid #dcedc8 !important; } /* Green */
+    .wh-badge-2 { background-color: #fff3e0 !important; color: #e65100 !important; border: 1px solid #ffe0b2 !important; } /* Orange */
+    .wh-badge-3 { background-color: #f3e5f5 !important; color: #4a148c !important; border: 1px solid #e1bee7 !important; } /* Purple */
+    .wh-badge-4 { background-color: #e0f2f1 !important; color: #004d40 !important; border: 1px solid #b2dfdb !important; } /* Teal */
+    .wh-badge-5 { background-color: #fffde7 !important; color: #f57f17 !important; border: 1px solid #fff9c4 !important; } /* Yellow */
+    .wh-badge-6 { background-color: #fbe9e7 !important; color: #bf360c !important; border: 1px solid #ffccbc !important; } /* Deep Orange */
+    .wh-badge-7 { background-color: #e1f5fe !important; color: #01579b !important; border: 1px solid #b3e5fc !important; } /* Light Blue */
 </style>
 <script>
     var curPage = 1, curPerPage = 10, curSearch = '', searchTimer, currentData = [], currentCols = [];
     var apiUrl = '<?= BASE_URL ?>/api/stock_status.php';
+    
+    // Warehouse Color Mapping
+    var warehouseColors = {};
+    <?php 
+    foreach ($warehouses as $index => $w) {
+        $colorIdx = $index % 8;
+        echo "warehouseColors['" . addslashes($w['name']) . "'] = 'wh-badge-$colorIdx';\n";
+    }
+    ?>
+
+    function getWarehouseBadgeClass(name) {
+        return warehouseColors[name] || 'bg-light text-dark border';
+    }
+
     function esc(v) { return $('<span>').text(v || '').html(); }
 
     function showImagePreview(src) {
@@ -190,7 +214,9 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
     function updateBadges() {
         var badges = '';
         $('.wh-switch:checked').each(function () {
-            badges += '<span class="badge bg-primary px-3 py-2" style="margin-right: 8px; margin-bottom: 8px;">' + $(this).data('name') + '</span>';
+            var name = $(this).data('name');
+            var colorClass = getWarehouseBadgeClass(name);
+            badges += '<span class="badge ' + colorClass + ' px-3 py-2" style="margin-right: 8px; margin-bottom: 8px;">' + name + '</span>';
         });
         if (!badges) badges = '<span class="text-muted small">Herhangi bir depo seçilmedi</span>';
         $('#selectedWarehouses').html(badges);
@@ -232,30 +258,32 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
             var html = '';
             var rowIndex = offset() + 1;
             $.each(r.data.data, function (i, row) {
+                var isLowStock = (row.stock_alarm > 0 && row.total < row.stock_alarm);
+                var totalClass = isLowStock ? 'text-danger fw-bold' : 'text-success text-bold';
+
                 $.each(r.data.columns, function (j, col) {
                     var qty = row.stocks[col] || 0;
-                    if (qty <= 0) return; // Sıfır stoklu kayıtları gösterme
+                    if (qty == 0) return; // Sadece 0 olanları gizle, negatifleri göster
 
                     var rowIndexText = rowIndex++;
                     var imgSrc = row.image ? '<?= BASE_URL ?>/images/UrunResim/' + encodeURIComponent(row.image) : '';
+                    var qtyClass = qty < 0 ? 'text-danger fw-bold' : 'text-success text-bold';
 
-                    html += '<tr><td class="text-muted">' + rowIndexText + '</td><td>';
+                    html += '<tr class="' + (isLowStock ? 'table-warning' : '') + '">';
+                    html += '<td class="text-muted">' + rowIndexText + '</td><td>';
                     if (row.image) { 
                         html += '<img src="' + imgSrc + '" style="width:32px;height:32px;object-fit:cover;border-radius:4px;margin-right:6px;cursor:pointer;" onerror="this.remove()" onclick="showImagePreview(\'' + imgSrc + '\')" title="Büyütmek için tıklayın">'; 
                     }
-                    html += '<strong>' + esc(row.product) + '</strong></td>';
-                    html += '<td><span class="badge bg-light text-dark border"><i class="fas fa-warehouse text-muted me-1"></i> ' + esc(col) + '</span></td>';
-                    html += '<td class="num-align text-bold text-success">' + formatQty(qty) + ' <small class="text-muted fw-normal">' + esc(row.unit || 'Adet') + '</small></td>';
+                    html += '<strong>' + esc(row.product) + '</strong>' + 
+                            (isLowStock ? ' <span class="badge bg-danger ms-1" title="Global Stok Alarm Seviyesi Altında!"><i class="fas fa-exclamation-triangle"></i></span>' : '') + 
+                            '</td>';
+                    var colorClass = getWarehouseBadgeClass(col);
+                    html += '<td><span class="badge ' + colorClass + '"><i class="fas fa-warehouse opacity-75 me-1"></i> ' + esc(col) + '</span></td>';
+                    html += '<td class="num-align ' + qtyClass + '">' + formatQty(qty) + ' <small class="text-muted fw-normal">' + esc(row.unit || 'Adet') + '</small></td>';
                     
-                    // İşlemler
-                    // find warehouse id by name from r.data.warehouses (I should add this to api response)
-                    // Or just use the switch logic
-                    var whId = 0;
-                    $('.wh-switch').each(function(){ if($(this).data('name') == col) whId = $(this).val(); });
-
                     html += '<td class="text-center">' +
                             '<button class="btn btn-xs btn-outline-info" onclick="showHistory(' + row.product_id + ', \'' + esc(row.product) + '\')" title="Tüm Geçmişi Gör">' +
-                            '<i class="fas fa-users"></i>' +
+                            '<i class="fas fa-history"></i>' +
                             '</button>' +
                             '</td>';
                     html += '</tr>';

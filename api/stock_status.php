@@ -27,8 +27,11 @@ function getStockData(array $warehouseIds, string $search = '', int $page = 1, i
         $warehouseMap = array_column($warehouses, 'name', 'id');
 
         // Tüm ürünleri al (arama + sayfalama)
-        $where = "p.hidden=0 AND p.is_active=1";
-        $params = [];
+        // Sadece seçili depolara en az bir kez girmiş ürünleri getir
+        $placeholders = implode(',', array_fill(0, count($warehouseIds), '?'));
+        $where = "p.hidden=0 AND p.is_active=1 AND EXISTS (SELECT 1 FROM tbl_dp_stock_in si WHERE si.product_id = p.id AND si.is_active=1 AND si.warehouse_id IN ($placeholders))";
+        $params = array_values($warehouseIds);
+
         if ($search) {
             $where .= " AND p.name LIKE ?";
             $params[] = "%$search%";
@@ -39,7 +42,7 @@ function getStockData(array $warehouseIds, string $search = '', int $page = 1, i
 
         $offset = ($page - 1) * $perPage;
         $products = Database::fetchAll(
-            "SELECT p.id, p.name, p.image, p.unit FROM tbl_dp_products p WHERE $where ORDER BY p.name LIMIT $perPage OFFSET $offset",
+            "SELECT p.id, p.name, p.image, p.unit, p.stock_alarm FROM tbl_dp_products p WHERE $where ORDER BY p.name LIMIT $perPage OFFSET $offset",
             $params
         );
 
@@ -57,7 +60,7 @@ function getStockData(array $warehouseIds, string $search = '', int $page = 1, i
         $ins = Database::fetchAll(
             "SELECT warehouse_id, product_id, SUM(quantity) AS qty
              FROM tbl_dp_stock_in
-             WHERE warehouse_id IN ($placeholders) AND product_id IN ($prodPH)
+             WHERE is_active=1 AND warehouse_id IN ($placeholders) AND product_id IN ($prodPH)
              GROUP BY warehouse_id, product_id",
             $queryParams
         );
@@ -87,6 +90,7 @@ function getStockData(array $warehouseIds, string $search = '', int $page = 1, i
                 'product' => $p['name'],
                 'image' => $p['image'],
                 'unit' => $p['unit'],
+                'stock_alarm' => (int) $p['stock_alarm'],
                 'stocks' => [],
                 'total' => 0
             ];

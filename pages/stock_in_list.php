@@ -286,6 +286,12 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
     resize: none;
   }
 
+  .price-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
   /* Responsive */
   @media (max-width: 768px) {
 
