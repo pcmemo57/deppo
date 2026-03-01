@@ -38,6 +38,9 @@ requireRole(ROLE_ADMIN);
                         <button id="btnPerformUpdate" class="btn btn-success btn-lg px-5 shadow-sm mt-3">
                             <i class="fas fa-download me-1"></i> Şimdi Güncelle
                         </button>
+                        <button id="btnForceUpdate" class="btn btn-danger btn-lg px-5 shadow-sm mt-3 d-none">
+                            <i class="fas fa-exclamation-triangle me-1"></i> Çakışmaları Gider ve Zorla Güncelle
+                        </button>
                     </div>
 
                     <div id="no-update-info" class="d-none">
