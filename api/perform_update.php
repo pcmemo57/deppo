@@ -12,7 +12,15 @@ if (currentUser()['role'] !== ROLE_ADMIN) {
     jsonResponse(false, 'Bu işlem için yetkiniz yok.');
 }
 
-// Git pull komutunu çalıştır
+// 0. Git yüklü mü kontrol et
+exec('git --version', $test_output, $test_return);
+if ($test_return !== 0) {
+    jsonResponse(false, 'HATA: "git" komutu bu bilgisayarda tanınmıyor. Güncelleme yapabilmek için bilgisayarınızda Git yüklü olmalı ve sistem yoluna (PATH) eklenmiş olmalıdır.', [
+        'output' => 'Git not found in PATH'
+    ]);
+}
+
+// 1. Git pull komutunu çalıştır
 $command = 'git pull origin main 2>&1';
 $output = [];
 $return_var = 0;
@@ -36,6 +44,8 @@ if ($return_var === 0) {
         $error_msg = 'Yerel dosyalarda yapılan değişiklikler güncellemeye engel oluyor. Lütfen değişiklikleri geri alıp tekrar deneyin.';
     } elseif (str_contains($output_str, 'Could not resolve host')) {
         $error_msg = 'İnternet bağlantısı kurulamadı.';
+    } elseif (str_contains($output_str, 'Permission denied')) {
+        $error_msg = 'GitHub erişim yetkisi hatası. Lütfen Git ayarlarınızı kontrol edin.';
     }
 
     jsonResponse(false, $error_msg, [
