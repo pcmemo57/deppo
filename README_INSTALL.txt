@@ -12,7 +12,7 @@ Bu projeyi başka bir bilgisayara kurmak için aşağıdaki adımları takip edi
      C:\xampp\htdocs\ (veya Mac'te /Applications/XAMPP/htdocs/) klasörüne kopyalayın.
 
 3. OTOMATİK HAZIRLIK (ÖNERİLEN):
-   - Windows kullanıyorsanız: deppo klasöründeki "setup_windows.bat" dosyasına çift tıklayın.
+   - Windows kullanıyorsanız: deppo klasöründeki "setup_windows.bat" dosyasına sağ tıklayıp "Yönetici olarak çalıştır" deyin. (Bu dosya arka planda PowerShell kullanarak Git kurulumu yapar).
    - Mac kullanıyorsanız: Terminali açın, deppo klasörüne gidin ve "bash setup_mac.sh" komutunu çalıştırın.
    - Bu araçlar Git'in yüklü olup olmadığını kontrol eder ve eksikse kurulumda yardımcı olur.
 
