@@ -47,21 +47,11 @@ $lowStockProducts = Database::fetchAll("
            (SELECT COALESCE(SUM(so.quantity),0) FROM tbl_dp_stock_out so WHERE so.product_id = p.id) as current_stock
     FROM tbl_dp_products p
     WHERE p.hidden = 0 AND p.is_active = 1 AND p.stock_alarm > 0
+      AND EXISTS (SELECT 1 FROM tbl_dp_stock_in si WHERE si.product_id = p.id)
     HAVING current_stock < p.stock_alarm
     ORDER BY current_stock ASC
 ");
 ?>
-
-<!-- Test Amaçlı Güncelleme Uyarısı -->
-<div class="row">
-    <div class="col-12">
-        <div class="alert alert-info shadow-sm border-left-info animate__animated animate__fadeIn">
-            <h5><i class="icon fas fa-check-circle"></i> Sistem Başarıyla Güncellendi! (v1.0.8)</h5>
-            <p class="mb-0">Bu mesajı görüyorsanız, GitHub üzerinden yapılan otomatik güncelleme testi başarıyla
-                tamamlanmış demektir. Yeni özelliklerin tadını çıkarın!</p>
-        </div>
-    </div>
-</div>
 
 <!-- İstatistik Kartları -->
 <?php if (!empty($lowStockProducts)): ?>

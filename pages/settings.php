@@ -34,6 +34,8 @@ $googleFontList = [
                                  class="fas fa-cog me-1"></i>Genel</a></li>
                     <li class="nav-item"><a class="nav-link text-danger" data-bs-toggle="tab" href="#tab-data-mgmt"><i
                                  class="fas fa-trash-alt me-1"></i>Veri Yönetimi</a></li>
+                    <li class="nav-item"><a class="nav-link bg-light" data-bs-toggle="tab" href="#tab-backup"><i
+                                 class="fas fa-database me-1"></i>Yedekleme</a></li>
                 </ul>
             </div>
             <div class="card-body">
@@ -388,6 +390,37 @@ $googleFontList = [
                         </div>
                     </div>
 
+                    <!-- ═══════════ YEDEKLEME ═══════════ -->
+                    <div class="tab-pane fade" id="tab-backup">
+                        <div class="card card-outline card-primary">
+                            <div class="card-header">
+                                <h6 class="m-0 text-bold"><i class="fas fa-database me-1"></i> Veritabanı Yedekleri</h6>
+                                <div class="card-tools">
+                                    <button class="btn btn-primary btn-sm shadow-sm" onclick="createBackup()">
+                                        <i class="fas fa-plus-circle me-1"></i> Yeni Yedek Oluştur
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th class="ps-3">Dosya Adı</th>
+                                                <th>Boyut</th>
+                                                <th>Tarih</th>
+                                                <th class="text-end pe-3">İşlemler</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="backupTableBody">
+                                            <tr><td colspan="4" class="text-center text-muted p-4">Yükleniyor...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -550,4 +583,98 @@ $googleFontList = [
             }
         });
     }
+
+    // Yedekleme İşlemleri
+    function loadBackups() {
+        $.get('<?= BASE_URL ?>/api/backup.php', { action: 'list' }, function (r) {
+            if (r.success) {
+                if (r.data.length === 0) {
+                    $('#backupTableBody').html('<tr><td colspan="4" class="text-center text-muted p-4">Henüz yedek bulunmuyor.</td></tr>');
+                    return;
+                }
+                var html = '';
+                $.each(r.data, function (i, b) {
+                    html += '<tr>';
+                    html += '<td class="ps-3 fw-bold text-primary"><i class="fas fa-file-alt me-2 text-muted"></i>' + b.filename + '</td>';
+                    html += '<td><span class="badge bg-secondary">' + b.size + '</span></td>';
+                    html += '<td>' + b.date + '</td>';
+                    html += '<td class="text-end pe-3">';
+                    html += '<div class="btn-group">';
+                    html += '<a href="<?= BASE_URL ?>/api/backup.php?action=download&filename=' + b.filename + '" class="btn btn-sm btn-outline-success" title="İndir"><i class="fas fa-download"></i></a>';
+                    html += '<button class="btn btn-sm btn-outline-warning" onclick="restoreBackup(\'' + b.filename + '\')" title="Geri Yükle"><i class="fas fa-undo"></i></button>';
+                    html += '<button class="btn btn-sm btn-outline-danger" onclick="deleteBackup(\'' + b.filename + '\')" title="Sil"><i class="fas fa-trash"></i></button>';
+                    html += '</div></td></tr>';
+                });
+                $('#backupTableBody').html(html);
+            } else {
+                $('#backupTableBody').html('<tr><td colspan="4" class="text-center text-danger p-4">Hata: ' + r.message + '</td></tr>');
+            }
+        }, 'json');
+    }
+
+    function createBackup() {
+        Swal.fire({
+            title: 'Yedek Oluşturuluyor...',
+            text: 'Lütfen bekleyin, veritabanı yedeği alınıyor.',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        $.post('<?= BASE_URL ?>/api/backup.php', { action: 'create' }, function (r) {
+            if (r.success) {
+                showSuccess(r.message);
+                loadBackups();
+            } else {
+                showError(r.message + (r.data && r.data.error ? "\n\n" + r.data.error : ""));
+            }
+        }, 'json');
+    }
+
+    function deleteBackup(filename) {
+        confirmAction(filename + ' yedeği kalıcı olarak silinecektir! Emin misiniz?', function () {
+            $.post('<?= BASE_URL ?>/api/backup.php', { action: 'delete', filename: filename }, function (r) {
+                if (r.success) {
+                    showSuccess(r.message);
+                    loadBackups();
+                } else {
+                    showError(r.message);
+                }
+            }, 'json');
+        });
+    }
+
+    function restoreBackup(filename) {
+        Swal.fire({
+            title: '⚠️ DİKKAT!',
+            text: 'Veritabanı ' + filename + ' yedeğine geri döndürülecektir. Mevcut verileriniz backup anındaki haline döner. Devam etmek istiyor musunuz?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#f39c12',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Evet, Geri Yükle!',
+            cancelButtonText: 'İptal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Geri Yükleniyor...',
+                    text: 'İşlem sırasında sayfayı kapatmayın.',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+
+                $.post('<?= BASE_URL ?>/api/backup.php', { action: 'restore', filename: filename }, function (r) {
+                    if (r.success) {
+                        Swal.fire('Tamamlandı', r.message, 'success').then(() => location.reload());
+                    } else {
+                        showError(r.message + (r.data && r.data.error ? "\n\n" + r.data.error : ""));
+                    }
+                }, 'json');
+            }
+        });
+    }
+
+    // Tab açıldığında yedekleri yükle
+    $('a[href="#tab-backup"]').on('shown.bs.tab', function (e) {
+        loadBackups();
+    });
 </script>
