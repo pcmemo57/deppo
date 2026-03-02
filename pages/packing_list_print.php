@@ -1,0 +1,388 @@
+<?php
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../config/session.php';
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/functions.php';
+
+requireRole(ROLE_ADMIN, ROLE_USER);
+
+$id = (int) ($_GET['id'] ?? 0);
+$pl = Database::fetchOne("
+    SELECT pl.*, c.name as customer_name
+    FROM tbl_dp_packing_lists pl
+    JOIN tbl_dp_customers c ON c.id = pl.customer_id
+    WHERE pl.id = ?
+", [$id]);
+
+if (!$pl)
+    die('Liste bulunamadı.');
+
+$parcels = Database::fetchAll("SELECT * FROM tbl_dp_packing_list_parcels WHERE packing_list_id = ? ORDER BY parcel_no ASC", [$id]);
+
+foreach ($parcels as &$p) {
+    $p['items'] = Database::fetchAll("
+        SELECT i.*, pr.name as product_name, pr.code as product_code, pr.unit, pr.image, pr.description
+        FROM tbl_dp_packing_list_items i
+        JOIN tbl_dp_products pr ON pr.id = i.product_id
+        WHERE i.parcel_id = ?
+    ", [$p['id']]);
+}
+unset($p);
+?>
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Çeki Listesi - <?= e($pl['list_no']) ?></title>
+    <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 15mm;
+        }
+
+        body {
+            font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 13px;
+            line-height: 1.4;
+            color: #1a202c;
+            margin: 0;
+            padding: 0;
+            background: #fff;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 210mm;
+            margin: 0 auto;
+        }
+
+        /* ───────────────────────────────────────────
+           HEADER
+        ─────────────────────────────────────────── */
+        .info-header {
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+        }
+
+        .info-item {
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: #4a5568;
+            min-width: 220px;
+            display: inline-block;
+        }
+
+        .info-value {
+            font-weight: 700;
+            color: #000;
+        }
+
+        /* ───────────────────────────────────────────
+           TABLE
+        ─────────────────────────────────────────── */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #cbd5e0;
+        }
+
+        th {
+            background-color: #f7fafc;
+            color: #2d3748;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            border: 1px solid #cbd5e0;
+            padding: 10px 8px;
+            text-align: left;
+        }
+
+        td {
+            border: 1px solid #cbd5e0;
+            padding: 8px;
+            vertical-align: top;
+        }
+
+        .col-no {
+            width: 10%;
+            text-align: center;
+            font-weight: 700;
+            font-size: 11px;
+        }
+
+        .col-weight {
+            width: 12%;
+        }
+
+        .col-dims {
+            width: 16%;
+        }
+
+        .col-contents {
+            width: 62%;
+            padding: 0;
+        }
+
+        /* ───────────────────────────────────────────
+           BOX CONTENT (NESTED)
+        ─────────────────────────────────────────── */
+        .item-row {
+            display: flex;
+            align-items: flex-start;
+            padding: 10px;
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        .item-row:last-child {
+            border-bottom: none;
+        }
+
+        .item-img-container {
+            width: 70px;
+            height: 70px;
+            margin-right: 12px;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: #fff;
+        }
+
+        .item-img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .item-details {
+            flex-grow: 1;
+        }
+
+        .item-name {
+            font-weight: 700;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        .item-qty {
+            font-size: 11px;
+            font-weight: 500;
+            color: #4a5568;
+            margin-bottom: 4px;
+        }
+
+        .item-desc {
+            font-size: 11px;
+            color: #718096;
+            margin-top: 2px;
+        }
+
+        .item-desc b {
+            color: #4a5568;
+        }
+
+        /* ───────────────────────────────────────────
+           FOOTER
+        ─────────────────────────────────────────── */
+        .list-end {
+            text-align: center;
+            padding: 15px;
+            font-weight: 700;
+            font-size: 12px;
+            text-transform: uppercase;
+            border: 1px solid #cbd5e0;
+            border-top: none;
+            background: #fdfdfd;
+        }
+
+        /* ───────────────────────────────────────────
+           CONTROL BUTTONS
+        ─────────────────────────────────────────── */
+        .no-print {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: #64748b;
+            color: #fff;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                padding: 0;
+            }
+
+            table {
+                page-break-inside: auto;
+            }
+
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+
+<body>
+
+    <div class="no-print">
+        <button class="btn btn-primary shadow-sm" onclick="window.print()">
+            <i class="fas fa-print"></i> Yazdır
+        </button>
+        <button class="btn btn-secondary shadow-sm" onclick="window.close()">
+            <i class="fas fa-times"></i> Kapat
+        </button>
+    </div>
+
+    <div class="container" id="pdfContent">
+        <div class="info-header">
+            <div class="info-item">
+                <span class="info-label">Müşteri (Customer):</span>
+                <span class="info-value"><?= e($pl['customer_name']) ?></span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Tarih (Date):</span>
+                <span class="info-value"><?= date('d.m.Y', strtotime($pl['created_at'])) ?></span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Toplam Koli Sayısı (Total Box Count):</span>
+                <span class="info-value"><?= $pl['total_parcels'] ?></span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Toplam Ağırlık (Total Weight):</span>
+                <span class="info-value"><?= formatPrice($pl['total_weight_kg']) ?> kg</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Toplam Desi Değeri (Total Volumetric Weight):</span>
+                <span class="info-value"><?= number_format($pl['total_vol_desi'], 2, ',', '.') ?> desi</span>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th class="col-no">Koli No (Box No)</th>
+                    <th class="col-weight">Ağırlık (Weight) (kg)</th>
+                    <th class="col-dims">Boyutlar (Dimensions) (cm)</th>
+                    <th class="col-contents"><span style="margin-left: 10px">Koli İçeriği (Box Contents)</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($parcels as $p): ?>
+                    <tr>
+                        <td class="col-no"><?= $p['parcel_no'] ?></td>
+                        <td class="col-weight"><?= formatPrice($p['weight_kg']) ?> kg.</td>
+                        <td class="col-dims">
+                            <?= $p['width_cm'] ?>x<?= $p['length_cm'] ?>x<?= $p['height_cm'] ?> cm.
+                        </td>
+                        <td class="col-contents">
+                            <?php foreach ($p['items'] as $item): ?>
+                                <div class="item-row">
+                                    <div class="item-img-container">
+                                        <?php if ($item['image']): ?>
+                                            <img src="../images/UrunResim/<?= e($item['image']) ?>" class="item-img" alt="product">
+                                        <?php else: ?>
+                                            <i class="fas fa-image text-muted opacity-25" style="font-size: 24px;"></i>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="item-details">
+                                        <span class="item-name"><?= e($item['product_name']) ?></span>
+                                        <div class="item-qty">(<?= formatPrice($item['quantity']) ?>
+                                            <?= e($item['unit'] ?: 'adet') ?>)
+                                        </div>
+                                        <div class="item-desc"><?= e($item['description'] ?: '-') ?></div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                            <?php if (empty($p['items'])): ?>
+                                <div class="p-3 text-muted x-small italic text-center">İçerik bilgisi yok</div>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+
+        <div class="list-end">
+            LİSTE SONU (THE END OF LIST)
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('format') === 'pdf') {
+                const element = document.getElementById('pdfContent');
+                const listNo = "<?= e($pl['list_no']) ?>";
+
+                const opt = {
+                    margin: 10,
+                    filename: 'Ceki-Listesi-' + listNo + '.pdf',
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                // Generate PDF
+                html2pdf().set(opt).from(element).save().then(() => {
+                    // Sadece indirme işlemi bittikten sonra pencereyi kapatmak isterseniz:
+                    // setTimeout(() => window.close(), 1000);
+                });
+            }
+        });
+    </script>
+
+</body>
+
+</html>

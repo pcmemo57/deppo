@@ -389,11 +389,34 @@ if ($googleFont !== 'default' && isset($googleFonts[$googleFont])) {
                         <i class="fas fa-bars" style="color:var(--header-color)"></i>
                     </a>
                 </li>
-                <li class="nav-item d-none d-sm-inline-block">
-                    <a href="<?= BASE_URL ?>/index.php" class="nav-link fw-bold" style="color:var(--header-color)">
-                        <i class="fas fa-warehouse me-1"></i>
-                        <?= e($siteName) ?>
-                    </a>
+                <li class="nav-item d-none d-md-inline-block">
+                    <?php
+                    $trMonths = ["", "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+                    $trDays = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
+                    $displayDate = date('j') . ' ' . $trMonths[date('n')] . ' ' . date('Y') . ' (' . $trDays[date('w')] . ')';
+                    $usd = (float) get_setting('usd_rate', '0');
+                    $eur = (float) get_setting('eur_rate', '0');
+                    $lastUpdate = get_setting('currency_updated', '');
+                    $updateTime = $lastUpdate ? date('H:i', strtotime($lastUpdate)) : '--:--';
+                    ?>
+                    <div class="nav-link fw-bold d-flex align-items-center"
+                        style="color:var(--header-color); cursor: default;">
+                        <i class="far fa-calendar-alt me-2"></i>
+                        <span><?= $displayDate ?></span>
+                        <span class="mx-3" style="opacity: 0.5;">|</span>
+                        <div class="d-flex align-items-center" style="gap: 10px;">
+                            <span class="badge bg-success shadow-sm" id="nav-usd-rate">
+                                <i class="fas fa-dollar-sign me-1"></i>USD: <?= formatPrice($usd) ?>
+                            </span>
+                            <span class="badge bg-primary shadow-sm" id="nav-eur-rate">
+                                <i class="fas fa-euro-sign me-1"></i>EUR: <?= formatPrice($eur) ?>
+                            </span>
+                            <button id="btnNavbarUpdateCurrency" class="badge bg-info border-0 shadow-sm"
+                                style="cursor: pointer; font-weight: 500;">
+                                <i class="fas fa-sync-alt me-1"></i>Güncelle (<?= $updateTime ?>)
+                            </button>
+                        </div>
+                    </div>
                 </li>
             </ul>
             <ul class="navbar-nav ml-auto">
@@ -403,24 +426,27 @@ if ($googleFont !== 'default' && isset($googleFonts[$googleFont])) {
                         <span style="color:var(--header-color)">
                             <i class="fas fa-user-circle me-1"></i>
                             <?= e(currentUser()['name']) ?>
-                            <span class="badge ms-1
-                        <?= currentUser()['role'] === ROLE_ADMIN ? 'bg-danger' :
-                            (currentUser()['role'] === ROLE_USER ? 'bg-info' : 'bg-warning') ?>">
-                                <?= currentUser()['role'] === ROLE_ADMIN ? 'Admin' :
-                                    (currentUser()['role'] === ROLE_USER ? 'Yönetici' : 'Talep Eden') ?>
-                            </span>
                         </span>
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
+                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-right shadow-sm border-0"
+                        style="min-width: 200px; right: 0; left: auto;">
                         <li>
-                            <h6 class="dropdown-header">
-                                <?= e(currentUser()['email']) ?>
-                            </h6>
+                            <div class="px-3 py-2 border-bottom mb-1 bg-light rounded-top">
+                                <div class="fw-bold small text-dark"><?= e(currentUser()['name']) ?></div>
+                                <div class="text-muted" style="font-size: 0.75rem;"><?= e(currentUser()['email']) ?>
+                                </div>
+                                <div class="mt-2 text-center">
+                                    <span class="badge w-100 py-2
+                                        <?= currentUser()['role'] === ROLE_ADMIN ? 'bg-danger' :
+                                            (currentUser()['role'] === ROLE_USER ? 'bg-info' : 'bg-warning') ?>">
+                                        <i class="fas fa-shield-alt me-1"></i>
+                                        <?= currentUser()['role'] === ROLE_ADMIN ? 'Admin' :
+                                            (currentUser()['role'] === ROLE_USER ? 'Yönetici' : 'Talep Eden') ?>
+                                    </span>
+                                </div>
+                            </div>
                         </li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li><a class="dropdown-item text-danger" href="<?= BASE_URL ?>/logout.php">
+                        <li><a class="dropdown-item text-danger py-2" href="<?= BASE_URL ?>/logout.php">
                                 <i class="fas fa-sign-out-alt me-2"></i> Çıkış Yap
                             </a></li>
                     </ul>

@@ -30,8 +30,8 @@ $footerText = get_setting('footer_text', '© 2026 Depo Yönetim Sistemi');
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
-<!-- XLSX (Excel export) -->
-<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+<!-- XLSX-JS-STYLE (Excel export with styles) -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 
 <script>
     // Global SweetAlert tema
@@ -163,6 +163,35 @@ $footerText = get_setting('footer_text', '© 2026 Depo Yönetim Sistemi');
         if (!val) return 0;
         return parseFloat(val.replace(/\./g, '').replace(',', '.')) || 0;
     }
+
+    // Navbar Döviz Güncelleme
+    $(document).on('click', '#btnNavbarUpdateCurrency', function (e) {
+        e.preventDefault();
+        var btn = $(this);
+        var originalHtml = btn.html();
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>...');
+
+        $.post('<?= BASE_URL ?>/api/settings.php', { action: 'update_currency' }, function (r) {
+            if (r.success) {
+                showSuccess('Kurlar güncellendi!');
+                if (r.data) {
+                    $('#nav-usd-rate').html('<i class="fas fa-dollar-sign me-1"></i>USD: ' + r.data.usd_formatted);
+                    $('#nav-eur-rate').html('<i class="fas fa-euro-sign me-1"></i>EUR: ' + r.data.eur_formatted);
+                    var now = new Date();
+                    var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+                    btn.html('<i class="fas fa-sync-alt me-1"></i>Güncelle (' + timeStr + ')');
+                }
+            } else {
+                showError(r.message || 'Güncelleme başarısız.');
+                btn.html(originalHtml);
+            }
+        }, 'json').fail(function () {
+            showError('Bağlantı hatası.');
+            btn.html(originalHtml);
+        }).always(function () {
+            btn.prop('disabled', false);
+        });
+    });
 </script>
 
 <?php if (isset($extraScripts))

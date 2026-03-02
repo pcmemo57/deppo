@@ -563,8 +563,35 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
 
         $('#productAdd').select2({
             theme: 'bootstrap-5', placeholder: '— Ürün arayın —', width: '100%', dropdownParent: $('#addModal'),
-            ajax: { url: '<?= BASE_URL ?>/api/products.php', data: function (p) { return { action: 'search_select2', q: p.term || '' }; }, processResults: function (d) { return { results: d.results }; }, delay: 300 },
-            templateResult: function (i) { if (i.loading) return i.text; var no = '<?= BASE_URL ?>/assets/no-image.png', img = i.image ? '<?= BASE_URL ?>/images/UrunResim/' + i.image : no; return $('<span><img src="' + img + '" class="select2-product-img" onerror="this.src=\'' + no + '\'"> ' + esc(i.text) + '</span>'); }
+            ajax: {
+                url: '<?= BASE_URL ?>/api/products.php',
+                data: function (p) {
+                    return {
+                        action: 'search_select2',
+                        q: p.term || '',
+                        warehouse_id: $('#warehouseSelect').val()
+                    };
+                },
+                processResults: function (d) {
+                    var warehouseId = $('#warehouseSelect').val();
+                    var results = $.map(d.results, function (item) {
+                        if (warehouseId && parseFloat(item.stock || 0) <= 0) {
+                            item.disabled = true;
+                        }
+                        return item;
+                    });
+                    return { results: results };
+                },
+                delay: 300
+            },
+            templateResult: function (i) {
+                if (i.loading) return i.text;
+                var no = '<?= BASE_URL ?>/assets/no-image.png', img = i.image ? '<?= BASE_URL ?>/images/UrunResim/' + i.image : no;
+                var stockVal = parseFloat(i.stock || 0);
+                var badgeClass = stockVal <= 0 ? 'bg-danger' : 'bg-success';
+                var stockInfo = i.id ? ' <span class="badge ' + badgeClass + ' float-end">' + formatQty(stockVal) + ' ' + (i.unit || '') + '</span>' : '';
+                return $('<span><img src="' + img + '" class="select2-product-img" onerror="this.src=\'' + no + '\'"> ' + esc(i.text) + stockInfo + '</span>');
+            }
         });
 
         $('#warehouseSelect').on('select2:select', function () { $(this).select2('close'); $('#requesterSelect').select2('open'); });
@@ -573,7 +600,9 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
 
         $('#productAdd').on('select2:select', function (e) {
             $(this).select2('close');
-            $('#unitAddLabel').text(e.params.data.unit || 'Adet');
+            var data = e.params.data;
+            $('#unitAddLabel').text(data.unit || 'Adet');
+            $(this).data('current-stock', parseFloat(data.stock || 0));
             $('#qtyInput').val('').focus();
         });
 
@@ -582,6 +611,12 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
             if (!sel || !sel[0] || !sel[0].id) { showError('Lütfen bir ürün seçin.'); return; }
             var qty = parseFloat($('#qtyInput').val());
             if (!qty || qty <= 0) { showError('Geçerli bir adet girin.'); return; }
+
+            var curStock = $('#productAdd').data('current-stock') || 0;
+            if (qty > curStock) {
+                showError('Yetersiz stok! Mevcut: ' + formatQty(curStock));
+                return;
+            }
 
             var productId = sel[0].id, productName = sel[0].text, unit = $('#unitAddLabel').text(), warehouseId = $('#warehouseSelect').val();
             if (!warehouseId) { showError('Önce depo seçmelisiniz.'); return; }

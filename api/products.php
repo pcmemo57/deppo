@@ -151,6 +151,33 @@ switch ($action) {
         $rows = Database::fetchAll("SELECT id,name,code,image,unit FROM `$table` WHERE hidden=0 AND is_active=1 ORDER BY name");
         jsonResponse(true, '', $rows);
 
+    case 'update_procurement':
+        $id = (int) ($_POST['id'] ?? 0);
+        $status = (int) ($_POST['status'] ?? 0);
+        $note = sanitize($_POST['note'] ?? '');
+        if (!$id)
+            jsonResponse(false, 'Ürün ID eksik.');
+
+        Database::execute(
+            "UPDATE `$table` SET procurement_status=?, procurement_note=? WHERE id=?",
+            [$status, $note, $id]
+        );
+        jsonResponse(true, 'Tedarik durumu güncellendi.');
+
+    case 'get_supplier_history':
+        $id = (int) ($_GET['id'] ?? 0);
+        if (!$id)
+            jsonResponse(false, 'Ürün ID eksik.');
+
+        $rows = Database::fetchAll("
+            SELECT DISTINCT s.name as supplier_name
+            FROM tbl_dp_stock_in si
+            JOIN tbl_dp_suppliers s ON s.id = si.supplier_id
+            WHERE si.product_id = ? AND si.is_active = 1
+            ORDER BY si.created_at DESC
+        ", [$id]);
+        jsonResponse(true, '', $rows);
+
     default:
         jsonResponse(false, 'Geçersiz işlem.');
 }

@@ -8,28 +8,29 @@ $warehouseCount = Database::fetchOne("SELECT COUNT(*) as c FROM tbl_dp_warehouse
 ?>
 <!-- Sidebar -->
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
-    <a href="<?= BASE_URL ?>/index.php" class="brand-link">
-        <i class="fas fa-warehouse brand-image ml-3" style="font-size:1.5rem; opacity:.8"></i>
-        <span class="brand-text font-weight-light ml-2">DEPPO</span>
+    <a href="<?= BASE_URL ?>/index.php" class="brand-link d-flex align-items-center justify-content-center p-2"
+        style="height: 57px; background: rgba(0,0,0,0.1);">
+        <?php
+        $logo = get_setting('system_logo');
+        $width = get_setting('system_logo_width');
+        $height = get_setting('system_logo_height');
+        $style = "";
+        if ($width)
+            $style .= "width:{$width}px; ";
+        if ($height)
+            $style .= "height:{$height}px; ";
+        if (!$width && !$height)
+            $style = "max-width: 100%; max-height: 40px; ";
+        ?>
+        <?php if ($logo && file_exists(__DIR__ . '/../' . $logo)): ?>
+            <img src="<?= BASE_URL . '/' . $logo ?>?t=<?= filemtime(__DIR__ . '/../' . $logo) ?>" alt="DEPPO Logo"
+                class="brand-image-custom" style="<?= $style ?>object-fit: contain;">
+        <?php else: ?>
+            <i class="fas fa-warehouse brand-image ml-3" style="font-size:1.5rem; opacity:.8"></i>
+            <span class="brand-text font-weight-light ml-2">DEPPO</span>
+        <?php endif; ?>
     </a>
     <div class="sidebar">
-        <div class="user-panel mt-3 pb-3 mb-3 d-flex align-items-center">
-            <div class="image">
-                <div
-                    style="width:35px;height:35px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:50%;display:flex;align-items:center;justify-content:center;">
-                    <i class="fas fa-user text-white" style="font-size:0.9rem"></i>
-                </div>
-            </div>
-            <div class="info">
-                <a href="#" class="d-block text-truncate" style="max-width:130px">
-                    <?= e(currentUser()['name']) ?>
-                </a>
-                <small class="text-muted">
-                    <?= $role === ROLE_ADMIN ? 'Admin' : ($role === ROLE_USER ? 'Yönetici' : 'Talep Eden') ?>
-                </small>
-            </div>
-        </div>
-
         <nav class="mt-2">
             <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
 
@@ -68,9 +69,9 @@ $warehouseCount = Database::fetchOne("SELECT COUNT(*) as c FROM tbl_dp_warehouse
 
                     <!-- STOK HAREKETLERİ -->
                     <li
-                        class="nav-item has-treeview <?= in_array($currentPage, ['stock_in', 'stock_in_list', 'stock_out', 'stock_out_orders', 'transfer', 'transfer_history', 'entrusted']) ? 'menu-open' : '' ?>">
-                        <a href="#"
-                            class="nav-link <?= in_array($currentPage, ['stock_in', 'stock_in_list', 'stock_out', 'stock_out_orders', 'transfer', 'transfer_history', 'entrusted']) ? 'active' : '' ?>">
+                        class="nav-item has-treeview <?= in_array($currentPage, ['stock_movements', 'stock_in', 'stock_in_list', 'stock_out', 'stock_out_orders', 'transfer', 'transfer_history', 'entrusted']) ? 'menu-open' : '' ?>">
+                        <a href="<?= BASE_URL ?>/index.php?page=stock_movements"
+                            class="nav-link <?= in_array($currentPage, ['stock_movements', 'stock_in', 'stock_in_list', 'stock_out', 'stock_out_orders', 'transfer', 'transfer_history', 'entrusted']) ? 'active' : '' ?>">
                             <i class="nav-icon fas fa-exchange-alt"></i>
                             <p>Stok Hareketleri <i class="right fas fa-angle-left"></i></p>
                         </a>
@@ -103,6 +104,13 @@ $warehouseCount = Database::fetchOne("SELECT COUNT(*) as c FROM tbl_dp_warehouse
                                     class="nav-link <?= $currentPage === 'entrusted' ? 'active' : '' ?>">
                                     <i class="far fa-circle nav-icon"></i>
                                     <p>Emanet Yönetimi</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="<?= BASE_URL ?>/index.php?page=packing_list"
+                                    class="nav-link <?= $currentPage === 'packing_list' ? 'active' : '' ?>">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Çeki Listesi (Packing)</p>
                                 </a>
                             </li>
                         </ul>

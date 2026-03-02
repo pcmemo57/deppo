@@ -1,22 +1,89 @@
 <?php
-/**
- * Kullanıcı Yönetimi — Admin & Normal Kullanıcı
- */
 requireRole(ROLE_ADMIN);
+
+$activeTab = $_GET['tab'] ?? 'admins';
+$tabs = ['admins', 'users'];
+if (!in_array($activeTab, $tabs))
+    $activeTab = 'admins';
 ?>
+
+<style>
+    /* ══════════════════════════════════════════
+       CUSTOM SEGMENTED TABS STYLING
+    ══════════════════════════════════════════ */
+    .settings-card {
+        border: none !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+        border-radius: 12px !important;
+        overflow: hidden;
+    }
+
+    .settings-tabs-wrapper {
+        background: #f8fafc;
+        padding: 10px 15px 0 15px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .nav-segmented {
+        display: flex;
+        background: #e2e8f0;
+        padding: 4px;
+        border-radius: 10px;
+        border: none !important;
+        gap: 2px;
+        width: fit-content;
+        margin-bottom: 10px;
+    }
+
+    .nav-segmented .nav-item {
+        margin: 0;
+    }
+
+    .nav-segmented .nav-link {
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 8px 18px !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        color: #64748b !important;
+        background: transparent !important;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .nav-segmented .nav-link i {
+        font-size: 0.95rem;
+        opacity: 0.8;
+    }
+
+    .nav-segmented .nav-link:hover {
+        color: #1e293b !important;
+        background: rgba(255, 255, 255, 0.4) !important;
+    }
+
+    .nav-segmented .nav-link.active {
+        background: #fff !important;
+        color: #1a56db !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+    }
+</style>
 
 <div class="row">
     <div class="col-12">
-        <div class="card card-primary card-outline card-outline-tabs">
-            <div class="card-header p-0 border-bottom-0">
-                <ul class="nav nav-tabs" id="userTabs" role="tablist">
+        <div class="card card-primary card-tabs settings-card">
+            <div class="settings-tabs-wrapper">
+                <ul class="nav nav-tabs nav-segmented" id="userTabs" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link active" data-bs-toggle="tab" href="#tab-admins" role="tab">
+                        <a class="nav-link <?= $activeTab === 'admins' ? 'active' : '' ?>" data-bs-toggle="tab"
+                            href="#tab-admins" role="tab">
                             <i class="fas fa-user-shield me-1"></i>Adminler
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" data-bs-toggle="tab" href="#tab-users" role="tab">
+                        <a class="nav-link <?= $activeTab === 'users' ? 'active' : '' ?>" data-bs-toggle="tab"
+                            href="#tab-users" role="tab">
                             <i class="fas fa-user-cog me-1"></i>Program Yöneticileri
                         </a>
                     </li>
@@ -25,7 +92,8 @@ requireRole(ROLE_ADMIN);
             <div class="card-body p-0">
                 <div class="tab-content">
                     <!-- ══ ADMINLER ══ -->
-                    <div class="tab-pane fade show active" id="tab-admins" role="tabpanel">
+                    <div class="tab-pane fade <?= $activeTab === 'admins' ? 'show active' : '' ?>" id="tab-admins"
+                        role="tabpanel">
                         <div class="p-3 d-flex justify-content-between align-items-center border-bottom bg-light">
                             <h3 class="card-title text-sm text-bold">Admin Kullanıcıları</h3>
                             <div class="card-tools d-flex gap-2">
@@ -67,7 +135,8 @@ requireRole(ROLE_ADMIN);
                     </div>
 
                     <!-- ══ PROGRAM YÖNETİCİLERİ ══ -->
-                    <div class="tab-pane fade" id="tab-users" role="tabpanel">
+                    <div class="tab-pane fade <?= $activeTab === 'users' ? 'show active' : '' ?>" id="tab-users"
+                        role="tabpanel">
                         <div class="p-3 d-flex justify-content-between align-items-center border-bottom bg-light">
                             <h3 class="card-title text-sm text-bold">Program Yöneticileri</h3>
                             <div class="card-tools d-flex gap-2">
@@ -316,6 +385,13 @@ requireRole(ROLE_ADMIN);
     $('#searchUsers').on('input', function () { clearTimeout(userTimer); userSearch = $(this).val(); userTimer = setTimeout(function () { userPage = 1; loadUsers(); }, 400); });
     $('#perPageAdmins').on('change', function () { adminPerPage = parseInt($(this).val()); adminPage = 1; loadAdmins(); });
     $('#perPageUsers').on('change', function () { userPerPage = parseInt($(this).val()); userPage = 1; loadUsers(); });
+
+    // Tab persistence - URL update on click
+    $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+        var tabId = $(e.target).attr('href').replace('#tab-', '');
+        var newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?page=admin_users&tab=' + tabId;
+        window.history.replaceState({ path: newUrl }, '', newUrl);
+    });
 
     // İlk yükleme
     loadAdmins();

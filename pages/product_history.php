@@ -86,8 +86,94 @@ $totalBalance = array_sum(array_column($stocks, 'balance'));
                     </div>
                 </div>
 
-                <a href="<?= BASE_URL ?>/index.php?page=products&action=edit&id=<?= $productId ?>"
+                <a href="javascript:void(0)" onclick="editProduct(<?= $productId ?>)"
                     class="btn btn-outline-primary btn-block mt-4"><b>Ürünü Düzenle</b></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal fade" id="crudModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="modalTitle">Ürün Düzenle</h5>
+                    <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body">
+                    <form id="crudForm" enctype="multipart/form-data">
+                        <input type="hidden" name="action" value="edit">
+                        <input type="hidden" name="id" value="<?= $productId ?>">
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <div class="mb-2">
+                                    <img id="previewImg"
+                                        src="<?= $product['image'] ? BASE_URL . '/images/UrunResim/' . $product['image'] : BASE_URL . '/assets/no-image.png' ?>"
+                                        alt="Ürün Resmi"
+                                        style="width:150px;height:150px;object-fit:cover;border-radius:10px;border:2px solid #dee2e6;">
+                                </div>
+                                <label class="form-label">Ürün Resmi</label>
+                                <input type="file" name="image" id="imageInput" class="form-control form-control-sm"
+                                    accept="image/*">
+                            </div>
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="mb-3"><label class="form-label">Ürün Adı <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="text" name="name" class="form-control"
+                                                value="<?= e($product['name']) ?>" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3"><label class="form-label">Birim</label>
+                                            <select name="unit" class="form-select">
+                                                <option value="Adet" <?= $product['unit'] == 'Adet' ? 'selected' : '' ?>>
+                                                    Adet</option>
+                                                <option value="Kg" <?= $product['unit'] == 'Kg' ? 'selected' : '' ?>>Kg
+                                                </option>
+                                                <option value="Litre" <?= $product['unit'] == 'Litre' ? 'selected' : '' ?>>
+                                                    Litre</option>
+                                                <option value="Metre" <?= $product['unit'] == 'Metre' ? 'selected' : '' ?>>
+                                                    Metre</option>
+                                                <option value="Kutu" <?= $product['unit'] == 'Kutu' ? 'selected' : '' ?>>
+                                                    Kutu</option>
+                                                <option value="Paket" <?= $product['unit'] == 'Paket' ? 'selected' : '' ?>>
+                                                    Paket</option>
+                                                <option value="Ton" <?= $product['unit'] == 'Ton' ? 'selected' : '' ?>>Ton
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3"><label class="form-label">Ürün Kodu</label>
+                                            <input type="text" name="code" class="form-control"
+                                                value="<?= e($product['code']) ?>">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Alarm Seviyesi</label>
+                                            <input type="number" name="stock_alarm" class="form-control"
+                                                value="<?= (int) $product['stock_alarm'] ?>" min="0">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <div class="mb-3"><label class="form-label">Açıklama</label>
+                                            <textarea name="description" class="form-control"
+                                                rows="3"><?= e($product['description']) ?></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                    <button type="button" class="btn btn-success" id="btnSaveProduct">Kaydet</button>
+                </div>
             </div>
         </div>
     </div>
@@ -257,6 +343,49 @@ $totalBalance = array_sum(array_column($stocks, 'balance'));
             $('#viewOutModal').modal('show');
         }, 'json');
     }
+    function editProduct(id) {
+        $('#crudModal').modal('show');
+    }
+
+    $(function () {
+        $('#imageInput').on('change', function () {
+            var file = this.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function (e) { $('#previewImg').attr('src', e.target.result); };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        $('#btnSaveProduct').on('click', function () {
+            var formData = new FormData($('#crudForm')[0]);
+            var $btn = $(this);
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Kaydediliyor...');
+
+            $.ajax({
+                url: '<?= BASE_URL ?>/api/products.php',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (r) {
+                    if (r.success) {
+                        showSuccess(r.message);
+                        $('#crudModal').modal('hide');
+                        setTimeout(function () { location.reload(); }, 1000);
+                    } else {
+                        showError(r.message);
+                        $btn.prop('disabled', false).text('Kaydet');
+                    }
+                },
+                error: function () {
+                    showError('Bağlantı hatası.');
+                    $btn.prop('disabled', false).text('Kaydet');
+                },
+                dataType: 'json'
+            });
+        });
+    });
 </script>
 
 <!-- MODAL: Giriş Detayı -->

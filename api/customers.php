@@ -60,6 +60,12 @@ switch ($action) {
     case 'active_list':
         $rows = Database::fetchAll("SELECT id,name FROM `$table` WHERE hidden=0 AND is_active=1 ORDER BY name");
         jsonResponse(true, '', $rows);
+
+    case 'search':
+        $q = sanitize($_GET['q'] ?? '');
+        $rows = Database::fetchAll("SELECT id, name as text FROM `$table` WHERE hidden=0 AND is_active=1 AND name LIKE ? ORDER BY name LIMIT 20", ["%$q%"]);
+        echo json_encode(['results' => $rows]);
+        exit;
     default:
         jsonResponse(false, 'Geçersiz işlem.');
 }

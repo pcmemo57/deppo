@@ -7,6 +7,7 @@ $warehouseCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_warehouse
 $productCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_products WHERE hidden=0')['c'] ?? 0;
 $customerCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_customers WHERE hidden=0')['c'] ?? 0;
 $supplierCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_suppliers WHERE hidden=0')['c'] ?? 0;
+$requesterCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_requesters WHERE is_active=1')['c'] ?? 0;
 $stockInToday = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_stock_in WHERE DATE(created_at)=CURDATE()')['c'] ?? 0;
 $stockOutToday = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_stock_out WHERE DATE(created_at)=CURDATE()')['c'] ?? 0;
 $transferCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_transfers WHERE DATE(created_at)=CURDATE()')['c'] ?? 0;
@@ -42,7 +43,7 @@ $entrustedList = Database::fetchAll(
 
 // Stok Alarmı (Kritik Seviye Altındakiler)
 $lowStockProducts = Database::fetchAll("
-    SELECT p.id, p.name, p.unit, p.stock_alarm, 
+    SELECT p.id, p.name, p.code, p.unit, p.image, p.stock_alarm, p.procurement_status, p.procurement_note,
            (SELECT COALESCE(SUM(quantity), 0) FROM tbl_dp_stock_in WHERE product_id = p.id AND is_active = 1) -
            (SELECT COALESCE(SUM(quantity), 0) FROM tbl_dp_stock_out WHERE product_id = p.id) AS current_stock
     FROM tbl_dp_products p
@@ -51,89 +52,402 @@ $lowStockProducts = Database::fetchAll("
     HAVING current_stock < p.stock_alarm
     ORDER BY current_stock ASC
 ");
+
+$procurementStatuses = [
+    0 => 'Beklemede',
+    1 => 'Teklifler Değerlendiriliyor',
+    2 => 'Bütçe Araştırılıyor',
+    3 => 'Sipariş Verildi',
+    4 => 'Tedarikçi Araştırılıyor',
+    5 => 'Tamamlandı'
+];
 ?>
 
 <!-- İstatistik Kartları -->
 <?php if (!empty($lowStockProducts)): ?>
     <div class="row">
         <div class="col-12">
-            <div class="alert alert-danger shadow-sm border-left-danger">
-                <h5><i class="icon fas fa-exclamation-triangle"></i> Kritik Stok Uyarıları!</h5>
-                <ul class="mb-0">
+            <div class="alert alert-danger shadow-sm border-0 bg-soft-red text-dark p-0 overflow-hidden mb-4">
+                <div class="bg-danger text-white px-4 py-2 d-flex align-items-center justify-content-between">
+                    <h5 class="fw-bold mb-0" style="font-size: 1.1rem;">
+                        <i class="fas fa-exclamation-triangle me-2"></i> Kritik Stok Uyarıları!
+                    </h5>
+                    <span class="badge bg-white text-danger fw-bold rounded-pill px-3"><?= count($lowStockProducts) ?>
+                        Ürün</span>
+                </div>
+                <div class="list-group list-group-flush px-4 py-2">
                     <?php foreach ($lowStockProducts as $lp): ?>
-                        <li>
-                            <strong><?= e($lp['name']) ?></strong>: Mevcut Stok
-                            <span class="badge bg-white text-danger px-2 mx-1"><?= e(formatQty($lp['current_stock'])) ?></span>
-                            (Alarm Seviyesi: <?= e(formatQty($lp['stock_alarm'])) ?>         <?= e($lp['unit']) ?>)
-                            <a href="<?= BASE_URL ?>/index.php?page=stock_status&search=<?= urlencode($lp['name']) ?>"
-                                class="ms-2 text-white text-decoration-underline small">Detaylı Gör</a>
-                        </li>
+                        <div
+                            class="list-group-item d-flex align-items-center justify-content-between flex-wrap bg-transparent border-0 px-0 py-2">
+                            <div class="me-auto">
+                                <span class="fw-bold fs-6 text-dark"><?= e($lp['name']) ?></span>
+                            </div>
+                            <div class="d-flex align-items-center flex-wrap">
+                                <span
+                                    class="badge rounded bg-white text-dark border shadow-sm py-1 px-3 fw-normal badge-spacing"
+                                    style="font-size: 0.8125rem;">
+                                    <i class="fas fa-cubes text-muted me-2"></i> Mevcut Stok: <span
+                                        class="text-danger fw-bold ms-1"><?= e(formatQty($lp['current_stock'])) ?></span>
+                                </span>
+                                <span
+                                    class="badge rounded bg-white text-dark border shadow-sm py-1 px-3 fw-normal badge-spacing"
+                                    style="font-size: 0.8125rem;">
+                                    <i class="fas fa-bell text-muted me-2"></i> Alarm Seviyesi: <span
+                                        class="fw-bold ms-1"><?= e(formatQty($lp['stock_alarm'])) ?></span>
+                                </span>
+                                <a href="<?= BASE_URL ?>/index.php?page=stock_status&search=<?= urlencode($lp['name']) ?>"
+                                    class="badge rounded bg-white text-info border shadow-sm py-1 px-3 text-decoration-none hover-shadow fw-bold badge-spacing"
+                                    style="font-size: 0.8125rem;" title="Stok Detayı">
+                                    <i class="fas fa-search me-2"></i> Detayları Gör
+                                </a>
+                                <a href="javascript:void(0)"
+                                    onclick="openProcurementModal(<?= (int) $lp['id'] ?>, '<?= e(addslashes($lp['name'])) ?>', <?= (int) $lp['procurement_status'] ?>, '<?= e(addslashes($lp['procurement_note'])) ?>', '<?= e($lp['image']) ?>', '<?= e(addslashes($lp['code'])) ?>')"
+                                    class="badge rounded bg-white text-primary border shadow-sm py-1 px-3 text-decoration-none hover-shadow fw-bold badge-spacing"
+                                    style="font-size: 0.8125rem;">
+                                    <i class="fas fa-truck-loading me-2"></i> Tedarik:
+                                    <span
+                                        class="ms-1"><?= $procurementStatuses[$lp['procurement_status']] ?? 'Bilinmiyor' ?></span>
+                                </a>
+                            </div>
+                        </div>
                     <?php endforeach; ?>
-                </ul>
+                </div>
             </div>
         </div>
     </div>
+
+    <style>
+        .bg-soft-red {
+            background-color: #fff8f8;
+            border-left: 5px solid #dc3545 !important;
+        }
+
+        .hover-shadow:hover {
+            filter: brightness(0.95);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+            transform: translateY(-1px);
+        }
+
+        .badge {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .badge-spacing {
+            margin: 3px 6px !important;
+        }
+    </style>
 <?php endif; ?>
 
+<!-- Tedarik Süreci Modalı -->
+<div class="modal fade" id="procurementModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content premium-modal border-0 shadow-lg">
+            <div class="modal-header bg-premium py-3">
+                <h5 class="modal-title fw-bold text-white"><i class="fas fa-truck-loading me-3 text-warning"
+                        style="margin-right: 10px;"></i>Tedarik Süreci Güncelleme</h5>
+                <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="row g-0">
+                    <!-- Sol Taraf: Ürün Kartı -->
+                    <div class="col-md-5 bg-light p-4 border-end">
+                        <div class="text-center mb-3">
+                            <img id="proc_product_img" class="img-fluid rounded shadow-sm mb-3 border bg-white p-1"
+                                src="" alt="" style="max-height: 200px; width: 100%; object-fit: contain;">
+                            <div id="proc_no_img"
+                                class="bg-white d-flex align-items-center justify-content-center rounded shadow-sm mb-3 mx-auto border"
+                                style="height: 180px; width: 180px;">
+                                <i class="fas fa-box text-muted fa-4x"></i>
+                            </div>
+                        </div>
+                        <div class="px-2">
+                            <h4 id="proc_product_name_h" class="fw-bold text-dark text-center mb-1"></h4>
+                            <p id="proc_product_code_p" class="text-muted text-center small mb-4 border-bottom pb-2">
+                            </p>
+
+                            <div class="modal-section-label">
+                                <i class="fas fa-history text-primary me-2"></i> Geçmiş Tedarikçiler
+                            </div>
+                            <div id="proc_supplier_history" class="small text-muted ps-2 bg-white p-3 rounded border">
+                                <div class="spinner-border spinner-border-sm text-primary"></div> Yükleniyor...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sağ Taraf: Süreç Formu -->
+                    <div class="col-md-7 p-4 bg-white">
+                        <input type="hidden" id="proc_product_id">
+
+                        <div class="modal-section-label">
+                            <i class="fas fa-info-circle text-primary me-2"></i> Süreç Bilgileri
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Güncel Durum</label>
+                            <div class="input-icon-wrap">
+                                <i class="fas fa-tasks field-icon"></i>
+                                <select id="proc_status" class="form-select border-2 shadow-sm ps-5 py-2">
+                                    <?php foreach ($procurementStatuses as $val => $label): ?>
+                                        <option value="<?= $val ?>"><?= e($label) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label fw-bold">Süreç Notları / Açıklama</label>
+                            <div class="input-icon-wrap">
+                                <i class="fas fa-comment-dots field-icon" style="top: 15px; transform: none;"></i>
+                                <textarea id="proc_note" class="form-control border-2 shadow-sm ps-5" rows="8"
+                                    placeholder="Tedarik süreci ile ilgili gelişmeleri buraya not edin..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-top py-3 px-4">
+                <button type="button" class="btn-modal-cancel me-auto" data-bs-dismiss="modal">Vazgeç</button>
+                <button type="button" class="btn-modal-save" id="btnSaveProcurement">
+                    <i class="fas fa-save me-2"></i>Değişiklikleri Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function esc(v) { return $('<div/>').text(v || '').html(); }
+
+    function openProcurementModal(id, name, status, note, image, code) {
+        $('#proc_product_id').val(id);
+        $('#proc_product_name_h').text(name);
+        $('#proc_product_code_p').text(code || 'Kodsuz Ürün');
+        $('#proc_status').val(status);
+        $('#proc_note').val(note);
+
+        // Resim ayarı
+        if (image) {
+            $('#proc_product_img').attr('src', '<?= BASE_URL ?>/images/UrunResim/' + encodeURIComponent(image)).show();
+            $('#proc_no_img').hide();
+        } else {
+            $('#proc_product_img').hide();
+            $('#proc_no_img').show();
+        }
+
+        // Tedarikçi geçmişini getir
+        $('#proc_supplier_history').html('<div class="spinner-border spinner-border-sm text-primary"></div> Yükleniyor...');
+        $.get('<?= BASE_URL ?>/api/products.php', { action: 'get_supplier_history', id: id }, function (r) {
+            if (r.success && r.data.length > 0) {
+                let sHtml = '<ul class="list-unstyled mb-0">';
+                $.each(r.data, function (i, s) {
+                    sHtml += `<li class="mb-1"><i class="fas fa-truck text-muted me-2 small"></i>${esc(s.supplier_name)}</li>`;
+                });
+                sHtml += '</ul>';
+                $('#proc_supplier_history').html(sHtml);
+            } else {
+                $('#proc_supplier_history').html('<span class="text-muted font-italic">Kayıtlı tedarikçi bulunamadı.</span>');
+            }
+        }, 'json');
+
+        $('#procurementModal').modal('show');
+    }
+
+    $(function () {
+        $('#btnSaveProcurement').on('click', function () {
+            var id = $('#proc_product_id').val();
+            var status = $('#proc_status').val();
+            var note = $('#proc_note').val();
+            var $btn = $(this);
+
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Kaydediliyor...');
+
+            $.post('<?= BASE_URL ?>/api/products.php', {
+                action: 'update_procurement',
+                id: id,
+                status: status,
+                note: note
+            }, function (r) {
+                if (r.success) {
+                    showSuccess(r.message);
+                    $('#procurementModal').modal('hide');
+                    setTimeout(function () { location.reload(); }, 800);
+                } else {
+                    showError(r.message);
+                    $btn.prop('disabled', false).html('<i class="fas fa-check-circle me-1"></i>Değişiklikleri Kaydet');
+                }
+            }, 'json').fail(function () {
+                showError('Bağlantı hatası oluştu.');
+                $btn.prop('disabled', false).html('<i class="fas fa-check-circle me-1"></i>Değişiklikleri Kaydet');
+            });
+        });
+    });
+</script>
+
 <style>
-    .small-box {
-        transition: transform 0.2s, box-shadow 0.2s;
-        cursor: pointer;
-        text-decoration: none !important;
-        display: block;
-        margin-bottom: 20px;
-        border-radius: 8px;
-        position: relative;
+    /* ─── PREMIUM MODAL TASARIMI (dashboard focus) ─── */
+    .premium-modal.modal-content {
+        border: none;
+        border-radius: 16px !important;
         overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
     }
 
-    .small-box:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-        color: #fff !important;
+    .modal-header.bg-premium {
+        background: linear-gradient(135deg, #1a56db 0%, #0c3daa 100%) !important;
+        padding: 20px 28px;
     }
 
-    /* Warning box text color fix for consistency */
-    .small-box.bg-warning:hover {
-        color: #1f2d3d !important;
+    .modal-section-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #6b7a99;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e4e9f0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
     }
 
-    .small-box.bg-warning {
-        color: #1f2d3d !important;
+    .modal-section-label i {
+        margin-right: 0px;
     }
 
-    .small-box .inner {
-        padding: 12px 15px !important;
+    .input-icon-wrap {
+        position: relative;
     }
 
-    .small-box h3 {
-        font-size: 1.8rem !important;
-        font-weight: 700 !important;
-        margin: 0 !important;
-        white-space: nowrap;
-    }
-
-    .small-box p {
-        font-size: 0.9rem !important;
-        margin: 0 !important;
-        opacity: 0.9;
-    }
-
-    .small-box .icon {
+    .input-icon-wrap .field-icon {
         position: absolute;
-        top: 5px;
-        right: 15px;
-        z-index: 0;
-        font-size: 50px;
-        color: rgba(0, 0, 0, 0.15);
-        transition: transform 0.3s;
+        left: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9aa5be;
+        font-size: 1.1rem;
+        z-index: 5;
     }
 
-    .small-box:hover .icon {
-        transform: scale(1.1);
+    .input-icon-wrap .form-control,
+    .input-icon-wrap .form-select {
+        border-radius: 10px;
+        border: 1.5px solid #d1d9e6;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        transition: all 0.2s;
+    }
+
+    .input-icon-wrap .form-control:focus,
+    .input-icon-wrap .form-select:focus {
+        border-color: #1a56db;
+        box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.1);
+    }
+
+    .btn-modal-cancel {
+        background: transparent;
+        border: 1.5px solid #c9d3e0;
+        color: #4a5568;
+        border-radius: 10px;
+        padding: 10px 28px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .btn-modal-cancel:hover {
+        background: #f0f4f9;
+        border-color: #a0aec0;
+        color: #1f2937;
+    }
+
+    .btn-modal-save {
+        background: linear-gradient(135deg, #1a56db, #0c3daa);
+        border: none;
+        color: #fff;
+        border-radius: 10px;
+        padding: 10px 35px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        box-shadow: 0 6px 16px rgba(26, 86, 219, 0.25);
+        transition: all 0.2s;
+    }
+
+    .btn-modal-save:hover {
+        background: linear-gradient(135deg, #1d4ed8, #0a35a0);
+        box-shadow: 0 8px 20px rgba(26, 86, 219, 0.35);
+        transform: translateY(-1px);
+        color: #fff;
     }
 </style>
 
+<?php
+// Hareket Özetleri
+$stockInCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_stock_in')['c'] ?? 0;
+$stockOutCount = Database::fetchOne('SELECT COUNT(DISTINCT batch_id) AS c FROM tbl_dp_stock_out')['c'] ?? 0;
+$transferCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_transfers')['c'] ?? 0;
+$entrustedCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_entrusted WHERE remaining_quantity > 0')['c'] ?? 0;
+?>
+
+<div class="row">
+    <div class="col-lg-3 col-6">
+        <a href="<?= BASE_URL ?>/index.php?page=stock_out_orders" class="small-box bg-success shadow-sm">
+            <div class="inner">
+                <h3><?= e(formatQty($stockOutCount)) ?></h3>
+                <p>Depodan Çıkış</p>
+            </div>
+            <div class="icon"><i class="fas fa-sign-out-alt"></i></div>
+        </a>
+    </div>
+    <div class="col-lg-3 col-6">
+        <a href="<?= BASE_URL ?>/index.php?page=entrusted" class="small-box bg-danger shadow-sm">
+            <div class="inner">
+                <h3><?= e(formatQty($entrustedCount)) ?></h3>
+                <p>Emanetler</p>
+            </div>
+            <div class="icon"><i class="fas fa-hand-holding"></i></div>
+        </a>
+    </div>
+    <div class="col-lg-3 col-6">
+        <a href="<?= BASE_URL ?>/index.php?page=stock_in_list" class="small-box bg-info shadow-sm">
+            <div class="inner">
+                <h3><?= e(formatQty($stockInCount)) ?></h3>
+                <p>Stok Girişleri</p>
+            </div>
+            <div class="icon"><i class="fas fa-sign-in-alt"></i></div>
+        </a>
+    </div>
+    <div class="col-lg-3 col-6">
+    <a href="javascript:void(0)" class="small-box shadow-sm border"
+        style="background: #f8f9fa; color: #495057; cursor: default;">
+        <div class="inner p-2">
+            <table class="table table-sm table-borderless mb-0 m-0 w-100" style="font-size: 0.82rem; color: inherit;">
+                <tbody>
+                    <tr>
+                        <td class="p-0 border-0 pb-1 w-75"><i class="fas fa-users me-2 text-secondary opacity-75"></i> Müşteri</td>
+                        <td class="p-0 border-0 pb-1 fw-bold" style="text-align: right;"><?= e(formatQty($customerCount)) ?></td>
+                    </tr>
+                    <tr>
+                        <td class="p-0 border-0 pb-1 w-75"><i class="fas fa-truck-moving me-2 text-secondary opacity-75"></i> Tedarikçi</td>
+                        <td class="p-0 border-0 pb-1 fw-bold" style="text-align: right;"><?= e(formatQty($supplierCount)) ?></td>
+                    </tr>
+                    <tr>
+                        <td class="p-0 border-0 pb-1 w-75"><i class="fas fa-user-friends me-2 text-secondary opacity-75"></i> Personel</td>
+                        <td class="p-0 border-0 pb-1 fw-bold" style="text-align: right;"><?= e(formatQty($requesterCount)) ?></td>
+                    </tr>
+                    <tr>
+                        <td class="p-0 border-0 w-75"><i class="fas fa-boxes me-2 text-secondary opacity-75"></i> Ürün</td>
+                        <td class="p-0 border-0 fw-bold" style="text-align: right;"><?= e(formatQty($productCount)) ?></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </a>
+</div>
+</div>
+<!-- 
 <div class="row">
     <div class="col-lg-3 col-6">
         <a href="<?= BASE_URL ?>/index.php?page=warehouses" class="small-box bg-info">
@@ -171,10 +485,10 @@ $lowStockProducts = Database::fetchAll("
             <div class="icon"><i class="fas fa-truck"></i></div>
         </a>
     </div>
-</div>
+</div> -->
 
 <!-- Bugünkü Hareketler -->
-<div class="row">
+<!-- <div class="row">
     <div class="col-md-4">
         <div class="info-box">
             <span class="info-box-icon bg-success elevation-1"><i class="fas fa-arrow-down"></i></span>
@@ -208,64 +522,274 @@ $lowStockProducts = Database::fetchAll("
             </div>
         </div>
     </div>
+</div> -->
+
+<?php if (!empty($entrustedList)): ?>
+    <!-- Emanetteki Ürünler (Tam Genişlik) -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card card-outline card-warning">
+                <div class="card-header">
+                    <h3 class="card-title text-bold"><i class="fas fa-hand-holding me-2"></i>Emanetteki Ürünler
+                        (Bekleyenler)</h3>
+                    <div class="card-tools">
+                        <a href="<?= BASE_URL ?>/index.php?page=entrusted" class="btn btn-sm btn-primary shadow-sm">
+                            Tümünü Yönet <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-0 table-responsive text-nowrap">
+                    <table class="table table-sm table-hover table-striped mb-0">
+                        <thead class="bg-light text-muted small text-uppercase">
+                            <tr>
+                                <th class="ps-3">Ürün</th>
+                                <th>Emanet Alan</th>
+                                <th>Depo</th>
+                                <th class="num-align">Kalan Miktar</th>
+                                <th class="num-align">İade Tarihi</th>
+                                <th class="num-align">Kayıt Tarihi</th>
+                                <th class="text-center pe-3">İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($entrustedList as $e): ?>
+                                <tr>
+                                    <td class="ps-3"><strong><?= e($e['product']) ?></strong></td>
+                                    <td><?= e($e['req_name'] . ' ' . $e['req_surname']) ?></td>
+                                    <td><small class="text-muted"><?= e($e['warehouse']) ?></small></td>
+                                    <td class="num-align">
+                                        <span
+                                            class="badge bg-warning text-dark px-2"><?= e(formatQty($e['remaining_quantity'])) ?></span>
+                                        <small class="text-muted"><?= e($e['unit']) ?></small>
+                                    </td>
+                                    <td class="num-align">
+                                        <?php if ($e['expected_return_at']): ?>
+                                            <small
+                                                class="<?= (strtotime($e['expected_return_at']) < time()) ? 'text-danger fw-bold' : 'text-muted' ?>">
+                                                <i class="far fa-calendar-alt me-1"
+                                                    style="margin-right: 5px;"></i><?= e(date('d.m.Y', strtotime($e['expected_return_at']))) ?>
+                                            </small>
+                                        <?php else: ?>
+                                            <span class="text-muted">—</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="num-align">
+                                        <small><?= e(date('d.m.Y H:i', strtotime($e['created_at']))) ?></small>
+                                    </td>
+                                    <td class="text-center pe-3">
+                                        <?php
+                                        $actionData = [
+                                            'id' => $e['id'],
+                                            'product_name' => $e['product'],
+                                            'remaining_quantity' => $e['remaining_quantity'],
+                                            'unit' => $e['unit']
+                                        ];
+                                        ?>
+                                        <button class="btn btn-xs btn-info text-white shadow-sm"
+                                            onclick="openActionModal(<?= e(json_encode($actionData)) ?>)" title="İşlem Yap">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                            <?php if (empty($entrustedList)): ?>
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted p-4">Sistemde aktif emanet kaydı bulunamadı.
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
+
+<!-- Action Modal (Return/Sale) -->
+<div class="modal fade" id="actionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content premium-modal border-0 shadow-lg">
+            <div class="modal-header bg-info py-3 shadow-sm">
+                <h5 class="modal-title text-white fw-bold"><i class="fas fa-exchange-alt me-3 opacity-75"></i>Emanet
+                    İşlemi</h5>
+                <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <div class="modal-section-label">
+                    <i class="fas fa-box text-primary me-2"></i> Ürün Bilgisi
+                </div>
+                <h6 id="actionProduct" class="fw-bold text-dark mb-2 fs-5"></h6>
+                <div class="alert alert-warning border-0 small py-3 mb-4 shadow-sm d-flex align-items-center">
+                    <i class="fas fa-exclamation-circle fs-4 me-3 text-warning"></i>
+                    <div>
+                        <span class="text-muted d-block">Emanette Kalan</span>
+                        <b id="actionRemaining" class="text-danger fs-5">0</b>
+                    </div>
+                </div>
+
+                <form id="formAction">
+                    <input type="hidden" id="actionId">
+
+                    <div class="modal-section-label">
+                        <i class="fas fa-cog text-primary me-2"></i> İşlem Detayları
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label d-block text-center mb-3 fw-bold text-muted small text-uppercase">İşlem
+                            Türü</label>
+                        <div class="d-flex justify-content-center">
+                            <div class="status-btn-group shadow-sm p-1 bg-white rounded-pill border">
+                                <button type="button" class="status-btn-item rounded-pill px-4 py-2 border-0 fw-bold"
+                                    id="set_return" onclick="setActionType('return')">
+                                    <i class="fas fa-undo me-2"></i> İade Al
+                                </button>
+                                <button type="button" class="status-btn-item rounded-pill px-4 py-2 border-0 fw-bold"
+                                    id="set_sale" onclick="setActionType('sale')">
+                                    <i class="fas fa-shopping-cart me-2"></i> Müşteriye Çık
+                                </button>
+                            </div>
+                        </div>
+                        <input type="hidden" name="type" id="actionTypeValue" value="return">
+                    </div>
+
+                    <div class="mb-3" id="customerDiv" style="display:none">
+                        <label class="form-label fw-bold">Müşteri Seçin <span class="text-danger">*</span></label>
+                        <div class="input-icon-wrap">
+                            <i class="fas fa-building field-icon"></i>
+                            <select id="actionCustomerId" class="form-select border-2"></select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">İşlem Miktarı <span class="text-danger">*</span></label>
+                        <div class="input-icon-wrap">
+                            <i class="fas fa-sort-numeric-up field-icon"></i>
+                            <input type="number" id="actionQty" class="form-control border-2" step="any" required>
+                        </div>
+                    </div>
+
+                    <div class="modal-section-label mt-4">
+                        <i class="fas fa-comment-dots text-primary me-2"></i> Not
+                    </div>
+                    <div class="mb-3">
+                        <textarea id="actionNote" class="form-control border-2" rows="2"
+                            placeholder="İşlem notu..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light border-top py-3 px-4">
+                <button type="button" class="btn-modal-cancel me-auto" data-bs-dismiss="modal">Kapat</button>
+                <button type="button" class="btn-modal-save bg-info"
+                    style="box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);" id="btnSubmitAction">
+                    <i class="fas fa-check-circle me-2"></i>İşlemi Onayla
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
-<!-- Emanetteki Ürünler (Tam Genişlik) -->
+<script>
+    // Emanet İşlemleri Scripti
+    function openActionModal(d) {
+        $('#actionId').val(d.id);
+        $('#actionProduct').text(d.product_name);
+        var rem = parseFloat(d.remaining_quantity) || 0;
+        $('#actionRemaining').text(formatQty(rem) + ' ' + (d.unit || ''));
+        $('#actionQty').val(rem).attr('max', rem);
+        $('#actionNote').val('');
+        setActionType('return');
+        $('#actionCustomerId').val(null).trigger('change');
+        $('#actionModal').modal('show');
+    }
+
+    function setActionType(type) {
+        $('#actionTypeValue').val(type);
+        $('.status-btn-item').removeClass('active-state inactive-state');
+        if (type === 'return') {
+            $('#set_return').addClass('active-state');
+            $('#customerDiv').hide();
+        } else {
+            $('#set_sale').addClass('inactive-state');
+            $('#customerDiv').show();
+        }
+    }
+
+    $(document).ready(function () {
+        $('#actionCustomerId').select2({
+            theme: 'bootstrap-5', placeholder: '— Müşteri Seçin —', width: '100%', dropdownParent: $('#actionModal'),
+            ajax: { url: '<?= BASE_URL ?>/api/customers.php', data: function (p) { return { action: 'active_list', search: p.term || '' }; }, processResults: function (d) { return { results: $.map(d.data, function (u) { return { id: u.id, text: u.name }; }) }; }, delay: 300 }
+        });
+
+        $('#btnSubmitAction').on('click', function () {
+            var qty = parseFloat($('#actionQty').val());
+            if (!qty || qty <= 0) { showError('Geçerli bir miktar girin.'); return; }
+            var btn = $(this);
+            var btnHtml = btn.html();
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> İşleniyor...');
+
+            $.post('<?= BASE_URL ?>/api/entrusted.php', {
+                action: 'process_action',
+                id: $('#actionId').val(),
+                type: $('#actionTypeValue').val(),
+                quantity: qty,
+                customer_id: $('#actionCustomerId').val(),
+                note: $('#actionNote').val()
+            }, function (r) {
+                if (r.success) {
+                    showSuccess(r.message);
+                    $('#actionModal').modal('hide');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showError(r.message);
+                    btn.prop('disabled', false).html(btnHtml);
+                }
+            }, 'json');
+        });
+    });
+</script>
+
 <div class="row">
-    <div class="col-12">
-        <div class="card card-outline card-warning">
+<!-- Son Stok Çıkışları -->
+    <div class="col-md-6">
+        <div class="card card-outline card-danger">
             <div class="card-header">
-                <h3 class="card-title text-bold"><i class="fas fa-hand-holding me-2"></i>Emanetteki Ürünler
-                    (Bekleyenler)</h3>
+                <h3 class="card-title text-bold"><i class="fas fa-sign-out-alt me-2"></i>Son Stok Çıkışları</h3>
                 <div class="card-tools">
-                    <a href="<?= BASE_URL ?>/index.php?page=entrusted" class="btn btn-sm btn-primary shadow-sm">
-                        Tümünü Yönet <i class="fas fa-arrow-right ms-1"></i>
+                    <a href="<?= BASE_URL ?>/index.php?page=stock_out" class="btn btn-sm btn-danger shadow-sm">
+                        Hepsini Gör <i class="fas fa-arrow-right ms-1"></i>
                     </a>
                 </div>
             </div>
-            <div class="card-body p-0 table-responsive text-nowrap">
-                <table class="table table-sm table-hover table-striped mb-0">
-                    <thead class="bg-light text-muted small text-uppercase">
+            <div class="card-body p-0">
+                <table class="table table-sm table-striped mb-0">
+                    <thead>
                         <tr>
-                            <th class="ps-3">Ürün</th>
-                            <th>Emanet Alan</th>
-                            <th>Depo</th>
-                            <th class="num-align">Kalan Miktar</th>
-                            <th class="num-align">İade Tarihi</th>
-                            <th class="num-align">Kayıt Tarihi</th>
+                            <th>Ürün</th>
+                            <th class="num-align">Adet</th>
+                            <th class="num-align">Tarih</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($entrustedList as $e): ?>
+                        <?php foreach ($recentOut as $r): ?>
                             <tr>
-                                <td class="ps-3"><strong><?= e($e['product']) ?></strong></td>
-                                <td><?= e($e['req_name'] . ' ' . $e['req_surname']) ?></td>
-                                <td><small class="text-muted"><?= e($e['warehouse']) ?></small></td>
-                                <td class="num-align">
-                                    <span
-                                        class="badge bg-warning text-dark px-2"><?= e(formatQty($e['remaining_quantity'])) ?></span>
-                                    <small class="text-muted"><?= e($e['unit']) ?></small>
+                                <td>
+                                    <strong><?= e($r['product']) ?></strong><br>
+                                    <small class="text-muted"><i class="fas fa-warehouse me-1"></i>
+                                        <?= e($r['warehouse']) ?></small>
                                 </td>
                                 <td class="num-align">
-                                    <?php if ($e['expected_return_at']): ?>
-                                        <small
-                                            class="<?= (strtotime($e['expected_return_at']) < time()) ? 'text-danger fw-bold' : 'text-muted' ?>">
-                                            <i
-                                                class="far fa-calendar-alt me-1"></i><?= e(date('d.m.Y', strtotime($e['expected_return_at']))) ?>
-                                        </small>
-                                    <?php else: ?>
-                                        <span class="text-muted">—</span>
-                                    <?php endif; ?>
+                                    <span class="text-danger fw-bold"><?= e(formatQty($r['quantity'])) ?></span>
+                                    <small class="text-muted"><?= e($r['unit']) ?></small>
                                 </td>
                                 <td class="num-align">
-                                    <small><?= e(date('d.m.Y H:i', strtotime($e['created_at']))) ?></small>
+                                    <small><?= e(date('d.m.Y H:i', strtotime($r['created_at']))) ?></small>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
-                        <?php if (empty($entrustedList)): ?>
+                        <?php if (empty($recentOut)): ?>
                             <tr>
-                                <td colspan="6" class="text-center text-muted p-4">Sistemde aktif emanet kaydı bulunamadı.
-                                </td>
+                                <td colspan="3" class="text-center text-muted p-3">Henüz çıkış yok</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
@@ -273,9 +797,6 @@ $lowStockProducts = Database::fetchAll("
             </div>
         </div>
     </div>
-</div>
-
-<div class="row">
     <!-- Son Stok Girişleri -->
     <div class="col-md-6">
         <div class="card card-outline card-success">
@@ -324,51 +845,6 @@ $lowStockProducts = Database::fetchAll("
         </div>
     </div>
 
-    <!-- Son Stok Çıkışları -->
-    <div class="col-md-6">
-        <div class="card card-outline card-danger">
-            <div class="card-header">
-                <h3 class="card-title text-bold"><i class="fas fa-sign-out-alt me-2"></i>Son Stok Çıkışları</h3>
-                <div class="card-tools">
-                    <a href="<?= BASE_URL ?>/index.php?page=stock_out" class="btn btn-sm btn-danger shadow-sm">
-                        Hepsini Gör <i class="fas fa-arrow-right ms-1"></i>
-                    </a>
-                </div>
-            </div>
-            <div class="card-body p-0">
-                <table class="table table-sm table-striped mb-0">
-                    <thead>
-                        <tr>
-                            <th>Ürün</th>
-                            <th class="num-align">Adet</th>
-                            <th class="num-align">Tarih</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($recentOut as $r): ?>
-                            <tr>
-                                <td>
-                                    <strong><?= e($r['product']) ?></strong><br>
-                                    <small class="text-muted"><i class="fas fa-warehouse me-1"></i>
-                                        <?= e($r['warehouse']) ?></small>
-                                </td>
-                                <td class="num-align">
-                                    <span class="text-danger fw-bold"><?= e(formatQty($r['quantity'])) ?></span>
-                                    <small class="text-muted"><?= e($r['unit']) ?></small>
-                                </td>
-                                <td class="num-align">
-                                    <small><?= e(date('d.m.Y H:i', strtotime($r['created_at']))) ?></small>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                        <?php if (empty($recentOut)): ?>
-                            <tr>
-                                <td colspan="3" class="text-center text-muted p-3">Henüz çıkış yok</td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+    
+    
 </div>

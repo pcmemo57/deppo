@@ -302,19 +302,135 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
 
     function renderPag(total) { var pages = Math.ceil(total / curPerPage); if (pages <= 1) { $('#pagination').html(''); return; } var html = '<ul class="pagination pagination-sm">', s = Math.max(1, curPage - 2), e = Math.min(pages, curPage + 2); if (curPage > 1) html += '<li class="page-item"><a class="page-link" data-p="' + (curPage - 1) + '" href="#">&laquo;</a></li>'; for (var p = s; p <= e; p++)html += '<li class="page-item' + (p === curPage ? ' active' : '') + '"><a class="page-link" data-p="' + p + '" href="#">' + p + '</a></li>'; if (curPage < pages) html += '<li class="page-item"><a class="page-link" data-p="' + (curPage + 1) + '" href="#">&raquo;</a></li>'; html += '</ul>'; $('#pagination').html(html).find('a').on('click', function (e) { e.preventDefault(); curPage = parseInt($(this).data('p')); load(); }); }
 
-    // Excel export (client-side XLSX)
+    // Excel export (Styled with xlsx-js-style)
     $('#btnExcel').on('click', function () {
         if (!currentData.length) { showInfo('Önce stok verisini yükleyin.'); return; }
-        var rows = [['Ürün', 'Depo', 'Miktar', 'Birim']];
+
+        var wb = XLSX.utils.book_new();
+        var ws_data = [];
+
+        // 1. Header: DEPO STOK RAPORU
+        ws_data.push(["DEPO STOK RAPORU", "", ""]);
+        
+        // 2. Info Rows
+        var now = new Date();
+        var dateStr = now.toLocaleDateString('tr-TR') + ' ' + now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+        var selectedWhNames = $('.wh-switch:checked').map(function() { return $(this).data('name'); }).get().join(', ');
+
+        ws_data.push(["Rapor Tarihi", "", dateStr]);
+        ws_data.push(["Depo", "", selectedWhNames]);
+        ws_data.push(["", "", ""]); // Spacer
+
+        // 3. Table Header
+        ws_data.push(["Ürün Adı", "Stok Adeti", "Depo"]);
+
+        // 4. Data Rows
         $.each(currentData, function (i, row) {
             $.each(currentCols, function (j, col) {
                 var qty = row.stocks[col] || 0;
-                rows.push([row.product, col, Math.round(qty), row.unit || 'Adet']);
+                ws_data.push([row.product, Math.round(qty), col]);
             });
         });
-        var ws = XLSX.utils.aoa_to_sheet(rows);
-        var wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Stok');
+
+        var ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+        // --- STYLING ---
+        var range = XLSX.utils.decode_range(ws['!ref']);
+
+        // Column Widths (A4 Width optimization)
+        ws['!cols'] = [
+            { wch: 60 }, // Ürün Adı
+            { wch: 15 }, // Stok Adeti
+            { wch: 25 }  // Depo
+        ];
+
+        // Row Heights (Double height for title)
+        ws['!rows'] = [
+            { hpt: 40 } // Row 0 (Title)
+        ];
+
+        // Style objects
+        var styleTitle = {
+            fill: { fgColor: { rgb: "444444" } },
+            font: { color: { rgb: "FFFFFF" }, bold: true, sz: 16 },
+            alignment: { horizontal: "center", vertical: "center" }
+        };
+        var styleInfoLabel = {
+            font: { bold: true },
+            border: {
+                top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" }
+            }
+        };
+        var styleInfoValue = {
+            alignment: { horizontal: "right", wrapText: true },
+            border: {
+                top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" }
+            }
+        };
+        var styleTableHeader = {
+            fill: { fgColor: { rgb: "F2F2F2" } },
+            font: { bold: true },
+            alignment: { horizontal: "center" },
+            border: {
+                top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" }
+            }
+        };
+        var styleDataNum = {
+            alignment: { horizontal: "right" },
+            border: {
+                top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" }
+            }
+        };
+        var styleDataCenter = {
+            alignment: { horizontal: "center" },
+            border: {
+                top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" }
+            }
+        };
+        var styleDataText = {
+            border: {
+                top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" }
+            }
+        };
+
+        // Merge Title
+        ws['!merges'] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 2 } } // Title
+        ];
+
+        // Apply styles to all cells
+        for (var R = range.s.r; R <= range.e.r; ++R) {
+            for (var C = range.s.c; C <= range.e.c; ++C) {
+                var cell_ref = XLSX.utils.encode_cell({ r: R, c: C });
+                if (!ws[cell_ref]) continue;
+
+                if (R === 0) {
+                    ws[cell_ref].s = styleTitle;
+                } else if (R === 1 || R === 2) {
+                    if (C < 2) {
+                        ws[cell_ref].s = styleInfoLabel;
+                    } else {
+                        ws[cell_ref].s = styleInfoValue;
+                    }
+                    // Merge info labels (A and B)
+                    if (C === 0) {
+                        if (!ws['!merges']) ws['!merges'] = [];
+                        ws['!merges'].push({ s: { r: R, c: 0 }, e: { r: R, c: 1 } });
+                    }
+                } else if (R === 4) {
+                    ws[cell_ref].s = styleTableHeader;
+                } else if (R > 4) {
+                    if (C === 1) ws[cell_ref].s = styleDataNum;
+                    else if (C === 2) ws[cell_ref].s = styleDataCenter;
+                    else ws[cell_ref].s = styleDataText;
+                }
+            }
+        }
+
+        // Print settings
+        ws['!margins'] = { left: 0.5, right: 0.5, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 };
+        
+        XLSX.utils.book_append_sheet(wb, ws, "Stok Durumu");
         XLSX.writeFile(wb, 'stok_durumu_' + new Date().toISOString().slice(0, 10) + '.xlsx');
     });
 

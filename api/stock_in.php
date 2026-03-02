@@ -45,6 +45,13 @@ switch ($action) {
              VALUES (?,?,?,?,?,?,?,?,?,?)",
             [$warehouseId, $productId, $supplierId, $quantity, $unitPrice, $currency, $priceEur, $note, $userId, $userName]
         );
+
+        // Tedarik sürecini resetle
+        Database::execute(
+            "UPDATE tbl_dp_products SET procurement_status = 0, procurement_note = '' WHERE id = ?",
+            [$productId]
+        );
+
         jsonResponse(true, 'Stok girişi kaydedildi.');
 
     case 'recent':

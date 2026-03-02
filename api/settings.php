@@ -27,7 +27,7 @@ switch ($action) {
         jsonResponse(true, 'Mail ayarları kaydedildi.');
 
     case 'save_appearance':
-        $keys = ['header_bg', 'header_color', 'footer_bg', 'footer_color', 'footer_text', 'google_font'];
+        $keys = ['header_bg', 'header_color', 'footer_bg', 'footer_color', 'footer_text', 'google_font', 'system_logo_width', 'system_logo_height'];
         foreach ($keys as $key) {
             if (isset($_POST[$key])) {
                 set_setting($key, sanitize($_POST[$key]));
@@ -93,6 +93,46 @@ switch ($action) {
             jsonResponse(true, 'Test maili gönderildi.');
         } else {
             jsonResponse(false, 'Mail gönderilemedi. Ayarları kontrol edin.');
+        }
+
+    case 'save_logo':
+        if (!isset($_FILES['system_logo_file']) || $_FILES['system_logo_file']['error'] !== UPLOAD_ERR_OK) {
+            jsonResponse(false, 'Dosya yüklenemedi veya seçilmedi.');
+        }
+
+        $file = $_FILES['system_logo_file'];
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!in_array($file['type'], $allowedTypes)) {
+            jsonResponse(false, 'Sadece JPG, PNG, GIF veya WEBP dosyaları yüklenebilir.');
+        }
+
+        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = 'logo_' . time() . '.' . $ext;
+        $uploadDir = __DIR__ . '/../uploads/system/';
+
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+
+        // Eski logoyu sil (isteğe bağlı)
+        $oldLogo = get_setting('system_logo');
+        if ($oldLogo && file_exists(__DIR__ . '/../' . $oldLogo)) {
+            @unlink(__DIR__ . '/../' . $oldLogo);
+        }
+
+        if (move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
+            $dbPath = 'uploads/system/' . $filename;
+            set_setting('system_logo', $dbPath);
+
+            // Eğer boyutlar da gönderildiyse kaydet
+            if (isset($_POST['system_logo_width']))
+                set_setting('system_logo_width', sanitize($_POST['system_logo_width']));
+            if (isset($_POST['system_logo_height']))
+                set_setting('system_logo_height', sanitize($_POST['system_logo_height']));
+
+            jsonResponse(true, 'Logo başarıyla yüklendi.', ['url' => BASE_URL . '/' . $dbPath]);
+        } else {
+            jsonResponse(false, 'Dosya sunucuya kaydedilemedi.');
         }
 
     default:

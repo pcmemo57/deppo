@@ -4,6 +4,12 @@
  */
 requireRole(ROLE_ADMIN);
 
+$activeTab = $_GET['tab'] ?? 'mail';
+$tabs = ['mail', 'appearance', 'currency', 'general', 'data-mgmt', 'backup'];
+if (!in_array($activeTab, $tabs)) {
+    $activeTab = 'mail';
+}
+
 $googleFontList = [
     'default' => 'AdminLTE Varsayılanı (Source Sans Pro)',
     'Roboto' => 'Roboto',
@@ -25,7 +31,7 @@ $googleFontList = [
     ══════════════════════════════════════════ */
     .settings-card {
         border: none !important;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05) !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
         border-radius: 12px !important;
         overflow: hidden;
     }
@@ -72,20 +78,20 @@ $googleFontList = [
 
     .nav-segmented .nav-link:hover {
         color: #1e293b !important;
-        background: rgba(255,255,255,0.4) !important;
+        background: rgba(255, 255, 255, 0.4) !important;
     }
 
     .nav-segmented .nav-link.active {
         background: #fff !important;
         color: #1a56db !important;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
     }
 
     /* Özel renkli tablar */
     .nav-segmented .nav-link.tab-danger.active {
         color: #dc2626 !important;
     }
-    
+
     .nav-segmented .nav-link.tab-backup.active {
         color: #059669 !important;
     }
@@ -101,32 +107,38 @@ $googleFontList = [
             <div class="settings-tabs-wrapper">
                 <ul class="nav nav-tabs nav-segmented" id="settingsTabs" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link active" data-bs-toggle="tab" href="#tab-mail">
+                        <a class="nav-link <?= $activeTab === 'mail' ? 'active' : '' ?>" data-bs-toggle="tab"
+                            href="#tab-mail">
                             <i class="fas fa-envelope"></i>Mail Ayarları
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" data-bs-toggle="tab" href="#tab-appearance">
+                        <a class="nav-link <?= $activeTab === 'appearance' ? 'active' : '' ?>" data-bs-toggle="tab"
+                            href="#tab-appearance">
                             <i class="fas fa-paint-brush"></i>Görünüm
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" data-bs-toggle="tab" href="#tab-currency">
+                        <a class="nav-link <?= $activeTab === 'currency' ? 'active' : '' ?>" data-bs-toggle="tab"
+                            href="#tab-currency">
                             <i class="fas fa-money-bill-wave"></i>Döviz Kurları
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" data-bs-toggle="tab" href="#tab-general">
+                        <a class="nav-link <?= $activeTab === 'general' ? 'active' : '' ?>" data-bs-toggle="tab"
+                            href="#tab-general">
                             <i class="fas fa-cog"></i>Genel
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link tab-danger" data-bs-toggle="tab" href="#tab-data-mgmt">
+                        <a class="nav-link tab-danger <?= $activeTab === 'data-mgmt' ? 'active' : '' ?>"
+                            data-bs-toggle="tab" href="#tab-data-mgmt">
                             <i class="fas fa-trash-alt text-danger"></i>Veri Yönetimi
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link tab-backup" data-bs-toggle="tab" href="#tab-backup">
+                        <a class="nav-link tab-backup <?= $activeTab === 'backup' ? 'active' : '' ?>"
+                            data-bs-toggle="tab" href="#tab-backup">
                             <i class="fas fa-database text-success"></i>Yedekleme
                         </a>
                     </li>
@@ -136,7 +148,7 @@ $googleFontList = [
                 <div class="tab-content">
 
                     <!-- ═══════════ MAIL ═══════════ -->
-                    <div class="tab-pane fade show active" id="tab-mail">
+                    <div class="tab-pane fade <?= $activeTab === 'mail' ? 'show active' : '' ?>" id="tab-mail">
                         <form id="formMail">
                             <input type="hidden" name="action" value="save_mail">
                             <div class="row">
@@ -146,7 +158,7 @@ $googleFontList = [
                                         <div class="input-icon-wrap">
                                             <i class="fas fa-server field-icon"></i>
                                             <input type="text" name="mail_host" class="form-control"
-                                                value="<?= e(get_setting('mail_host', 'smtp.gmail.com'))?>"
+                                                value="<?= e(get_setting('mail_host', 'smtp.gmail.com')) ?>"
                                                 placeholder="smtp.gmail.com">
                                         </div>
                                     </div>
@@ -155,7 +167,7 @@ $googleFontList = [
                                         <div class="input-icon-wrap">
                                             <i class="fas fa-plug field-icon"></i>
                                             <input type="number" name="mail_port" class="form-control"
-                                                value="<?= e(get_setting('mail_port', '587'))?>" placeholder="587">
+                                                value="<?= e(get_setting('mail_port', '587')) ?>" placeholder="587">
                                         </div>
                                     </div>
                                     <div class="mb-3">
@@ -164,10 +176,9 @@ $googleFontList = [
                                             <i class="fas fa-lock field-icon"></i>
                                             <select name="mail_secure" class="form-select select2-simple">
                                                 <?php foreach (['tls' => 'TLS', 'ssl' => 'SSL', '' => 'Yok'] as $v => $l): ?>
-                                                <option value="<?= e($v)?>"
-                                                    <?=get_setting('mail_secure', 'tls') === $v ? 'selected' : ''?>>
-                                                    <?= e($l)?>
-                                                </option>
+                                                    <option value="<?= e($v) ?>" <?= get_setting('mail_secure', 'tls') === $v ? 'selected' : '' ?>>
+                                                        <?= e($l) ?>
+                                                    </option>
                                                 <?php endforeach; ?>
                                             </select>
                                         </div>
@@ -179,7 +190,7 @@ $googleFontList = [
                                         <div class="input-icon-wrap">
                                             <i class="fas fa-user-tag field-icon"></i>
                                             <input type="email" name="mail_user" class="form-control"
-                                                value="<?= e(get_setting('mail_user', ''))?>">
+                                                value="<?= e(get_setting('mail_user', '')) ?>">
                                         </div>
                                     </div>
                                     <div class="mb-3">
@@ -196,7 +207,7 @@ $googleFontList = [
                                         <div class="input-icon-wrap">
                                             <i class="fas fa-signature field-icon"></i>
                                             <input type="text" name="mail_from_name" class="form-control"
-                                                value="<?= e(get_setting('mail_from_name', APP_NAME))?>">
+                                                value="<?= e(get_setting('mail_from_name', APP_NAME)) ?>">
                                         </div>
                                     </div>
                                     <div class="mb-3">
@@ -204,7 +215,7 @@ $googleFontList = [
                                         <div class="input-icon-wrap">
                                             <i class="fas fa-at field-icon"></i>
                                             <input type="email" name="mail_from" class="form-control"
-                                                value="<?= e(get_setting('mail_from', ''))?>">
+                                                value="<?= e(get_setting('mail_from', '')) ?>">
                                         </div>
                                     </div>
                                 </div>
@@ -220,7 +231,8 @@ $googleFontList = [
                     </div>
 
                     <!-- ═══════════ GÖRÜNÜM ═══════════ -->
-                    <div class="tab-pane fade" id="tab-appearance">
+                    <div class="tab-pane fade <?= $activeTab === 'appearance' ? 'show active' : '' ?>"
+                        id="tab-appearance">
                         <form id="formAppearance">
                             <input type="hidden" name="action" value="save_appearance">
                             <div class="row">
@@ -235,10 +247,10 @@ $googleFontList = [
                                                 <div class="d-flex align-items-center gap-2">
                                                     <input type="color" name="header_bg"
                                                         class="form-control form-control-color"
-                                                        value="<?= e(get_setting('header_bg', '#343a40'))?>"
+                                                        value="<?= e(get_setting('header_bg', '#343a40')) ?>"
                                                         style="width:60px;height:38px">
                                                     <input type="text" name="header_bg_hex" class="form-control"
-                                                        value="<?= e(get_setting('header_bg', '#343a40'))?>"
+                                                        value="<?= e(get_setting('header_bg', '#343a40')) ?>"
                                                         maxlength="7" placeholder="#343a40">
                                                 </div>
                                             </div>
@@ -247,10 +259,10 @@ $googleFontList = [
                                                 <div class="d-flex align-items-center gap-2">
                                                     <input type="color" name="header_color"
                                                         class="form-control form-control-color"
-                                                        value="<?= e(get_setting('header_color', '#ffffff'))?>"
+                                                        value="<?= e(get_setting('header_color', '#ffffff')) ?>"
                                                         style="width:60px;height:38px">
                                                     <input type="text" name="header_color_hex" class="form-control"
-                                                        value="<?= e(get_setting('header_color', '#ffffff'))?>"
+                                                        value="<?= e(get_setting('header_color', '#ffffff')) ?>"
                                                         maxlength="7" placeholder="#ffffff">
                                                 </div>
                                             </div>
@@ -268,7 +280,7 @@ $googleFontList = [
                                                 <div class="input-icon-wrap">
                                                     <i class="fas fa-quote-left field-icon"></i>
                                                     <input type="text" name="footer_text" class="form-control"
-                                                        value="<?= e(get_setting('footer_text', ''))?>">
+                                                        value="<?= e(get_setting('footer_text', '')) ?>">
                                                 </div>
                                             </div>
                                             <div class="mb-3">
@@ -276,10 +288,10 @@ $googleFontList = [
                                                 <div class="d-flex align-items-center gap-2">
                                                     <input type="color" name="footer_bg"
                                                         class="form-control form-control-color"
-                                                        value="<?= e(get_setting('footer_bg', '#343a40'))?>"
+                                                        value="<?= e(get_setting('footer_bg', '#343a40')) ?>"
                                                         style="width:60px;height:38px">
                                                     <input type="text" name="footer_bg_hex" class="form-control"
-                                                        value="<?= e(get_setting('footer_bg', '#343a40'))?>"
+                                                        value="<?= e(get_setting('footer_bg', '#343a40')) ?>"
                                                         maxlength="7" placeholder="#343a40">
                                                 </div>
                                             </div>
@@ -288,12 +300,67 @@ $googleFontList = [
                                                 <div class="d-flex align-items-center gap-2">
                                                     <input type="color" name="footer_color"
                                                         class="form-control form-control-color"
-                                                        value="<?= e(get_setting('footer_color', '#ffffff'))?>"
+                                                        value="<?= e(get_setting('footer_color', '#ffffff')) ?>"
                                                         style="width:60px;height:38px">
                                                     <input type="text" name="footer_color_hex" class="form-control"
-                                                        value="<?= e(get_setting('footer_color', '#ffffff'))?>"
+                                                        value="<?= e(get_setting('footer_color', '#ffffff')) ?>"
                                                         maxlength="7" placeholder="#ffffff">
                                                 </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card card-outline card-secondary mb-3">
+                                        <div class="card-header">
+                                            <h6 class="m-0">Sistem Logosu</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3 text-center">
+                                                <?php $logo = get_setting('system_logo'); ?>
+                                                <div id="logo-preview-container"
+                                                    class="mb-2 p-2 bg-light rounded d-flex align-items-center justify-content-center"
+                                                    style="height: 100px; border: 1px dashed #ddd;">
+                                                    <?php if ($logo && file_exists(__DIR__ . '/../' . $logo)): ?>
+                                                        <img src="<?= BASE_URL . '/' . $logo ?>?t=<?= time() ?>"
+                                                            id="logo-preview"
+                                                            style="max-height: 80px; max-width: 100%; object-fit: contain;">
+                                                    <?php else: ?>
+                                                        <div id="logo-placeholder" class="text-muted small">Logo Yüklenmedi
+                                                        </div>
+                                                        <img src="" id="logo-preview"
+                                                            style="max-height: 80px; max-width: 100%; object-fit: contain; display: none;">
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div class="input-group">
+                                                    <input type="file" name="system_logo_file" id="system_logo_file"
+                                                        class="form-control" accept="image/*">
+                                                    <button type="button" class="btn btn-primary" id="btnUploadLogo">
+                                                        <i class="fas fa-upload"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="row g-2 mt-2">
+                                                    <div class="col-6">
+                                                        <div class="input-group input-group-sm">
+                                                            <span class="input-group-text">En (px)</span>
+                                                            <input type="number" name="system_logo_width"
+                                                                id="system_logo_width" class="form-control"
+                                                                value="<?= e(get_setting('system_logo_width', '')) ?>"
+                                                                placeholder="Oto">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="input-group input-group-sm">
+                                                            <span class="input-group-text">Boy (px)</span>
+                                                            <input type="number" name="system_logo_height"
+                                                                id="system_logo_height" class="form-control"
+                                                                value="<?= e(get_setting('system_logo_height', '')) ?>"
+                                                                placeholder="Oto">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <small class="text-muted d-block mt-1">Önerilen: En 200px / Boy 40px.
+                                                    Boş bırakılırsa orijinal boyutu kullanılır.</small>
                                             </div>
                                         </div>
                                     </div>
@@ -305,10 +372,9 @@ $googleFontList = [
                                             <i class="fas fa-font field-icon"></i>
                                             <select name="google_font" class="form-select select2-simple">
                                                 <?php foreach ($googleFontList as $fontKey => $fontLabel): ?>
-                                                <option value="<?= e($fontKey)?>"
-                                                    <?=get_setting('google_font', 'default') === $fontKey ? 'selected' : ''?>>
-                                                    <?= e($fontLabel)?>
-                                                </option>
+                                                    <option value="<?= e($fontKey) ?>" <?= get_setting('google_font', 'default') === $fontKey ? 'selected' : '' ?>>
+                                                        <?= e($fontLabel) ?>
+                                                    </option>
                                                 <?php endforeach; ?>
                                             </select>
                                         </div>
@@ -321,7 +387,7 @@ $googleFontList = [
                     </div>
 
                     <!-- ═══════════ DÖVİZ KURLARI ═══════════ -->
-                    <div class="tab-pane fade" id="tab-currency">
+                    <div class="tab-pane fade <?= $activeTab === 'currency' ? 'show active' : '' ?>" id="tab-currency">
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="card card-outline card-info">
@@ -329,7 +395,7 @@ $googleFontList = [
                                         <h6 class="m-0">TCMB Kurları</h6>
                                         <small class="text-muted">
                                             Son güncelleme:
-                                            <?= e(get_setting('currency_updated') ?: 'Henüz güncellenmedi')?>
+                                            <?= e(get_setting('currency_updated') ?: 'Henüz güncellenmedi') ?>
                                         </small>
                                     </div>
                                     <div class="card-body">
@@ -338,7 +404,7 @@ $googleFontList = [
                                                 <div class="p-3 bg-light rounded">
                                                     <span class="text-muted d-block small">USD / TL</span>
                                                     <span class="h4 text-success" id="usdDisplay">
-                                                        <?= e(get_setting('usd_rate', '0') > 0 ? formatPrice((float)get_setting('usd_rate', '0')) : '—')?>
+                                                        <?= e(get_setting('usd_rate', '0') > 0 ? formatPrice((float) get_setting('usd_rate', '0')) : '—') ?>
                                                     </span>
                                                 </div>
                                             </div>
@@ -346,7 +412,7 @@ $googleFontList = [
                                                 <div class="p-3 bg-light rounded">
                                                     <span class="text-muted d-block small">EUR / TL</span>
                                                     <span class="h4 text-primary" id="eurDisplay">
-                                                        <?= e(get_setting('eur_rate', '0') > 0 ? formatPrice((float)get_setting('eur_rate', '0')) : '—')?>
+                                                        <?= e(get_setting('eur_rate', '0') > 0 ? formatPrice((float) get_setting('eur_rate', '0')) : '—') ?>
                                                     </span>
                                                 </div>
                                             </div>
@@ -368,12 +434,12 @@ $googleFontList = [
                                             <div class="mb-3">
                                                 <label class="form-label">USD / TL</label>
                                                 <input type="text" name="usd_rate" class="form-control price-format"
-                                                    value="<?= e(formatPrice((float)get_setting('usd_rate', '0')))?>">
+                                                    value="<?= e(formatPrice((float) get_setting('usd_rate', '0'))) ?>">
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label">EUR / TL</label>
                                                 <input type="text" name="eur_rate" class="form-control price-format"
-                                                    value="<?= e(formatPrice((float)get_setting('eur_rate', '0')))?>">
+                                                    value="<?= e(formatPrice((float) get_setting('eur_rate', '0'))) ?>">
                                             </div>
                                             <button type="submit" class="btn btn-warning w-100">
                                                 <i class="fas fa-save me-1"></i>Manuel Kaydet
@@ -386,7 +452,7 @@ $googleFontList = [
                     </div>
 
                     <!-- ═══════════ GENEL ═══════════ -->
-                    <div class="tab-pane fade" id="tab-general">
+                    <div class="tab-pane fade <?= $activeTab === 'general' ? 'show active' : '' ?>" id="tab-general">
                         <form id="formGeneral">
                             <input type="hidden" name="action" value="save_general">
                             <div class="row">
@@ -396,16 +462,19 @@ $googleFontList = [
                                         <div class="input-icon-wrap">
                                             <i class="fas fa-globe field-icon"></i>
                                             <input type="text" name="site_name" class="form-control"
-                                                value="<?= e(get_setting('site_name', APP_NAME))?>">
+                                                value="<?= e(get_setting('site_name', APP_NAME)) ?>">
                                         </div>
                                     </div>
                                     <div class="mb-3">
                                         <div class="form-check form-switch p-0" style="padding-left: 2.5em !important;">
                                             <input type="hidden" name="allow_passive_with_stock" value="0">
-                                            <input class="form-check-input" type="checkbox" name="allow_passive_with_stock" value="1" id="allow_passive_stock" 
+                                            <input class="form-check-input" type="checkbox"
+                                                name="allow_passive_with_stock" value="1" id="allow_passive_stock"
                                                 <?= get_setting('allow_passive_with_stock', '0') === '1' ? 'checked' : '' ?> style="margin-left: -2.5em;">
-                                            <label class="form-check-label fw-bold" for="allow_passive_stock">Ürün varken depo pasif edilsin mi?</label>
-                                            <div class="small text-muted">Bu ayar kapalıyken, içinde ürün bulunan depolar pasif hale getirilemez.</div>
+                                            <label class="form-check-label fw-bold" for="allow_passive_stock">Ürün
+                                                varken depo pasif edilsin mi?</label>
+                                            <div class="small text-muted">Bu ayar kapalıyken, içinde ürün bulunan
+                                                depolar pasif hale getirilemez.</div>
                                         </div>
                                     </div>
                                 </div>
@@ -416,85 +485,112 @@ $googleFontList = [
                     </div>
 
                     <!-- ═══════════ VERİ YÖNETİMİ ═══════════ -->
-                    <div class="tab-pane fade" id="tab-data-mgmt">
+                    <div class="tab-pane fade <?= $activeTab === 'data-mgmt' ? 'show active' : '' ?>"
+                        id="tab-data-mgmt">
                         <div class="card card-outline card-danger">
                             <div class="card-header">
-                                <h6 class="m-0 text-danger text-bold"><i class="fas fa-exclamation-triangle me-1"></i> Kritik Bölge</h6>
+                                <h6 class="m-0 text-danger text-bold"><i class="fas fa-exclamation-triangle me-1"></i>
+                                    Kritik Bölge</h6>
                             </div>
                             <div class="card-body">
                                 <div class="alert alert-warning border-left-warning shadow-sm">
                                     <h5><strong>DİKKAT!</strong> Tüm Verileri Silme İşlemi</h5>
-                                    <p class="mb-0">Bu işlem; ürünleri, stok hareketlerini, müşterileri, tedarikçileri ve tüm diğer operasyonel verileri <strong>kalıcı olarak silecektir.</strong></p>
-                                    <p class="mb-0 mt-1">Admin kullanıcıları, program kullanıcıları ve sistem ayarları bu işlemden <strong>etkinmez.</strong></p>
+                                    <p class="mb-0">Bu işlem; ürünleri, stok hareketlerini, müşterileri, tedarikçileri
+                                        ve tüm diğer operasyonel verileri <strong>kalıcı olarak silecektir.</strong></p>
+                                    <p class="mb-0 mt-1">Admin kullanıcıları, program kullanıcıları ve sistem ayarları
+                                        bu işlemden <strong>etkinmez.</strong></p>
                                 </div>
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <div class="bg-light p-3 rounded d-flex align-items-center shadow-sm border">
-                                    <div class="form-check form-switch mb-0 d-flex align-items-center">
-                                        <input class="form-check-input" type="checkbox" id="selectAllCats" style="transform: scale(1.4); margin-right: 15px;" onchange="toggleAllSelection(this)">
-                                        <label class="form-check-label fw-bold mb-0 text-primary ms-2" for="selectAllCats" style="cursor:pointer; font-size: 1.1rem; margin-left: 20px;">Tümünü Seç</label>
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <div class="bg-light p-3 rounded d-flex align-items-center shadow-sm border">
+                                            <div class="form-check form-switch mb-0 d-flex align-items-center">
+                                                <input class="form-check-input" type="checkbox" id="selectAllCats"
+                                                    style="transform: scale(1.4); margin-right: 15px;"
+                                                    onchange="toggleAllSelection(this)">
+                                                <label class="form-check-label fw-bold mb-0 text-primary ms-2"
+                                                    for="selectAllCats"
+                                                    style="cursor:pointer; font-size: 1.1rem; margin-left: 20px;">Tümünü
+                                                    Seç</label>
+                                            </div>
+                                            <div class="ms-auto">
+                                                <p class="text-muted mb-0 small" style="margin-left: 20px;"><i
+                                                        class="fas fa-info-circle me-1"></i> Silmek istediğiniz alanları
+                                                    aşağıdan işaretleyin.</p>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="ms-auto">
-                                        <p class="text-muted mb-0 small" style="margin-left: 20px;"><i class="fas fa-info-circle me-1"></i> Silmek istediğiniz alanları aşağıdan işaretleyin.</p>
+                                </div>
+
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input sel-del-check" type="checkbox"
+                                                value="stock_in" id="checkStockIn">
+                                            <label class="form-check-label" for="checkStockIn">Depo Giriş
+                                                Hareketleri</label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input sel-del-check" type="checkbox"
+                                                value="stock_out" id="checkStockOut">
+                                            <label class="form-check-label" for="checkStockOut">Depo Çıkış
+                                                Hareketleri</label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input sel-del-check" type="checkbox"
+                                                value="entrusted" id="checkEntrusted">
+                                            <label class="form-check-label" for="checkEntrusted">Emanet
+                                                İşlemleri</label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input sel-del-check" type="checkbox"
+                                                value="transfers" id="checkTransfers">
+                                            <label class="form-check-label" for="checkTransfers">Transferler</label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input sel-del-check" type="checkbox"
+                                                value="products" id="checkProducts">
+                                            <label class="form-check-label" for="checkProducts">Ürün Tanımları</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input sel-del-check" type="checkbox"
+                                                value="customers" id="checkCustomers">
+                                            <label class="form-check-label" for="checkCustomers">Müşteri
+                                                Tanımları</label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input sel-del-check" type="checkbox"
+                                                value="suppliers" id="checkSuppliers">
+                                            <label class="form-check-label" for="checkSuppliers">Tedarikçi
+                                                Tanımları</label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input sel-del-check" type="checkbox"
+                                                value="requesters" id="checkRequesters">
+                                            <label class="form-check-label" for="checkRequesters">Talep Eden
+                                                Kişiler</label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input sel-del-check" type="checkbox"
+                                                value="warehouses" id="checkWarehouses">
+                                            <label class="form-check-label" for="checkWarehouses">Depo Tanımları</label>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
 
-                        <div class="row mb-4">
-                            <div class="col-md-6">
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input sel-del-check" type="checkbox" value="stock_in" id="checkStockIn">
-                                    <label class="form-check-label" for="checkStockIn">Depo Giriş Hareketleri</label>
+                                <div class="d-grid gap-2">
+                                    <button type="button" class="btn btn-danger btn-lg p-3 shadow-sm border-0"
+                                        onclick="clearSelectiveData()">
+                                        <i class="fas fa-trash-alt me-2"></i> Seçilen Verileri Kalıcı Olarak Sil
+                                    </button>
                                 </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input sel-del-check" type="checkbox" value="stock_out" id="checkStockOut">
-                                    <label class="form-check-label" for="checkStockOut">Depo Çıkış Hareketleri</label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input sel-del-check" type="checkbox" value="entrusted" id="checkEntrusted">
-                                    <label class="form-check-label" for="checkEntrusted">Emanet İşlemleri</label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input sel-del-check" type="checkbox" value="transfers" id="checkTransfers">
-                                    <label class="form-check-label" for="checkTransfers">Transferler</label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input sel-del-check" type="checkbox" value="products" id="checkProducts">
-                                    <label class="form-check-label" for="checkProducts">Ürün Tanımları</label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input sel-del-check" type="checkbox" value="customers" id="checkCustomers">
-                                    <label class="form-check-label" for="checkCustomers">Müşteri Tanımları</label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input sel-del-check" type="checkbox" value="suppliers" id="checkSuppliers">
-                                    <label class="form-check-label" for="checkSuppliers">Tedarikçi Tanımları</label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input sel-del-check" type="checkbox" value="requesters" id="checkRequesters">
-                                    <label class="form-check-label" for="checkRequesters">Talep Eden Kişiler</label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input sel-del-check" type="checkbox" value="warehouses" id="checkWarehouses">
-                                    <label class="form-check-label" for="checkWarehouses">Depo Tanımları</label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="button" class="btn btn-danger btn-lg p-3 shadow-sm border-0" onclick="clearSelectiveData()">
-                                <i class="fas fa-trash-alt me-2"></i> Seçilen Verileri Kalıcı Olarak Sil
-                            </button>
-                        </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- ═══════════ YEDEKLEME ═══════════ -->
-                    <div class="tab-pane fade" id="tab-backup">
+                    <div class="tab-pane fade <?= $activeTab === 'backup' ? 'show active' : '' ?>" id="tab-backup">
                         <div class="card card-outline card-primary">
                             <div class="card-header">
                                 <h6 class="m-0 text-bold"><i class="fas fa-database me-1"></i> Veritabanı Yedekleri</h6>
@@ -516,7 +612,9 @@ $googleFontList = [
                                             </tr>
                                         </thead>
                                         <tbody id="backupTableBody">
-                                            <tr><td colspan="4" class="text-center text-muted p-4">Yükleniyor...</td></tr>
+                                            <tr>
+                                                <td colspan="4" class="text-center text-muted p-4">Yükleniyor...</td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -531,7 +629,7 @@ $googleFontList = [
 </div>
 
 <script>
-    $(document).ready(function() {
+    $(document).ready(function () {
         // Select2 Simple Init
         $('.select2-simple').select2({
             theme: 'bootstrap-5',
@@ -567,8 +665,12 @@ $googleFontList = [
             data.push({ name: n, value: $(this).val() });
         });
 
-        $.post('<?= BASE_URL?>/api/settings.php', $.param(data), function (r) {
-            if (r.success) { showSuccess(r.message || 'Kaydedildi!'); setTimeout(() => location.reload(), 1200); }
+        $.post('<?= BASE_URL ?>/api/settings.php', $.param(data), function (r) {
+            if (r.success) {
+                showSuccess(r.message || 'Kaydedildi!');
+                var activeTab = $('.nav-segmented .nav-link.active').attr('href').replace('#tab-', '');
+                setTimeout(() => location.href = '<?= BASE_URL ?>/index.php?page=settings&tab=' + activeTab, 1200);
+            }
             else showError(r.message || 'Bir hata oluştu.');
         }, 'json').fail(function () { showError('Bağlantı hatası.'); });
     }
@@ -589,7 +691,7 @@ $googleFontList = [
             cancelButtonText: 'İptal'
         }).then(function (result) {
             if (result.isConfirmed && result.value) {
-                $.post('<?= BASE_URL?>/api/settings.php', { action: 'test_mail', to: result.value }, function (r) {
+                $.post('<?= BASE_URL ?>/api/settings.php', { action: 'test_mail', to: result.value }, function (r) {
                     if (r.success) showSuccess('Test maili gönderildi!');
                     else showError(r.message || 'Mail gönderilemedi.');
                 }, 'json');
@@ -597,17 +699,83 @@ $googleFontList = [
         });
     });
 
+    // Logo Upload
+    $('#btnUploadLogo').on('click', function () {
+        var fileInput = $('#system_logo_file')[0];
+        if (fileInput.files.length === 0) {
+            Swal.fire('Uyarı', 'Lütfen bir resim dosyası seçin.', 'warning');
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append('action', 'save_logo');
+        formData.append('system_logo_file', fileInput.files[0]);
+        formData.append('system_logo_width', $('#system_logo_width').val());
+        formData.append('system_logo_height', $('#system_logo_height').val());
+
+        var btn = $(this);
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+        $.ajax({
+            url: '<?= BASE_URL ?>/api/settings.php',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function (r) {
+                if (r.success) {
+                    showSuccess(r.message);
+                    if (r.data && r.data.url) {
+                        $('#logo-preview').attr('src', r.data.url + '?t=' + new Date().getTime()).show();
+                        $('#logo-placeholder').hide();
+                    }
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showError(r.message);
+                }
+            },
+            error: function () {
+                showError('Yükleme sırasında bir hata oluştu.');
+            },
+            complete: function () {
+                btn.prop('disabled', false).html('<i class="fas fa-upload"></i>');
+            }
+        });
+    });
+
+    // Logo Preview on select
+    $('#system_logo_file').on('change', function () {
+        var input = this;
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                $('#logo-preview').attr('src', e.target.result).show();
+                $('#logo-placeholder').hide();
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    });
+
+    // Tab persistence - URL update on click
+    $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+        var tabId = $(e.target).attr('href').replace('#tab-', '');
+        var newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?page=settings&tab=' + tabId;
+        window.history.replaceState({ path: newUrl }, '', newUrl);
+    });
+
     // TCMB kurları güncelle
     $('#btnUpdateCurrency').on('click', function () {
         var btn = $(this).html('<i class="fas fa-spinner fa-spin me-1"></i>Güncelleniyor...').prop('disabled', true);
-        $.post('<?= BASE_URL?>/api/settings.php', { action: 'update_currency' }, function (r) {
+        $.post('<?= BASE_URL ?>/api/settings.php', { action: 'update_currency' }, function (r) {
             if (r.success) {
                 showSuccess('Kurlar güncellendi!');
                 if (r.data) {
                     $('#usdDisplay').text(r.data.usd_formatted);
                     $('#eurDisplay').text(r.data.eur_formatted);
                 }
-                setTimeout(() => location.reload(), 1500);
+                var activeTab = $('.nav-segmented .nav-link.active').attr('href').replace('#tab-', '');
+                setTimeout(() => location.href = '<?= BASE_URL ?>/index.php?page=settings&tab=' + activeTab, 1500);
             } else showError(r.message || 'Güncelleme başarısız.');
         }, 'json').always(function () {
             btn.html('<i class="fas fa-sync-alt me-1"></i>TCMB\'den Kurları Güncelle').prop('disabled', false);
@@ -621,7 +789,7 @@ $googleFontList = [
 
     function clearSelectiveData() {
         var selected = [];
-        $('.sel-del-check:checked').each(function() {
+        $('.sel-del-check:checked').each(function () {
             selected.push($(this).val());
         });
 
@@ -630,9 +798,9 @@ $googleFontList = [
             return;
         }
 
-        var text = selected.length === $('.sel-del-check').length 
-                   ? "Sistemdeki TÜM veriler (seçili kategoriler) kalıcı olarak silinecektir!" 
-                   : "Seçilen kategorilerdeki veriler kalıcı olarak silinecektir!";
+        var text = selected.length === $('.sel-del-check').length
+            ? "Sistemdeki TÜM veriler (seçili kategoriler) kalıcı olarak silinecektir!"
+            : "Seçilen kategorilerdeki veriler kalıcı olarak silinecektir!";
 
         Swal.fire({
             title: 'Emin misiniz?',
@@ -698,11 +866,11 @@ $googleFontList = [
                 var html = '';
                 $.each(r.data, function (i, b) {
                     html += '<tr>';
-                    html += '<td class="ps-3 fw-bold text-primary"><i class="fas fa-file-alt me-2 text-muted"></i>' + b.filename + '</td>';
+                    html += '<td class="ps-3 fw-bold text-primary"><i class="fas fa-file-alt me-2 text-muted" style="margin-right: 5px"></i>' + b.filename + '</td>';
                     html += '<td><span class="badge bg-secondary">' + b.size + '</span></td>';
                     html += '<td>' + b.date + '</td>';
                     html += '<td class="text-end pe-3">';
-                    html += '<div class="btn-group">';
+                    html += '<div class="btn-group d-flex justify-content-end">';
                     html += '<a href="<?= BASE_URL ?>/api/backup.php?action=download&filename=' + b.filename + '" class="btn btn-sm btn-outline-success" title="İndir"><i class="fas fa-download"></i></a>';
                     html += '<button class="btn btn-sm btn-outline-warning" onclick="restoreBackup(\'' + b.filename + '\')" title="Geri Yükle"><i class="fas fa-undo"></i></button>';
                     html += '<button class="btn btn-sm btn-outline-danger" onclick="deleteBackup(\'' + b.filename + '\')" title="Sil"><i class="fas fa-trash"></i></button>';
