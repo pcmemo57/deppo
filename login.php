@@ -97,10 +97,13 @@ $googleFonts = [
     'Inter' => BASE_URL . '/assets/vendor/fonts/Inter.css',
     'Ubuntu' => BASE_URL . '/assets/vendor/fonts/Ubuntu.css',
     'Outfit' => BASE_URL . '/assets/vendor/fonts/Outfit.css',
+    'Source+Sans+Pro' => BASE_URL . '/assets/vendor/fonts/Source_Sans_Pro.css',
 ];
-if ($googleFont !== 'default' && isset($googleFonts[$googleFont])) {
-    $fontLink = '<link href="' . $googleFonts[$googleFont] . '" rel="stylesheet">';
-    $fontFamily = "font-family: '" . str_replace('+', ' ', $googleFont) . "', sans-serif;";
+$selectedFont = ($googleFont === 'default') ? 'Source+Sans+Pro' : $googleFont;
+
+if (isset($googleFonts[$selectedFont])) {
+    $fontLink = '<link href="' . $googleFonts[$selectedFont] . '" rel="stylesheet">';
+    $fontFamily = "font-family: '" . str_replace('+', ' ', $selectedFont) . "', sans-serif;";
 }
 ?>
 <!DOCTYPE html>

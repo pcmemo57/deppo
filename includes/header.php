@@ -20,13 +20,16 @@ $googleFonts = [
     'Inter' => BASE_URL . '/assets/vendor/fonts/Inter.css',
     'Ubuntu' => BASE_URL . '/assets/vendor/fonts/Ubuntu.css',
     'Outfit' => BASE_URL . '/assets/vendor/fonts/Outfit.css',
+    'Source+Sans+Pro' => BASE_URL . '/assets/vendor/fonts/Source_Sans_Pro.css',
 ];
 
 $fontLinkTag = '';
 $fontFamilyCss = "'Source Sans Pro', sans-serif";
-if ($googleFont !== 'default' && isset($googleFonts[$googleFont])) {
-    $fontLinkTag = '<link href="' . $googleFonts[$googleFont] . '" rel="stylesheet">';
-    $fontFamilyCss = "'" . str_replace('+', ' ', $googleFont) . "', sans-serif";
+$selectedFont = ($googleFont === 'default') ? 'Source+Sans+Pro' : $googleFont;
+
+if (isset($googleFonts[$selectedFont])) {
+    $fontLinkTag = '<link href="' . $googleFonts[$selectedFont] . '" rel="stylesheet">';
+    $fontFamilyCss = "'" . str_replace('+', ' ', $selectedFont) . "', sans-serif";
 }
 ?>
 <!DOCTYPE html>
