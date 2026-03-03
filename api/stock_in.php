@@ -7,6 +7,14 @@ require_once __DIR__ . '/../config/functions.php';
 requireRole(ROLE_ADMIN, ROLE_USER);
 header('Content-Type: application/json; charset=utf-8');
 
+// CSRF check
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_POST['csrf_token'] ?? '';
+    if (!validateCsrfToken($token)) {
+        jsonResponse(false, 'Güvenlik doğrulaması başarısız (CSRF).');
+    }
+}
+
 $action = sanitize($_POST['action'] ?? $_GET['action'] ?? '');
 $page = max(1, (int) ($_GET['page'] ?? 1));
 $perPage = min(100, max(5, (int) ($_GET['per_page'] ?? 10)));
@@ -40,19 +48,25 @@ switch ($action) {
         $userId = $user['id'];
         $userName = $user['name'];
 
-        Database::insert(
-            "INSERT INTO tbl_dp_stock_in (warehouse_id, product_id, supplier_id, quantity, unit_price, currency, price_eur, note, created_by, created_by_name)
-             VALUES (?,?,?,?,?,?,?,?,?,?)",
-            [$warehouseId, $productId, $supplierId, $quantity, $unitPrice, $currency, $priceEur, $note, $userId, $userName]
-        );
+        Database::beginTransaction();
+        try {
+            Database::insert(
+                "INSERT INTO tbl_dp_stock_in (warehouse_id, product_id, supplier_id, quantity, unit_price, currency, price_eur, note, created_by, created_by_name)
+                 VALUES (?,?,?,?,?,?,?,?,?,?)",
+                [$warehouseId, $productId, $supplierId, $quantity, $unitPrice, $currency, $priceEur, $note, $userId, $userName]
+            );
 
-        // Tedarik sürecini resetle
-        Database::execute(
-            "UPDATE tbl_dp_products SET procurement_status = 0, procurement_note = '' WHERE id = ?",
-            [$productId]
-        );
-
-        jsonResponse(true, 'Stok girişi kaydedildi.');
+            // Tedarik sürecini resetle
+            Database::execute(
+                "UPDATE tbl_dp_products SET procurement_status = 0, procurement_note = '' WHERE id = ?",
+                [$productId]
+            );
+            Database::commit();
+            jsonResponse(true, 'Stok girişi kaydedildi.');
+        } catch (Exception $e) {
+            Database::rollBack();
+            jsonResponse(false, 'Kaydetme hatası: ' . $e->getMessage());
+        }
 
     case 'recent':
         $rows = Database::fetchAll(

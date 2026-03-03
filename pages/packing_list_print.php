@@ -281,7 +281,7 @@ unset($p);
             }
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="<?= BASE_URL ?>/assets/vendor/js/html2pdf.bundle.min.js"></script>
 </head>
 
 <body>

@@ -7,6 +7,14 @@ require_once __DIR__ . '/../config/functions.php';
 requireRole(ROLE_ADMIN, ROLE_USER, ROLE_REQUESTER);
 header('Content-Type: application/json; charset=utf-8');
 
+// CSRF check for write actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_POST['csrf_token'] ?? '';
+    if (!validateCsrfToken($token)) {
+        jsonResponse(false, 'Geçersiz CSRF token. Lütfen sayfayı yenileyin.');
+    }
+}
+
 $action = sanitize($_POST['action'] ?? $_GET['action'] ?? '');
 
 switch ($action) {
@@ -46,22 +54,29 @@ switch ($action) {
         $batchId = 'SO-' . date('YmdHis') . '-' . rand(1000, 9999);
         $orderNo = (int) Database::fetchOne("SELECT MAX(order_no) as max_no FROM tbl_dp_stock_out")['max_no'] + 1;
 
-        foreach ($lines as $line) {
-            $productId = (int) ($line['product_id'] ?? 0);
-            $quantity = (float) ($line['quantity'] ?? 0);
-            $unitPrice = (float) ($line['unit_price'] ?? 0);
-            $totalPrice = (float) ($line['total'] ?? 0);
+        Database::beginTransaction();
+        try {
+            foreach ($lines as $line) {
+                $productId = (int) ($line['product_id'] ?? 0);
+                $quantity = (float) ($line['quantity'] ?? 0);
+                $unitPrice = (float) ($line['unit_price'] ?? 0);
+                $totalPrice = (float) ($line['total'] ?? 0);
 
-            if (!$productId || $quantity <= 0)
-                continue;
+                if (!$productId || $quantity <= 0)
+                    continue;
 
-            $currency = sanitize($line['currency'] ?? 'EUR');
+                $currency = sanitize($line['currency'] ?? 'EUR');
 
-            Database::insert(
-                "INSERT INTO tbl_dp_stock_out (batch_id, order_no, warehouse_id, requester_id, customer_id, product_id, quantity, currency, unit_price, total_price, note, created_by, created_by_name)
-                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                [$batchId, $orderNo, $warehouseId, $requesterId, $customerId, $productId, $quantity, $currency, $unitPrice, $totalPrice, $note, $userId, $userName]
-            );
+                Database::insert(
+                    "INSERT INTO tbl_dp_stock_out (batch_id, order_no, warehouse_id, requester_id, customer_id, product_id, quantity, currency, unit_price, total_price, note, created_by, created_by_name)
+                     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    [$batchId, $orderNo, $warehouseId, $requesterId, $customerId, $productId, $quantity, $currency, $unitPrice, $totalPrice, $note, $userId, $userName]
+                );
+            }
+            Database::commit();
+        } catch (Exception $e) {
+            Database::rollBack();
+            jsonResponse(false, 'Kaydetme sırasında bir hata oluştu: ' . $e->getMessage());
         }
 
         // --- E-posta Bildirimi ---

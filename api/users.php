@@ -10,6 +10,14 @@ require_once __DIR__ . '/../config/functions.php';
 requireRole(ROLE_ADMIN);
 header('Content-Type: application/json; charset=utf-8');
 
+// CSRF check
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_POST['csrf_token'] ?? '';
+    if (!validateCsrfToken($token)) {
+        jsonResponse(false, 'Güvenlik doğrulaması başarısız (CSRF).');
+    }
+}
+
 $action = sanitize($_POST['action'] ?? $_GET['action'] ?? '');
 $type = sanitize($_POST['type'] ?? $_GET['type'] ?? 'admin');
 $table = $type === 'admin' ? 'tbl_dp_admins' : 'tbl_dp_users';

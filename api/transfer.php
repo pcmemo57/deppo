@@ -7,6 +7,14 @@ require_once __DIR__ . '/../config/functions.php';
 requireRole(ROLE_ADMIN, ROLE_USER);
 header('Content-Type: application/json; charset=utf-8');
 
+// CSRF check
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_POST['csrf_token'] ?? '';
+    if (!validateCsrfToken($token)) {
+        jsonResponse(false, 'Güvenlik doğrulaması başarısız (CSRF).');
+    }
+}
+
 $action = sanitize($_POST['action'] ?? $_GET['action'] ?? '');
 
 switch ($action) {
@@ -38,47 +46,53 @@ switch ($action) {
         $currentUser = currentUser();
         $userId = $currentUser['id'];
         $userName = $currentUser['name'];
-        $transferId = Database::insert(
-            "INSERT INTO tbl_dp_transfers (source_warehouse_id, target_warehouse_id, note, created_by, created_by_name) VALUES (?,?,?,?,?)",
-            [$sourceId, $targetId, $note, $userId, $userName]
-        );
-
-        foreach ($lines as $line) {
-            $productId = (int) ($line['product_id'] ?? 0);
-            $quantity = (float) ($line['quantity'] ?? 0);
-            if (!$productId || $quantity <= 0)
-                continue;
-
-            Database::insert(
-                "INSERT INTO tbl_dp_transfer_items (transfer_id, product_id, quantity) VALUES (?,?,?)",
-                [$transferId, $productId, $quantity]
+        Database::beginTransaction();
+        try {
+            $transferId = Database::insert(
+                "INSERT INTO tbl_dp_transfers (source_warehouse_id, target_warehouse_id, note, created_by, created_by_name) VALUES (?,?,?,?,?)",
+                [$sourceId, $targetId, $note, $userId, $userName]
             );
 
-            // Kaynak depodan çıkar → hedef depoya giriş
-            // Hedef: En son fiyatı ve birimi bul
-            $lastPriceData = Database::fetchOne(
-                "SELECT unit_price, currency FROM tbl_dp_stock_in WHERE product_id=? ORDER BY created_at DESC LIMIT 1",
-                [$productId]
-            );
-            $unitPriceOrig = $lastPriceData ? (float) $lastPriceData['unit_price'] : 0;
-            $currencyOrig = $lastPriceData ? $lastPriceData['currency'] : 'EUR';
-            $priceInBase = toBaseCurrencyDisplay($unitPriceOrig, $currencyOrig);
+            foreach ($lines as $line) {
+                $productId = (int) ($line['product_id'] ?? 0);
+                $quantity = (float) ($line['quantity'] ?? 0);
+                if (!$productId || $quantity <= 0)
+                    continue;
 
-            // Kaynak: stock_out kaydı
-            Database::insert(
-                "INSERT INTO tbl_dp_stock_out (warehouse_id,product_id,quantity,currency,unit_price,total_price,note,created_by)
-                 VALUES (?,?,?,?,?,?,?,?)",
-                [$sourceId, $productId, $quantity, $currencyOrig, $unitPriceOrig, $unitPriceOrig * $quantity, "Transfer #$transferId", $userId]
-            );
+                Database::insert(
+                    "INSERT INTO tbl_dp_transfer_items (transfer_id, product_id, quantity) VALUES (?,?,?)",
+                    [$transferId, $productId, $quantity]
+                );
 
-            // Hedef: stock_in kaydı
-            Database::insert(
-                "INSERT INTO tbl_dp_stock_in (warehouse_id,product_id,quantity,unit_price,currency,price_eur,note,created_by)
-                 VALUES (?,?,?,?,?,?,?,?)",
-                [$targetId, $productId, $quantity, $unitPriceOrig, $currencyOrig, $priceInBase, "Transfer #$transferId", $userId]
-            );
+                // Kaynak depodan çıkar → hedef depoya giriş
+                $lastPriceData = Database::fetchOne(
+                    "SELECT unit_price, currency FROM tbl_dp_stock_in WHERE product_id=? ORDER BY created_at DESC LIMIT 1",
+                    [$productId]
+                );
+                $unitPriceOrig = $lastPriceData ? (float) $lastPriceData['unit_price'] : 0;
+                $currencyOrig = $lastPriceData ? $lastPriceData['currency'] : 'EUR';
+                $priceInBase = toBaseCurrencyDisplay($unitPriceOrig, $currencyOrig);
+
+                // Kaynak: stock_out kaydı
+                Database::insert(
+                    "INSERT INTO tbl_dp_stock_out (warehouse_id,product_id,quantity,currency,unit_price,total_price,note,created_by)
+                     VALUES (?,?,?,?,?,?,?,?)",
+                    [$sourceId, $productId, $quantity, $currencyOrig, $unitPriceOrig, $unitPriceOrig * $quantity, "Transfer #$transferId", $userId]
+                );
+
+                // Hedef: stock_in kaydı
+                Database::insert(
+                    "INSERT INTO tbl_dp_stock_in (warehouse_id,product_id,quantity,unit_price,currency,price_eur,note,created_by)
+                     VALUES (?,?,?,?,?,?,?,?)",
+                    [$targetId, $productId, $quantity, $unitPriceOrig, $currencyOrig, $priceInBase, "Transfer #$transferId", $userId]
+                );
+            }
+            Database::commit();
+            jsonResponse(true, 'Transfer tamamlandı.');
+        } catch (Exception $e) {
+            Database::rollBack();
+            jsonResponse(false, 'Transfer sırasında bir hata oluştu: ' . $e->getMessage());
         }
-        jsonResponse(true, 'Transfer tamamlandı.');
         break;
 
     case 'recent':

@@ -277,7 +277,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                 <table class="table table-hover m-0 table-valign-middle orders-table" id="ordersTable">
                     <thead class="bg-light text-muted small text-uppercase">
                         <tr>
-                            <th>Sipariş No</th>
+                            <th width="100">Sip. #</th>
                             <th>Müşteri / Muhatap</th>
                             <th>Depo</th>
                             <th class="num-align">Kalem Sayısı</th>
@@ -442,7 +442,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
             var baseCurrency = '<?= get_setting('base_currency', 'EUR') ?>';
             $.each(r.data.data, function (i, d) {
                 html += '<tr class="order-row" onclick="toggleDetail(\'' + d.batch_id + '\', this)">' +
-                    '<td><span class="badge bg-primary px-2">#' + d.order_no + '</span></td>' +
+                    '<td><span class="badge bg-primary px-2">' + d.order_no + '</span></td>' +
                     '<td><div class="fw-bold text-primary">' + esc(d.customer_name || '—') + '</div></td>' +
                     '<td><i class="fas fa-warehouse me-1 opacity-50"></i> ' + esc(d.warehouse_name) + '</td>' +
                     '<td class="num-align"><span class="badge bg-light border text-dark ms-2 badge-item-count">' + formatQty(d.item_count) + ' Ürün</span></td>' +

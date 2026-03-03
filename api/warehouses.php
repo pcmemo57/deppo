@@ -7,6 +7,14 @@ require_once __DIR__ . '/../config/functions.php';
 requireRole(ROLE_ADMIN, ROLE_USER);
 header('Content-Type: application/json; charset=utf-8');
 
+// CSRF check
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_POST['csrf_token'] ?? '';
+    if (!validateCsrfToken($token)) {
+        jsonResponse(false, 'Güvenlik doğrulaması başarısız (CSRF).');
+    }
+}
+
 $action = sanitize($_POST['action'] ?? $_GET['action'] ?? '');
 $page = max(1, (int) ($_GET['page'] ?? 1));
 $perPage = min(100, max(5, (int) ($_GET['per_page'] ?? 10)));

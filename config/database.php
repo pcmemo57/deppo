@@ -24,8 +24,7 @@ class Database
             ];
             try {
                 self::$instance = new PDO($dsn, DB_USER, DB_PASS, $options);
-            }
-            catch (PDOException $e) {
+            } catch (PDOException $e) {
                 // Güvenli hata — detay production'a sızmasın
                 http_response_code(500);
                 die(json_encode(['success' => false, 'message' => 'Veritabanı bağlantı hatası.']));
@@ -47,7 +46,7 @@ class Database
         return self::query($sql, $params)->fetchAll();
     }
 
-    public static function fetchOne(string $sql, array $params = []): array |false
+    public static function fetchOne(string $sql, array $params = []): array|false
     {
         return self::query($sql, $params)->fetch();
     }
@@ -55,11 +54,26 @@ class Database
     public static function insert(string $sql, array $params = []): int
     {
         self::query($sql, $params);
-        return (int)self::getInstance()->lastInsertId();
+        return (int) self::getInstance()->lastInsertId();
     }
 
     public static function execute(string $sql, array $params = []): int
     {
         return self::query($sql, $params)->rowCount();
+    }
+
+    public static function beginTransaction(): bool
+    {
+        return self::getInstance()->beginTransaction();
+    }
+
+    public static function commit(): bool
+    {
+        return self::getInstance()->commit();
+    }
+
+    public static function rollBack(): bool
+    {
+        return self::getInstance()->rollBack();
     }
 }

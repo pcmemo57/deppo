@@ -130,7 +130,7 @@ class Database
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Deppo - Kurulum</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../assets/vendor/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
             background: #f4f7f6;
@@ -181,7 +181,8 @@ class Database
                 <div class="alert alert-warning">
                     <h5><i class="fas fa-exclamation-triangle me-2"></i> Git Eksik!</h5>
                     <p class="small mb-0">Bu bilgisayarda <b>Git</b> kurulu görünmüyor. "Otomatik Güncelleme" için
-                        <b>setup_windows.bat</b> dosyasını yönetici olarak çalıştırın.</p>
+                        <b>setup_windows.bat</b> dosyasını yönetici olarak çalıştırın.
+                    </p>
                 </div>
             <?php elseif (!$is_git_repo || isset($_GET['sync'])): ?>
                 <div id="sync-container" class="alert alert-info shadow-sm border-0" style="background: #eef2ff;">

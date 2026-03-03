@@ -87,16 +87,16 @@ $googleFont = get_setting('google_font', 'default');
 $fontLink = '';
 $fontFamily = "font-family: 'Source Sans Pro', sans-serif;";
 $googleFonts = [
-    'Roboto' => 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap',
-    'Open+Sans' => 'https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap',
-    'Lato' => 'https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap',
-    'Montserrat' => 'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap',
-    'Poppins' => 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap',
-    'Nunito' => 'https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&display=swap',
-    'Raleway' => 'https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;600;700&display=swap',
-    'Inter' => 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
-    'Ubuntu' => 'https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap',
-    'Outfit' => 'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap',
+    'Roboto' => BASE_URL . '/assets/vendor/fonts/Roboto.css',
+    'Open+Sans' => BASE_URL . '/assets/vendor/fonts/Open_Sans.css',
+    'Lato' => BASE_URL . '/assets/vendor/fonts/Lato.css',
+    'Montserrat' => BASE_URL . '/assets/vendor/fonts/Montserrat.css',
+    'Poppins' => BASE_URL . '/assets/vendor/fonts/Poppins.css',
+    'Nunito' => BASE_URL . '/assets/vendor/fonts/Nunito.css',
+    'Raleway' => BASE_URL . '/assets/vendor/fonts/Raleway.css',
+    'Inter' => BASE_URL . '/assets/vendor/fonts/Inter.css',
+    'Ubuntu' => BASE_URL . '/assets/vendor/fonts/Ubuntu.css',
+    'Outfit' => BASE_URL . '/assets/vendor/fonts/Outfit.css',
 ];
 if ($googleFont !== 'default' && isset($googleFonts[$googleFont])) {
     $fontLink = '<link href="' . $googleFonts[$googleFont] . '" rel="stylesheet">';
@@ -111,8 +111,8 @@ if ($googleFont !== 'default' && isset($googleFonts[$googleFont])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e($siteName) ?> — Giriş</title>
     <?= $fontLink ?>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/vendor/css/adminlte.min.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/vendor/css/all.min.css">
     <style>
         body {
             <?= $fontFamily ?>
@@ -273,7 +273,7 @@ if ($googleFont !== 'default' && isset($googleFonts[$googleFont])) {
         <p class="text-center text-white-50 mt-3 small"><?= e(get_setting('footer_text', '© 2026')) ?></p>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="<?= BASE_URL ?>/assets/vendor/js/bootstrap.bundle.min.js"></script>
     <script>
         // Şifre göster/gizle
         document.getElementById('togglePass').addEventListener('click', function () {

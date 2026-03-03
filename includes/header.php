@@ -10,16 +10,16 @@ $headerColor = get_setting('header_color', '#ffffff');
 $googleFont = get_setting('google_font', 'default');
 
 $googleFonts = [
-    'Roboto' => 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap',
-    'Open+Sans' => 'https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap',
-    'Lato' => 'https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap',
-    'Montserrat' => 'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap',
-    'Poppins' => 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap',
-    'Nunito' => 'https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&display=swap',
-    'Raleway' => 'https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;600;700&display=swap',
-    'Inter' => 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
-    'Ubuntu' => 'https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap',
-    'Outfit' => 'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap',
+    'Roboto' => BASE_URL . '/assets/vendor/fonts/Roboto.css',
+    'Open+Sans' => BASE_URL . '/assets/vendor/fonts/Open_Sans.css',
+    'Lato' => BASE_URL . '/assets/vendor/fonts/Lato.css',
+    'Montserrat' => BASE_URL . '/assets/vendor/fonts/Montserrat.css',
+    'Poppins' => BASE_URL . '/assets/vendor/fonts/Poppins.css',
+    'Nunito' => BASE_URL . '/assets/vendor/fonts/Nunito.css',
+    'Raleway' => BASE_URL . '/assets/vendor/fonts/Raleway.css',
+    'Inter' => BASE_URL . '/assets/vendor/fonts/Inter.css',
+    'Ubuntu' => BASE_URL . '/assets/vendor/fonts/Ubuntu.css',
+    'Outfit' => BASE_URL . '/assets/vendor/fonts/Outfit.css',
 ];
 
 $fontLinkTag = '';
@@ -35,20 +35,20 @@ if ($googleFont !== 'default' && isset($googleFonts[$googleFont])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?= generateCsrfToken() ?>">
     <title>
         <?= e($pageTitle) ?> —
         <?= e($siteName) ?>
     </title>
     <?= $fontLinkTag ?>
     <!-- AdminLTE 3 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/vendor/css/adminlte.min.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/vendor/css/all.min.css">
     <!-- Select2 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
-    <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/vendor/css/select2.min.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/vendor/css/select2-bootstrap-5-theme.min.css">
     <!-- SweetAlert2 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/vendor/css/sweetalert2.min.css">
     <style>
         :root {
             --font-family:
@@ -239,6 +239,11 @@ if ($googleFont !== 'default' && isset($googleFonts[$googleFont])) {
             transition: border-color 0.2s, box-shadow 0.2s;
         }
 
+        /* File input height fix */
+        input[type="file"].form-control {
+            height: auto !important;
+        }
+
         .form-control:focus,
         .form-select:focus {
             border-color: #1a56db !important;
@@ -374,6 +379,14 @@ if ($googleFont !== 'default' && isset($googleFonts[$googleFont])) {
         .btn .fab,
         .btn .fa {
             margin: 0 !important;
+        }
+
+        /* Navbar Kur Rozetleri Padding Artırma */
+        #nav-usd-rate,
+        #nav-eur-rate,
+        #btnNavbarUpdateCurrency {
+            padding: 6px 14px !important;
+            font-size: 0.8125rem;
         }
     </style>
 </head>

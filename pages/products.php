@@ -72,8 +72,7 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                                     style="width:150px;height:150px;object-fit:cover;border-radius:10px;border:2px solid #dee2e6;">
                             </div>
                             <label class="form-label">Ürün Resmi</label>
-                            <input type="file" name="image" id="imageInput" class="form-control form-control-sm"
-                                accept="image/*">
+                            <input type="file" name="image" id="imageInput" class="form-control" accept="image/*">
                             <small class="text-muted">Maks. 5MB — jpg, png, webp</small>
                         </div>
                         <div class="col-md-8">

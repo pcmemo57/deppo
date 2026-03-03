@@ -281,7 +281,7 @@ $customers = Database::fetchAll("SELECT id, name FROM tbl_dp_customers WHERE hid
 <div id="pdfExportContainer" style="position:fixed; left:-9999px; top:0; width:800px; background:white;"></div>
 
 <!-- html2pdf dependency -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="<?= BASE_URL ?>/assets/vendor/js/html2pdf.bundle.min.js"></script>
 
 <!-- Template: Koli Kartı -->
 <template id="parcelTemplate">

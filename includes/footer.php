@@ -21,17 +21,17 @@ $footerText = get_setting('footer_text', '© 2026 Depo Yönetim Sistemi');
 </footer>
 
 <!-- jQuery -->
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="<?= BASE_URL ?>/assets/vendor/js/jquery.min.js"></script>
 <!-- Bootstrap 5 -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="<?= BASE_URL ?>/assets/vendor/js/bootstrap.bundle.min.js"></script>
 <!-- AdminLTE 3 -->
-<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<script src="<?= BASE_URL ?>/assets/vendor/js/adminlte.min.js"></script>
 <!-- Select2 -->
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="<?= BASE_URL ?>/assets/vendor/js/select2.min.js"></script>
 <!-- SweetAlert2 -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<script src="<?= BASE_URL ?>/assets/vendor/js/sweetalert2.all.min.js"></script>
 <!-- XLSX-JS-STYLE (Excel export with styles) -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script src="<?= BASE_URL ?>/assets/vendor/js/xlsx.bundle.js"></script>
 
 <script>
     // Global SweetAlert tema
@@ -174,13 +174,9 @@ $footerText = get_setting('footer_text', '© 2026 Depo Yönetim Sistemi');
         $.post('<?= BASE_URL ?>/api/settings.php', { action: 'update_currency' }, function (r) {
             if (r.success) {
                 showSuccess('Kurlar güncellendi!');
-                if (r.data) {
-                    $('#nav-usd-rate').html('<i class="fas fa-dollar-sign me-1"></i>USD: ' + r.data.usd_formatted);
-                    $('#nav-eur-rate').html('<i class="fas fa-euro-sign me-1"></i>EUR: ' + r.data.eur_formatted);
-                    var now = new Date();
-                    var timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-                    btn.html('<i class="fas fa-sync-alt me-1"></i>Güncelle (' + timeStr + ')');
-                }
+                setTimeout(function () {
+                    location.reload();
+                }, 1000);
             } else {
                 showError(r.message || 'Güncelleme başarısız.');
                 btn.html(originalHtml);
@@ -191,6 +187,13 @@ $footerText = get_setting('footer_text', '© 2026 Depo Yönetim Sistemi');
         }).always(function () {
             btn.prop('disabled', false);
         });
+    });
+
+    // Global AJAX CSRF Setup
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-Token': $('meta[name="csrf-token"]').attr('content')
+        }
     });
 </script>
 
