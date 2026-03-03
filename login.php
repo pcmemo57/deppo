@@ -102,7 +102,8 @@ $googleFonts = [
 $selectedFont = ($googleFont === 'default') ? 'Source+Sans+Pro' : $googleFont;
 
 if (isset($googleFonts[$selectedFont])) {
-    $fontLink = '<link href="' . $googleFonts[$selectedFont] . '" rel="stylesheet">';
+    $fontVersion = '1.1.6'; // Cache buster
+    $fontLink = '<link href="' . $googleFonts[$selectedFont] . '?v=' . $fontVersion . '" rel="stylesheet">';
     $fontFamily = "font-family: '" . str_replace('+', ' ', $selectedFont) . "', sans-serif;";
 }
 ?>
@@ -117,7 +118,16 @@ if (isset($googleFonts[$selectedFont])) {
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/vendor/css/adminlte.min.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/vendor/css/all.min.css">
     <style>
-        body {
+        body,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        .brand-text,
+        .btn,
+        .form-control {
             <?= $fontFamily ?>
         }
 
@@ -317,7 +327,7 @@ if (isset($googleFonts[$selectedFont])) {
             if (emailInput.value) {
                 emailInput.dispatchEvent(new Event('input'));
             }
-        });
+    });
     </script>
 </body>
 

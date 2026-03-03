@@ -28,7 +28,8 @@ $fontFamilyCss = "'Source Sans Pro', sans-serif";
 $selectedFont = ($googleFont === 'default') ? 'Source+Sans+Pro' : $googleFont;
 
 if (isset($googleFonts[$selectedFont])) {
-    $fontLinkTag = '<link href="' . $googleFonts[$selectedFont] . '" rel="stylesheet">';
+    $fontVersion = '1.1.6'; // Cache buster
+    $fontLinkTag = '<link href="' . $googleFonts[$selectedFont] . '?v=' . $fontVersion . '" rel="stylesheet">';
     $fontFamilyCss = "'" . str_replace('+', ' ', $selectedFont) . "', sans-serif";
 }
 ?>
@@ -65,7 +66,22 @@ if (isset($googleFonts[$selectedFont])) {
             ;
         }
 
-        body {
+        body,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        .main-header,
+        .main-sidebar,
+        .content-wrapper,
+        .main-footer,
+        .btn,
+        .form-control,
+        .form-select,
+        .select2-container,
+        .brand-text {
             font-family: var(--font-family) !important;
         }
 
