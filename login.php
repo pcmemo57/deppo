@@ -98,11 +98,21 @@ $googleFonts = [
     'Ubuntu' => BASE_URL . '/assets/vendor/fonts/Ubuntu.css',
     'Outfit' => BASE_URL . '/assets/vendor/fonts/Outfit.css',
     'Source+Sans+Pro' => BASE_URL . '/assets/vendor/fonts/Source_Sans_Pro.css',
+    'Playfair+Display' => BASE_URL . '/assets/vendor/fonts/Playfair_Display.css',
+    'Merriweather' => BASE_URL . '/assets/vendor/fonts/Merriweather.css',
+    'Oswald' => BASE_URL . '/assets/vendor/fonts/Oswald.css',
+    'Quicksand' => BASE_URL . '/assets/vendor/fonts/Quicksand.css',
+    'Fira+Sans' => BASE_URL . '/assets/vendor/fonts/Fira_Sans.css',
+    'Josefin+Sans' => BASE_URL . '/assets/vendor/fonts/Josefin_Sans.css',
+    'Space+Grotesk' => BASE_URL . '/assets/vendor/fonts/Space_Grotesk.css',
+    'Lora' => BASE_URL . '/assets/vendor/fonts/Lora.css',
+    'Cabin' => BASE_URL . '/assets/vendor/fonts/Cabin.css',
+    'Zilla+Slab' => BASE_URL . '/assets/vendor/fonts/Zilla_Slab.css',
 ];
 $selectedFont = ($googleFont === 'default') ? 'Source+Sans+Pro' : $googleFont;
 
 if (isset($googleFonts[$selectedFont])) {
-    $fontVersion = '1.1.6'; // Cache buster
+    $fontVersion = '1.1.9'; // Cache buster
     $fontLink = '<link href="' . $googleFonts[$selectedFont] . '?v=' . $fontVersion . '" rel="stylesheet">';
     $fontFamily = "font-family: '" . str_replace('+', ' ', $selectedFont) . "', sans-serif;";
 }
@@ -327,7 +337,7 @@ if (isset($googleFonts[$selectedFont])) {
             if (emailInput.value) {
                 emailInput.dispatchEvent(new Event('input'));
             }
-    });
+        });
     </script>
 </body>
 

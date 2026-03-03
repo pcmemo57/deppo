@@ -22,6 +22,16 @@ $googleFontList = [
     'Inter' => 'Inter',
     'Ubuntu' => 'Ubuntu',
     'Outfit' => 'Outfit',
+    'Playfair+Display' => 'Playfair Display',
+    'Merriweather' => 'Merriweather',
+    'Oswald' => 'Oswald',
+    'Quicksand' => 'Quicksand',
+    'Fira+Sans' => 'Fira Sans',
+    'Josefin+Sans' => 'Josefin Sans',
+    'Space+Grotesk' => 'Space Grotesk',
+    'Lora' => 'Lora',
+    'Cabin' => 'Cabin',
+    'Zilla+Slab' => 'Zilla Slab',
 ];
 ?>
 
