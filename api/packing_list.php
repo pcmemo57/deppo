@@ -130,6 +130,55 @@ switch ($action) {
         Database::execute("DELETE FROM tbl_dp_packing_lists WHERE id = ?", [$id]);
         jsonResponse(true, 'Liste silindi.');
 
+    case 'send_email':
+        $id = (int) ($_POST['id'] ?? 0);
+        $to = sanitize($_POST['to'] ?? '');
+        $pdfData = $_POST['pdf_data'] ?? '';
+
+        if (!$id || !$to || !$pdfData) {
+            jsonResponse(false, 'Gerekli bilgiler eksik.');
+        }
+
+        $pl = Database::fetchOne("
+            SELECT pl.list_no, c.name as customer_name 
+            FROM tbl_dp_packing_lists pl
+            JOIN tbl_dp_customers c ON c.id = pl.customer_id
+            WHERE pl.id = ?
+        ", [$id]);
+
+        if (!$pl) {
+            jsonResponse(false, 'Liste bulunamadı.');
+        }
+
+        $subject = "{$pl['customer_name']} Çeki Listesi";
+        $body = "
+            <div style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+                <h2 style='color: #1a56db;'>Sayın İlgili,</h2>
+                <p><b>{$pl['customer_name']}</b> firmasına ait <b>{$pl['list_no']}</b> numaralı çeki listesi (packing list) ekte tarafınıza sunulmuştur.</p>
+                <p>Detayları ekteki PDF dosyasından inceleyebilirsiniz.</p>
+                <br>
+                <p>İyi çalışmalar dileriz.</p>
+                <hr style='border: 0; border-top: 1px solid #eee;'>
+                <p style='font-size: 0.8rem; color: #777;'>Bu e-posta " . APP_NAME . " üzerinden otomatik olarak gönderilmiştir.</p>
+            </div>
+        ";
+
+        $attachments = [
+            [
+                'data' => $pdfData,
+                'name' => "Ceki-Listesi-{$pl['list_no']}.pdf",
+                'type' => 'application/pdf'
+            ]
+        ];
+
+        $success = send_mail($to, $subject, $body, true, [], $attachments);
+
+        if ($success) {
+            jsonResponse(true, 'E-posta başarıyla gönderildi.');
+        } else {
+            jsonResponse(false, 'E-posta gönderilirken bir hata oluştu.');
+        }
+
     default:
         jsonResponse(false, 'Geçersiz işlem.');
 }

@@ -43,15 +43,15 @@ switch ($action) {
             );
 
             // 2. [NEW] Create Stock Out record (Deduct from stock)
-            // Get last price for reference
-            $priceData = Database::fetchOne("SELECT price_eur FROM tbl_dp_stock_in WHERE product_id=? ORDER BY created_at DESC LIMIT 1", [$productId]);
-            $unitPrice = $priceData ? (float) $priceData['price_eur'] : 0;
+            $priceData = Database::fetchOne("SELECT unit_price, currency FROM tbl_dp_stock_in WHERE product_id=? ORDER BY created_at DESC LIMIT 1", [$productId]);
+            $unitPrice = $priceData ? (float) $priceData['unit_price'] : 0;
+            $currency = $priceData ? $priceData['currency'] : 'EUR';
             $totalPrice = $unitPrice * $quantity;
 
             Database::insert(
-                "INSERT INTO tbl_dp_stock_out (batch_id, warehouse_id, requester_id, product_id, quantity, unit_price, total_price, note, created_by, created_by_name)
-                 VALUES (?,?,?,?,?,?,?,?,?,?)",
-                ['SO-' . $batchId, $warehouseId, $requesterId, $productId, $quantity, $unitPrice, $totalPrice, "Emanet Çıkışı: " . $note, $userId, $userName]
+                "INSERT INTO tbl_dp_stock_out (batch_id, warehouse_id, requester_id, product_id, quantity, currency, unit_price, total_price, note, created_by, created_by_name)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                ['SO-' . $batchId, $warehouseId, $requesterId, $productId, $quantity, $currency, $unitPrice, $totalPrice, "Emanet Çıkışı: " . $note, $userId, $userName]
             );
         }
 
@@ -63,7 +63,7 @@ switch ($action) {
                 $warehouseName = $warehouse['name'] ?? '—';
 
                 $items = Database::fetchAll(
-                    "SELECT e.*, p.name AS product_name, p.unit, so.unit_price, so.total_price
+                    "SELECT e.*, p.name AS product_name, p.unit, so.unit_price, so.total_price, so.currency
                      FROM tbl_dp_entrusted e
                      JOIN tbl_dp_products p ON p.id=e.product_id
                      JOIN tbl_dp_stock_out so ON so.batch_id = CONCAT('SO-', e.batch_id) AND so.product_id = e.product_id
@@ -72,16 +72,18 @@ switch ($action) {
                 );
 
                 if (!empty($items)) {
-                    $totalEur = 0;
+                    $totalInBase = 0;
                     $tableRows = "";
                     foreach ($items as $item) {
-                        $totalEur += (float) $item['total_price'];
+                        $displayUnitPrice = toBaseCurrencyDisplay($item['unit_price'], $item['currency'] ?: 'EUR');
+                        $displayTotalPrice = toBaseCurrencyDisplay($item['total_price'], $item['currency'] ?: 'EUR');
+                        $totalInBase += $displayTotalPrice;
                         $tableRows .= "
                             <tr style='border-bottom: 1px solid #eee;'>
                                 <td style='padding: 10px; border: 1px solid #e5e7eb;'>" . e($item['product_name']) . "</td>
                                 <td style='padding: 10px; border: 1px solid #e5e7eb; text-align: right;'>" . formatQty($item['quantity']) . " " . e($item['unit']) . "</td>
-                                <td style='padding: 10px; border: 1px solid #e5e7eb; text-align: right;'>" . number_format($item['unit_price'], 2, ',', '.') . " €</td>
-                                <td style='padding: 10px; border: 1px solid #e5e7eb; text-align: right; font-weight: bold;'>" . number_format($item['total_price'], 2, ',', '.') . " €</td>
+                                <td style='padding: 10px; border: 1px solid #e5e7eb; text-align: right;'>" . number_format($displayUnitPrice, 2, ',', '.') . " " . getCurrencySymbol() . "</td>
+                                <td style='padding: 10px; border: 1px solid #e5e7eb; text-align: right; font-weight: bold;'>" . number_format($displayTotalPrice, 2, ',', '.') . " " . getCurrencySymbol() . "</td>
                             </tr>
                         ";
                     }
@@ -109,7 +111,7 @@ switch ($action) {
                                             <th style='padding: 12px; border: 1px solid #e5e7eb; text-align: left;'>Ürün</th>
                                             <th style='padding: 12px; border: 1px solid #e5e7eb; text-align: right;'>Miktar</th>
                                             <th style='padding: 12px; border: 1px solid #e5e7eb; text-align: right;'>Birim Fiyat</th>
-                                            <th style='padding: 12px; border: 1px solid #e5e7eb; text-align: right;'>Toplam (EUR)</th>
+                                            <th style='padding: 12px; border: 1px solid #e5e7eb; text-align: right;'>Toplam (" . get_setting('base_currency', 'EUR') . ")</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -118,7 +120,7 @@ switch ($action) {
                                     <tfoot>
                                         <tr style='background-color: #f8fafc;'>
                                             <td colspan='3' style='padding: 12px; border: 1px solid #e5e7eb; text-align: right; font-weight: bold;'>EMANET TOPLAM DEĞERİ</td>
-                                            <td style='padding: 12px; border: 1px solid #e5e7eb; text-align: right; font-weight: bold; color: #059669; font-size: 16px;'>" . number_format($totalEur, 2, ',', '.') . " €</td>
+                                            <td style='padding: 12px; border: 1px solid #e5e7eb; text-align: right; font-weight: bold; color: #059669; font-size: 16px;'>" . number_format($totalInBase, 2, ',', '.') . " " . getCurrencySymbol() . "</td>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -231,13 +233,15 @@ switch ($action) {
         // 3. Stok Etkisi
         if ($type === 'return') {
             // IADE: Ürün geri geldi, Stock In kaydı oluştur (Stoğu artır)
-            $priceData = Database::fetchOne("SELECT price_eur FROM tbl_dp_stock_in WHERE product_id=? ORDER BY created_at DESC LIMIT 1", [$entrusted['product_id']]);
-            $unitPrice = $priceData ? (float) $priceData['price_eur'] : 0;
+            $priceData = Database::fetchOne("SELECT unit_price, currency FROM tbl_dp_stock_in WHERE product_id=? ORDER BY created_at DESC LIMIT 1", [$entrusted['product_id']]);
+            $unitPrice = $priceData ? (float) $priceData['unit_price'] : 0;
+            $currency = $priceData ? $priceData['currency'] : 'EUR';
+            $priceInBase = toBaseCurrencyDisplay($unitPrice, $currency);
 
             Database::insert(
-                "INSERT INTO tbl_dp_stock_in (warehouse_id, product_id, quantity, unit_price, price_eur, note, created_by)
-                 VALUES (?,?,?,?,?,?,?)",
-                [$entrusted['warehouse_id'], $entrusted['product_id'], $qty, $unitPrice, $unitPrice, "Emanetten İade: " . $note, $userId]
+                "INSERT INTO tbl_dp_stock_in (warehouse_id, product_id, quantity, unit_price, currency, price_eur, note, created_by)
+                 VALUES (?,?,?,?,?,?,?,?)",
+                [$entrusted['warehouse_id'], $entrusted['product_id'], $qty, $unitPrice, $currency, $priceInBase, "Emanetten İade: " . $note, $userId]
             );
         } else if ($type === 'sale') {
             // SATIŞ: Ürün zaten emanet verildiğinde stoktan düşmüştü.
@@ -251,10 +255,11 @@ switch ($action) {
             $actionColor = ($type === 'return') ? '#10b981' : '#ef4444';
             $actionIcon = ($type === 'return') ? '↩️' : '🚚';
 
-            // Get last price for EUR display
-            $priceData = Database::fetchOne("SELECT price_eur FROM tbl_dp_stock_in WHERE product_id=? ORDER BY created_at DESC LIMIT 1", [$entrusted['product_id']]);
-            $unitPrice = $priceData ? (float) $priceData['price_eur'] : 0;
-            $totalEur = $unitPrice * $qty;
+            $priceData = Database::fetchOne("SELECT unit_price, currency FROM tbl_dp_stock_in WHERE product_id=? ORDER BY created_at DESC LIMIT 1", [$entrusted['product_id']]);
+            $unitPriceOrig = $priceData ? (float) $priceData['unit_price'] : 0;
+            $currencyOrig = $priceData ? $priceData['currency'] : 'EUR';
+            $unitPriceDisplay = toBaseCurrencyDisplay($unitPriceOrig, $currencyOrig);
+            $totalInBase = $unitPriceDisplay * $qty;
 
             $customerRow = '';
             if ($type === 'sale' && $customerId) {
@@ -294,11 +299,11 @@ switch ($action) {
                             </tr>
                             <tr>
                                 <td style='padding: 12px; border: 1px solid #e5e7eb; font-weight: bold;'>Birim Değeri</td>
-                                <td style='padding: 12px; border: 1px solid #e5e7eb;'>" . number_format($unitPrice, 2, ',', '.') . " €</td>
+                                <td style='padding: 12px; border: 1px solid #e5e7eb;'>" . number_format($unitPriceDisplay, 2, ',', '.') . " " . getCurrencySymbol() . "</td>
                             </tr>
                             <tr style='background-color: #f9fafb;'>
                                 <td style='padding: 12px; border: 1px solid #e5e7eb; font-weight: bold;'>İşlem Tutarı</td>
-                                <td style='padding: 12px; border: 1px solid #e5e7eb; font-weight: bold; color: #1e40af;'>" . number_format($totalEur, 2, ',', '.') . " €</td>
+                                <td style='padding: 12px; border: 1px solid #e5e7eb; font-weight: bold; color: #1e40af;'>" . number_format($totalInBase, 2, ',', '.') . " " . getCurrencySymbol() . "</td>
                             </tr>
                             <tr>
                                 <td style='padding: 12px; border: 1px solid #e5e7eb; font-weight: bold;'>Kalan Emanet</td>

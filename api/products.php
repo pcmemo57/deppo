@@ -26,10 +26,15 @@ switch ($action) {
         $rows = Database::fetchAll("
             SELECT p.*, 
                    (SELECT COALESCE(SUM(quantity), 0) FROM tbl_dp_stock_in WHERE product_id = p.id AND is_active = 1) -
-                   (SELECT COALESCE(SUM(quantity), 0) FROM tbl_dp_stock_out WHERE product_id = p.id) AS total_stock
+                   (SELECT COALESCE(SUM(quantity), 0) FROM tbl_dp_stock_out WHERE product_id = p.id) AS total_stock,
+                   (SELECT unit_price FROM tbl_dp_stock_in WHERE product_id = p.id AND is_active = 1 ORDER BY created_at DESC LIMIT 1) AS last_purchase_price,
+                   (SELECT currency FROM tbl_dp_stock_in WHERE product_id = p.id AND is_active = 1 ORDER BY created_at DESC LIMIT 1) AS last_purchase_currency
             FROM `$table` p 
             WHERE $where 
             ORDER BY p.name ASC LIMIT $perPage OFFSET $offset", $params);
+        foreach ($rows as &$r) {
+            $r['last_price_eur'] = toBaseCurrencyDisplay($r['last_purchase_price'] ?? 0, $r['last_purchase_currency'] ?? 'EUR');
+        }
         jsonResponse(true, '', ['data' => $rows, 'total' => (int) $total]);
 
     case 'get':

@@ -269,7 +269,7 @@ if (!in_array($activeTab, $tabs))
                 html += '<button class="btn btn-xs btn-danger" onclick="deleteUser(\'admin\',' + u.id + ')"><i class="fas fa-trash"></i></button>';
                 html += '</td></tr>';
             });
-            $('#bodyAdmins').html(html || '<tr><td colspan="6" class="text-center text-muted">Kayıt yok</td></tr>');
+            $('#bodyAdmins').html(html || '<tr><td colspan="5" class="text-center text-muted">Kayıt yok</td></tr>');
             renderPagination('#paginationAdmins', r.data.total, adminPerPage, adminPage, function (p) { adminPage = p; loadAdmins(); });
         }, 'json');
     }
@@ -290,7 +290,7 @@ if (!in_array($activeTab, $tabs))
                 html += '<button class="btn btn-xs btn-danger" onclick="deleteUser(\'user\',' + u.id + ')"><i class="fas fa-trash"></i></button>';
                 html += '</td></tr>';
             });
-            $('#bodyUsers').html(html || '<tr><td colspan="6" class="text-center text-muted">Kayıt yok</td></tr>');
+            $('#bodyUsers').html(html || '<tr><td colspan="5" class="text-center text-muted">Kayıt yok</td></tr>');
             renderPagination('#paginationUsers', r.data.total, userPerPage, userPage, function (p) { userPage = p; loadUsers(); });
         }, 'json');
     }

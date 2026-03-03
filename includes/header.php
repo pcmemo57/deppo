@@ -401,7 +401,7 @@ if ($googleFont !== 'default' && isset($googleFonts[$googleFont])) {
                     ?>
                     <div class="nav-link fw-bold d-flex align-items-center"
                         style="color:var(--header-color); cursor: default;">
-                        <i class="far fa-calendar-alt me-2"></i>
+                        <i class="far fa-calendar-alt me-2" style="margin-right: 10px;"></i>
                         <span><?= $displayDate ?></span>
                         <span class="mx-3" style="opacity: 0.5;">|</span>
                         <div class="d-flex align-items-center" style="gap: 10px;">

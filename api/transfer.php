@@ -55,22 +55,27 @@ switch ($action) {
             );
 
             // Kaynak depodan çıkar → hedef depoya giriş
-            // Kaynak: stock_out kaydı
-            Database::insert(
-                "INSERT INTO tbl_dp_stock_out (warehouse_id,product_id,quantity,unit_price,total_price,note,created_by)
-                 VALUES (?,?,?,0,0,?,?)",
-                [$sourceId, $productId, $quantity, "Transfer #$transferId", $userId]
-            );
-            // Hedef: En son EUR fiyatı bul, stock_in kaydı
-            $lastPrice = Database::fetchOne(
-                "SELECT price_eur FROM tbl_dp_stock_in WHERE product_id=? ORDER BY created_at DESC LIMIT 1",
+            // Hedef: En son fiyatı ve birimi bul
+            $lastPriceData = Database::fetchOne(
+                "SELECT unit_price, currency FROM tbl_dp_stock_in WHERE product_id=? ORDER BY created_at DESC LIMIT 1",
                 [$productId]
             );
-            $priceEur = $lastPrice ? $lastPrice['price_eur'] : 0;
+            $unitPriceOrig = $lastPriceData ? (float) $lastPriceData['unit_price'] : 0;
+            $currencyOrig = $lastPriceData ? $lastPriceData['currency'] : 'EUR';
+            $priceInBase = toBaseCurrencyDisplay($unitPriceOrig, $currencyOrig);
+
+            // Kaynak: stock_out kaydı
+            Database::insert(
+                "INSERT INTO tbl_dp_stock_out (warehouse_id,product_id,quantity,currency,unit_price,total_price,note,created_by)
+                 VALUES (?,?,?,?,?,?,?,?)",
+                [$sourceId, $productId, $quantity, $currencyOrig, $unitPriceOrig, $unitPriceOrig * $quantity, "Transfer #$transferId", $userId]
+            );
+
+            // Hedef: stock_in kaydı
             Database::insert(
                 "INSERT INTO tbl_dp_stock_in (warehouse_id,product_id,quantity,unit_price,currency,price_eur,note,created_by)
                  VALUES (?,?,?,?,?,?,?,?)",
-                [$targetId, $productId, $quantity, $priceEur, 'EUR', $priceEur, "Transfer #$transferId", $userId]
+                [$targetId, $productId, $quantity, $unitPriceOrig, $currencyOrig, $priceInBase, "Transfer #$transferId", $userId]
             );
         }
         jsonResponse(true, 'Transfer tamamlandı.');

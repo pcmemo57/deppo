@@ -36,13 +36,17 @@ switch ($action) {
         jsonResponse(true, 'Görünüm ayarları kaydedildi.');
 
     case 'save_currency':
-        foreach (['usd_rate', 'eur_rate'] as $key) {
+        foreach (['usd_rate', 'eur_rate', 'base_currency'] as $key) {
             if (isset($_POST[$key])) {
-                $val = str_replace(['.', ','], ['', '.'], sanitize($_POST[$key]));
-                set_setting($key, (string) (float) $val);
+                if ($key === 'base_currency') {
+                    set_setting($key, sanitize($_POST[$key]));
+                } else {
+                    $val = str_replace(['.', ','], ['', '.'], sanitize($_POST[$key]));
+                    set_setting($key, (string) (float) $val);
+                }
             }
         }
-        jsonResponse(true, 'Döviz kurları kaydedildi.');
+        jsonResponse(true, 'Döviz kurları ve ayarları kaydedildi.');
 
     case 'save_general':
         if (isset($_POST['site_name'])) {
@@ -52,6 +56,15 @@ switch ($action) {
             set_setting('allow_passive_with_stock', sanitize($_POST['allow_passive_with_stock']));
         }
         jsonResponse(true, 'Genel ayarlar kaydedildi.');
+
+    case 'save_pdf':
+        if (isset($_POST['pdf_scale'])) {
+            set_setting('pdf_scale', sanitize($_POST['pdf_scale']));
+        }
+        if (isset($_POST['pdf_quality'])) {
+            set_setting('pdf_quality', sanitize($_POST['pdf_quality']));
+        }
+        jsonResponse(true, 'PDF ayarları kaydedildi.');
 
     case 'update_currency':
         // TCMB XML

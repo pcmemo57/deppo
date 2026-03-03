@@ -35,7 +35,7 @@ unset($p);
 <head>
     <meta charset="UTF-8">
     <title>Çeki Listesi - <?= e($pl['list_no']) ?></title>
-    <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/plugins/fontawesome-free/css/all.min.css">
     <style>
         @page {
             size: A4 portrait;
@@ -61,27 +61,37 @@ unset($p);
         /* ───────────────────────────────────────────
            HEADER
         ─────────────────────────────────────────── */
-        .info-header {
+        .info-header-table {
+            width: 100%;
+            border: 1px solid #cbd5e0;
+            border-collapse: collapse;
             margin-bottom: 20px;
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 15px;
         }
 
-        .info-item {
-            margin-bottom: 4px;
+        .info-header-table tr:nth-child(odd) {
+            background-color: #f7fafc;
+        }
+
+        .info-header-table tr:nth-child(even) {
+            background-color: #ffffff;
+        }
+
+        .info-header-table td {
+            padding: 8px 12px;
             font-size: 14px;
+            border: none;
         }
 
         .info-label {
             font-weight: 500;
             color: #4a5568;
-            min-width: 220px;
-            display: inline-block;
+            text-align: left;
         }
 
         .info-value {
             font-weight: 700;
             color: #000;
+            text-align: right;
         }
 
         /* ───────────────────────────────────────────
@@ -286,28 +296,28 @@ unset($p);
     </div>
 
     <div class="container" id="pdfContent">
-        <div class="info-header">
-            <div class="info-item">
-                <span class="info-label">Müşteri (Customer):</span>
-                <span class="info-value"><?= e($pl['customer_name']) ?></span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Tarih (Date):</span>
-                <span class="info-value"><?= date('d.m.Y', strtotime($pl['created_at'])) ?></span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Toplam Koli Sayısı (Total Box Count):</span>
-                <span class="info-value"><?= $pl['total_parcels'] ?></span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Toplam Ağırlık (Total Weight):</span>
-                <span class="info-value"><?= formatPrice($pl['total_weight_kg']) ?> kg</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Toplam Desi Değeri (Total Volumetric Weight):</span>
-                <span class="info-value"><?= number_format($pl['total_vol_desi'], 2, ',', '.') ?> desi</span>
-            </div>
-        </div>
+        <table class="info-header-table">
+            <tr>
+                <td class="info-label">Müşteri (Customer):</td>
+                <td class="info-value"><?= e($pl['customer_name']) ?></td>
+            </tr>
+            <tr>
+                <td class="info-label">Tarih (Date):</td>
+                <td class="info-value"><?= date('d.m.Y', strtotime($pl['created_at'])) ?></td>
+            </tr>
+            <tr>
+                <td class="info-label">Toplam Koli Sayısı (Total Box Count):</td>
+                <td class="info-value"><?= $pl['total_parcels'] ?></td>
+            </tr>
+            <tr>
+                <td class="info-label">Toplam Ağırlık (Total Weight):</td>
+                <td class="info-value"><?= formatPrice($pl['total_weight_kg']) ?> kg</td>
+            </tr>
+            <tr>
+                <td class="info-label">Toplam Desi Değeri (Total Volumetric Weight):</td>
+                <td class="info-value"><?= number_format($pl['total_vol_desi'], 2, ',', '.') ?> desi</td>
+            </tr>
+        </table>
 
         <table>
             <thead>
@@ -331,7 +341,7 @@ unset($p);
                                 <div class="item-row">
                                     <div class="item-img-container">
                                         <?php if ($item['image']): ?>
-                                            <img src="../images/UrunResim/<?= e($item['image']) ?>" class="item-img" alt="product">
+                                            <img src="<?= UPLOAD_URL . e($item['image']) ?>" class="item-img" alt="product">
                                         <?php else: ?>
                                             <i class="fas fa-image text-muted opacity-25" style="font-size: 24px;"></i>
                                         <?php endif; ?>

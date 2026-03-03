@@ -123,24 +123,47 @@ function uploadImage(array $file, string $prefix = ''): string|false
 }
 
 /**
- * Para birimi dönüşümü (TL/USD → EUR)
+ * Convert price between different currencies using system rates
+ */
+function convertPrice($amount, $from, $to)
+{
+    if ($from === $to)
+        return (float) $amount;
+
+    $rates = [
+        'TL' => 1.0,
+        'USD' => (float) get_setting('usd_rate', '0'),
+        'EUR' => (float) get_setting('eur_rate', '0')
+    ];
+
+    if ($to === 'TL') {
+        return (float) $amount * $rates[$from];
+    }
+
+    if ($from === 'TL') {
+        return (float) $amount / ($rates[$to] ?: 1);
+    }
+
+    // Bridge via TL
+    $tlAmount = (float) $amount * $rates[$from];
+    return $tlAmount / ($rates[$to] ?: 1);
+}
+
+/**
+ * Convert amount to system's base currency for display
+ */
+function toBaseCurrencyDisplay($amount, $fromCurrency)
+{
+    $baseCurrency = get_setting('base_currency', 'EUR');
+    return convertPrice($amount, $fromCurrency, $baseCurrency);
+}
+
+/**
+ * Para birimi dönüşümü (TL/USD/EUR → Seçilen Base Currency)
  */
 function toEur(float $amount, string $currency): float
 {
-    if ($currency === 'EUR')
-        return $amount;
-    if ($currency === 'USD') {
-        $usdRate = (float) get_setting('usd_rate', '1');
-        $eurRate = (float) get_setting('eur_rate', '1');
-        if ($eurRate <= 0)
-            return $amount;
-        return $amount / $eurRate * $usdRate;
-    }
-    // TL
-    $eurRate = (float) get_setting('eur_rate', '1');
-    if ($eurRate <= 0)
-        return $amount;
-    return $amount / $eurRate;
+    return toBaseCurrencyDisplay($amount, $currency);
 }
 
 /**
@@ -184,8 +207,10 @@ function isWarehouseEmpty(int $warehouseId): bool
 
 /**
  * Mail gönderme (PHPMailer wrapper)
+ * @param array $attachments [ ['data' => 'base64...', 'name' => 'filename.pdf', 'type' => 'application/pdf'], ... ]
+ *                          veya [ ['path' => '/path/to/file', 'name' => 'filename.pdf'], ... ]
  */
-function send_mail(string $to, string $subject, string $body, bool $isHtml = true, array $embeddedImages = []): bool
+function send_mail(string $to, string $subject, string $body, bool $isHtml = true, array $embeddedImages = [], array $attachments = []): bool
 {
     require_once ROOT_PATH . '/PHPMailer/src/PHPMailer.php';
     require_once ROOT_PATH . '/PHPMailer/src/SMTP.php';
@@ -209,6 +234,21 @@ function send_mail(string $to, string $subject, string $body, bool $isHtml = tru
         foreach ($embeddedImages as $cid => $path) {
             if (file_exists($path)) {
                 $mail->addEmbeddedImage($path, $cid);
+            }
+        }
+
+        // Ekler (Attachments)
+        foreach ($attachments as $att) {
+            if (isset($att['data'])) {
+                // Base64 veri eki
+                $data = $att['data'];
+                if (str_contains($data, ';base64,')) {
+                    $data = explode(';base64,', $data)[1];
+                }
+                $decoded = base64_decode($data);
+                $mail->addStringAttachment($decoded, $att['name'], 'base64', $att['type'] ?? 'application/octet-stream');
+            } elseif (isset($att['path']) && file_exists($att['path'])) {
+                $mail->addAttachment($att['path'], $att['name'] ?? basename($att['path']));
             }
         }
 
@@ -324,4 +364,24 @@ function resize_image(string $src, string $dst, int $width, int $height): bool
     imagedestroy($img);
     imagedestroy($thumb);
     return true;
+}
+
+/**
+ * Get base currency symbol
+ */
+function getCurrencySymbol($currency = null)
+{
+    if (!$currency) {
+        $currency = get_setting('base_currency', 'EUR');
+    }
+    switch ($currency) {
+        case 'USD':
+            return '$';
+        case 'EUR':
+            return '€';
+        case 'TL':
+            return '₺';
+        default:
+            return $currency;
+    }
 }

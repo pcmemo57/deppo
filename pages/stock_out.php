@@ -168,10 +168,21 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                         <option value="50">50</option>
                         <option value="100">100</option>
                     </select>
-                    <div class="input-group input-group-sm me-2" style="width: 200px;">
+                    <div class="input-group input-group-sm me-2" style="width: 150px;">
+                        <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                        <input type="date" id="startDate" class="form-control" title="Başlangıç Tarihi">
+                    </div>
+                    <div class="input-group input-group-sm me-2" style="width: 150px;">
+                        <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                        <input type="date" id="endDate" class="form-control" title="Bitiş Tarihi">
+                    </div>
+                    <div class="input-group input-group-sm me-2" style="width: 180px;">
                         <input type="text" id="searchBox" class="form-control" placeholder="Ara...">
                         <span class="input-group-text"><i class="fas fa-search"></i></span>
                     </div>
+                    <button id="btnExport" class="btn btn-success btn-sm px-3 shadow-sm me-2">
+                        <i class="fas fa-file-excel me-1"></i> Excel
+                    </button>
                     <a href="?page=stock_out_orders" class="btn btn-secondary btn-sm px-3 shadow-sm">
                         <i class="fas fa-list-ul me-1"></i> Sipariş Bazlı Liste
                     </a>
@@ -181,12 +192,11 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                 <table class="table table-hover table-striped m-0 table-valign-middle">
                     <thead class="bg-light text-muted small text-uppercase">
                         <tr>
-                            <th style="width:60px" class="ps-3">#</th>
                             <th>Ürün</th>
                             <th>Depo</th>
                             <th>Alan / Müşteri</th>
                             <th class="num-align">Miktar</th>
-                            <th class="num-align">Toplam (EUR)</th>
+                            <th class="num-align">Toplam (<?= getCurrencySymbol() ?>)</th>
                             <th style="width:120px">İşlemi Yapan</th>
                             <th style="width:120px" class="num-align">Tarih</th>
                             <th style="width:80px" class="text-center pe-3">Detay</th>
@@ -229,11 +239,10 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                                 <select name="warehouse_id" id="warehouseSelect" class="form-select" required>
                                     <option value="">— Seçiniz —</option>
                                     <?php foreach ($warehouses as $w): ?>
-                                        <option value="<?= e($w['id']) ?>">
+                                        <option value="<?= e($w['id']) ?>" <?= count($warehouses) === 1 ? 'selected' : '' ?>>
                                             <?= e($w['name']) ?>
                                         </option>
-                                        <?php
-                                    endforeach; ?>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                         </div>
@@ -283,9 +292,11 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                             <table class="table table-sm table-bordered">
                                 <thead class="bg-light small">
                                     <tr>
+                                        <th style="width:100px" class="ps-3">Sipariş No</th>
                                         <th>Ürün</th>
                                         <th class="num-align" style="width:150px">Miktar</th>
-                                        <th class="num-align" style="width:150px">Birim (EUR)</th>
+                                        <th class="num-align" style="width:150px">Birim
+                                            (<?= e(get_setting('base_currency', 'EUR')) ?>)</th>
                                         <th class="num-align" style="width:150px">Toplam</th>
                                         <th style="width:40px"></th>
                                     </tr>
@@ -294,7 +305,14 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                                 <tfoot id="lineFoot">
                                     <tr class="bg-light fw-bold">
                                         <td colspan="3" class="num-align">GENEL TOPLAM:</td>
-                                        <td id="totalSumLabel" class="num-align">0.00 EUR</td>
+                                        <td id="totalSumLabel" class="num-align">0.00
+                                            <?= e(get_setting('base_currency', 'EUR')) ?>
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                    <tr class="fw-bold">
+                                        <td colspan="3" class="num-align text-primary">TL GENEL TOPLAM:</td>
+                                        <td id="totalSumTLLabel" class="num-align text-primary">0.00 TL</td>
                                         <td></td>
                                     </tr>
                                 </tfoot>
@@ -342,37 +360,57 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
 </div>
 
 <script>
+    var eurExchangeRate = <?= (float) get_setting('eur_rate', '0') ?>;
     var curPage = 1, curPerPage = 10, curSearch = '', searchTimer;
     var apiUrl = '<?= BASE_URL ?>/api/stock_out.php';
     var lines = [];
+    var isSingleWarehouse = <?= count($warehouses) === 1 ? 'true' : 'false' ?>;
 
     function esc(v) { return $('<span>').text(v || '').html(); }
 
     function load() {
-        $.get(apiUrl, { action: 'list', page: curPage, per_page: curPerPage, search: curSearch }, function (r) {
+        var startDate = $('#startDate').val();
+        var endDate = $('#endDate').val();
+        $.get(apiUrl, {
+            action: 'list',
+            page: curPage,
+            per_page: curPerPage,
+            search: curSearch,
+            start_date: startDate,
+            end_date: endDate
+        }, function (r) {
             if (!r.success || !r.data.data) return;
             var html = '';
             $.each(r.data.data, function (i, d) {
-                var muhatap = '—';
-                if (d.requester_name) muhatap = '<i class="fas fa-user me-1 opacity-50"></i> ' + esc(d.requester_name + ' ' + d.requester_surname);
-                else if (d.customer) muhatap = '<i class="fas fa-building me-1 opacity-50"></i> ' + esc(d.customer);
+                var muhatap = [];
+                if (d.requester_name) muhatap.push('<i class="fas fa-user me-1 opacity-50"></i> ' + esc(d.requester_name + ' ' + d.requester_surname));
+                if (d.customer) muhatap.push('<i class="fas fa-building me-1 opacity-50"></i> ' + esc(d.customer));
+
+                var muhatapHtml = muhatap.length ? muhatap.join('<br>') : '—';
 
                 html += '<tr>' +
-                    '<td class="ps-3">' + d.id + '</td>' +
                     '<td><b>' + esc(d.product) + '</b></td>' +
                     '<td>' + esc(d.warehouse) + '</td>' +
-                    '<td>' + muhatap + '</td>' +
+                    '<td><small>' + muhatapHtml + '</small></td>' +
                     '<td class="num-align">' + formatQty(d.quantity) + ' <small class="text-muted">' + esc(d.unit) + '</small></td>' +
-                    '<td class="num-align"><strong>' + formatTurkish(parseFloat(d.total_price).toFixed(2)) + '</strong> <small>EUR</small></td>' +
+                    '<td class="num-align"><strong>' + formatTurkish(parseFloat(d.total_price).toFixed(2)) + '</strong> <small>' + '<?= get_setting('base_currency', 'EUR') ?>' + '</small></td>' +
                     '<td><small>' + esc(d.created_by_name || '—') + '</small></td>' +
-                    <td class="num-align"><small>' + d.created_at + '</small></td>' +
-                '<td class="text-center pe-3"><button class="btn btn-xs btn-outline-primary" onclick="viewRow(' + d.id + ')"><i class="fas fa-eye"></i></button></td>' +
+                    '<td class="num-align"><small>' + d.created_at + '</small></td>' +
+                    '<td class="text-center pe-3"><button class="btn btn-xs btn-outline-primary" onclick="viewRow(' + d.id + ')"><i class="fas fa-eye"></i></button></td>' +
                     '</tr>';
             });
-            $('#tableBody').html(html || '<tr><td colspan="9" class="text-center text-muted p-4">Kayıt bulunamadı</td></tr>');
+            $('#tableBody').html(html || '<tr><td colspan="8" class="text-center text-muted p-4">Kayıt bulunamadı</td></tr>');
             $('#totalCount').text('Toplam: ' + formatQty(r.data.total) + ' kayıt');
             renderPag(r.data.total);
         }, 'json');
+    }
+
+    function exportExcel() {
+        var startDate = $('#startDate').val();
+        var endDate = $('#endDate').val();
+        var url = apiUrl + '?action=export_excel&search=' + encodeURIComponent(curSearch) +
+            '&start_date=' + startDate + '&end_date=' + endDate;
+        window.location.href = url;
     }
 
     function renderPag(total) {
@@ -417,11 +455,27 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         renderLines();
         $('#editId').val('');
         $('#formStockOut')[0].reset();
-        $('#warehouseSelect, #requesterSelect, #customerSelect, #productAdd').val(null).trigger('change');
+        $('#requesterSelect, #customerSelect, #productAdd').val(null).trigger('change');
+        if (!isSingleWarehouse) {
+            $('#warehouseSelect').val(null).trigger('change');
+        } else {
+            $('#warehouseSelect').trigger('change');
+        }
         $('#addModal .modal-title').html('<i class="fas fa-sign-out-alt me-2"></i> Yeni Stok Çıkışı');
         $('#btnSubmitText').text('Çıkışı Kaydet');
         $('#addModal').modal('show');
     }
+
+    $(function () {
+        $('#startDate, #endDate').on('change', function () {
+            curPage = 1;
+            load();
+        });
+
+        $('#btnExport').on('click', function () {
+            exportExcel();
+        });
+    });
 
     function renderLines() {
         if (!lines.length) { $('#lineContainer').hide(); return; }
@@ -438,7 +492,10 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                 '</tr>';
         });
         $('#lineBody').html(html);
-        $('#totalSumLabel').text(formatTurkish(totalSum.toFixed(2)) + ' EUR');
+        $('#totalSumLabel').text(formatTurkish(totalSum.toFixed(2)) + ' <?= get_setting('base_currency', 'EUR') ?>');
+
+        var totalSumTL = totalSum * eurExchangeRate;
+        $('#totalSumTLLabel').text(formatTurkish(totalSumTL.toFixed(2)) + ' TL');
     }
 
     function removeLine(i) { lines.splice(i, 1); renderLines(); }
@@ -449,6 +506,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         $.get(apiUrl, { action: 'get', id: id }, function (r) {
             if (!r.success) { $('#viewBody').html('<div class="alert alert-danger">' + r.message + '</div>'); return; }
             var d = r.data;
+            var baseCurrency = '<?= get_setting('base_currency', 'EUR') ?>';
             var html = '<div class="modal-section-label"><i class="fas fa-map-marker-alt"></i> Konum & Muhatap Bilgileri</div>' +
                 '<div class="row g-3 mb-4">' +
                 '<div class="col-md-4"><label class="form-label small text-muted mb-1">Depo</label><div class="fw-bold"><i class="fas fa-warehouse me-1 opacity-50"></i> ' + esc(d.warehouse_name) + '</div></div>' +
@@ -461,7 +519,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                 '<thead class="bg-light small"><tr>' +
                 '<th>Ürün</th>' +
                 '<th style="width:150px" class="num-align">Miktar</th>' +
-                '<th style="width:150px" class="num-align">Birim (EUR)</th>' +
+                '<th style="width:150px" class="num-align">Birim (' + baseCurrency + ')</th>' +
                 '<th style="width:150px" class="num-align">Toplam</th>' +
                 '</tr></thead>' +
                 '<tbody><tr>' +
@@ -471,7 +529,8 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                 '<td class="num-align"><strong>' + formatTurkish(parseFloat(d.total_price).toFixed(2)) + '</strong></td>' +
                 '</tr></tbody>' +
                 '<tfoot class="bg-light fw-bold">' +
-                '<tr><td colspan="3" class="num-align">TOPLAM:</td><td class="num-align">' + formatTurkish(parseFloat(d.total_price).toFixed(2)) + ' EUR</td></tr>' +
+                '<tr><td colspan="3" class="num-align">TOPLAM:</td><td class="num-align">' + formatTurkish(parseFloat(d.total_price).toFixed(2)) + ' ' + baseCurrency + '</td></tr>' +
+                '<tr class=""><td colspan="3" class="num-align text-primary">TL TOPLAM:</td><td class="num-align text-primary">' + formatTurkish((parseFloat(d.total_price) * eurExchangeRate).toFixed(2)) + ' TL</td></tr>' +
                 '</tfoot>' +
                 '</table>' +
                 '</div>' +

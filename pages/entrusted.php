@@ -157,7 +157,6 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                 <table class="table table-hover m-0 table-valign-middle">
                     <thead class="bg-light text-muted small text-uppercase">
                         <tr>
-                            <th style="width:60px" class="ps-3">#</th>
                             <th>Ürün</th>
                             <th>Alan Kişi</th>
                             <th>Depo</th>
@@ -206,7 +205,9 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                                 <select name="warehouse_id" id="warehouseSelect" class="form-select" required>
                                     <option value="">— Seçiniz —</option>
                                     <?php foreach ($warehouses as $w): ?>
-                                        <option value="<?= e($w['id']) ?>"><?= e($w['name']) ?></option>
+                                        <option value="<?= e($w['id']) ?>" <?= count($warehouses) === 1 ? 'selected' : '' ?>>
+                                            <?= e($w['name']) ?>
+                                        </option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -395,6 +396,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
     var curPage = 1, curPerPage = 10, curSearch = '', searchTimer;
     var apiUrl = '<?= BASE_URL ?>/api/entrusted.php';
     var lines = [];
+    var isSingleWarehouse = <?= count($warehouses) === 1 ? 'true' : 'false' ?>;
 
     function esc(v) { return $('<span>').text(v || '').html(); }
 
@@ -410,7 +412,6 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                 else statusBadge = '<span class="badge bg-secondary">Kapalı</span>';
 
                 html += '<tr>' +
-                    '<td class="ps-3">' + d.id + '</td>' +
                     '<td><b>' + esc(d.product_name) + '</b></td>' +
                     '<td>' + esc(d.requester_name + ' ' + d.requester_surname) + '</td>' +
                     '<td>' + esc(d.warehouse_name) + '</td>' +
@@ -426,7 +427,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                     '</div>' +
                     '</td></tr>';
             });
-            $('#tableBody').html(html || '<tr><td colspan="10" class="text-center p-4">Kayıt bulunamadı</td></tr>');
+            $('#tableBody').html(html || '<tr><td colspan="9" class="text-center p-4">Kayıt bulunamadı</td></tr>');
             $('#totalCount').text('Toplam: ' + formatQty(r.data.total) + ' kayıt');
             renderPag(r.data.total);
         }, 'json');
@@ -447,7 +448,12 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         lines = [];
         renderLines();
         $('#formEntrusted')[0].reset();
-        $('#warehouseSelect, #requesterSelect, #productAdd').val(null).trigger('change');
+        $('#requesterSelect, #productAdd').val(null).trigger('change');
+        if (!isSingleWarehouse) {
+            $('#warehouseSelect').val(null).trigger('change');
+        } else {
+            $('#warehouseSelect').trigger('change');
+        }
 
         // Alanları aktif bırakıyoruz (sıralı girişe zorlamıyoruz)
         $('#requesterSelect, [name="expected_return_at"], #productAdd, #qtyInput, #btnAddLine').prop('disabled', false);

@@ -31,7 +31,6 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                 <table class="table table-hover table-striped m-0 table-valign-middle">
                     <thead class="bg-light">
                         <tr>
-                            <th style="width:60px" class="ps-3">#</th>
                             <th style="width:70px">Resim</th>
                             <th>Ürün Adı</th>
                             <th>Kod</th>
@@ -185,6 +184,7 @@ requireRole(ROLE_ADMIN, ROLE_USER);
         $.get(apiUrl, { action: 'list', page: curPage, per_page: curPerPage, search: curSearch }, function (r) {
             if (!r.success || !r.data.data) return;
             var html = '';
+            var baseCurrency = '<?= get_setting('base_currency', 'EUR') ?>';
             $.each(r.data.data, function (i, u) {
                 var imgSrc = u.image ? '<?= BASE_URL ?>/images/UrunResim/' + encodeURIComponent(u.image) : noImg;
                 var isLowStock = (u.stock_alarm > 0 && (u.total_stock || 0) < u.stock_alarm);
@@ -192,20 +192,19 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                 var stockClass = isLowStock ? 'text-danger fw-bold' : 'text-muted';
 
                 html += '<tr class="' + (isLowStock ? 'table-warning' : '') + '">';
-                html += '<td>' + u.id + '</td>';
                 html += '<td><img src="' + imgSrc + '" style="width:50px;height:50px;object-fit:cover;border-radius:6px; cursor:pointer;" onerror="this.src=\'' + noImg + '\'" onclick="showImagePreview(\'' + imgSrc + '\')" title="Büyütmek için tıklayın"></td>';
                 html += '<td><strong>' + esc(u.name) + '</strong></td>';
                 html += '<td><code>' + esc(u.code || '—') + '</code></td>';
                 html += '<td>' + esc(u.unit) + ' <br><small class="' + stockClass + '">' +
                     (isLowStock ? '<i class="fas fa-exclamation-triangle me-1"></i> ' : '') +
                     'Alarm: ' + alarmText + ' (Stok: ' + formatQty(u.total_stock || 0) + ')</small></td>';
-                html += '<td>' + esc(u.description || '—').substring(0, 60) + (u.description && u.description.length > 60 ? '...' : '') + '</td>';
+                html += '<td><strong>' + (u.last_price_eur ? formatTurkish(parseFloat(u.last_price_eur).toFixed(2)) : '—') + '</strong> <small>' + baseCurrency + '</small></td>';
                 html += '<td>';
                 html += '<button class="btn btn-xs btn-info me-1" onclick="editRow(' + u.id + ')"><i class="fas fa-edit"></i></button>';
                 html += '<button class="btn btn-xs btn-danger" onclick="deleteRow(' + u.id + ')"><i class="fas fa-trash"></i></button>';
                 html += '</td></tr>';
             });
-            $('#tableBody').html(html || '<tr><td colspan="7" class="text-center text-muted p-3">Kayıt bulunamadı</td></tr>');
+            $('#tableBody').html(html || '<tr><td colspan="6" class="text-center text-muted p-3">Kayıt bulunamadı</td></tr>');
             $('#totalCount').text('Toplam: ' + formatQty(r.data.total) + ' kayıt');
             renderPag(r.data.total);
         }, 'json');

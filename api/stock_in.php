@@ -101,6 +101,9 @@ switch ($action) {
              LIMIT $perPage OFFSET $offset",
             $params
         );
+        foreach ($rows as &$r) {
+            $r['price_eur'] = toBaseCurrencyDisplay($r['unit_price'], $r['currency']);
+        }
         jsonResponse(true, '', ['data' => $rows, 'total' => (int) $total]);
 
     case 'get':
@@ -116,6 +119,8 @@ switch ($action) {
         );
         if (!$row)
             jsonResponse(false, 'Kayıt bulunamadı.');
+
+        $row['price_eur'] = toBaseCurrencyDisplay($row['unit_price'], $row['currency']);
         jsonResponse(true, '', $row);
 
     case 'update':

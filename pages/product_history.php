@@ -209,6 +209,8 @@ $totalBalance = array_sum(array_column($stocks, 'balance'));
                                 <th class="num-align" style="width: 120px">Miktar</th>
                                 <th>Depo</th>
                                 <th>Kişi / Kurum / Detay</th>
+                                <th class="num-align">Birim (<?= getCurrencySymbol() ?>)</th>
+                                <th class="num-align">Toplam</th>
                                 <th class="num-align">Tarih</th>
                                 <th style="width: 80px" class="text-center">Detay</th>
                             </tr>
@@ -271,6 +273,8 @@ $totalBalance = array_sum(array_column($stocks, 'balance'));
                         <td>
                             <div class="font-weight-600">${contactInfo}</div>
                         </td>
+                        <td class="num-align">${formatTurkish(d.price_base, 2)}</td>
+                        <td class="num-align"><strong>${formatTurkish(d.total_base, 2)}</strong></td>
                         <td class="num-align"><small class="text-muted">${d.created_at_fmt}</small></td>
                         <td class="text-center">
                             <button type="button" class="btn btn-xs btn-outline-primary" onclick="${detailCall}" title="Kayda Git">
@@ -307,7 +311,7 @@ $totalBalance = array_sum(array_column($stocks, 'balance'));
             $('#viMiktar').val(formatQty(d.quantity) + ' ' + d.unit);
             $('#viTedarikci').val(d.supplier_name || '—');
             $('#viFiyat').val(formatTurkish(parseFloat(d.unit_price).toFixed(2)) + ' ' + d.currency);
-            $('#viEur').val(formatTurkish(parseFloat(d.price_eur).toFixed(2)) + ' EUR');
+            $('#viEur').val(formatTurkish(parseFloat(d.price_eur).toFixed(2)) + ' ' + '<?= get_setting('base_currency', 'EUR') ?>');
             $('#viTarih').val(d.created_at);
             $('#viYapan').val(d.created_by_name);
             $('#viNot').val(d.note || '—');
@@ -339,7 +343,7 @@ $totalBalance = array_sum(array_column($stocks, 'balance'));
                 }
             });
             $('#voTableBody').html(html);
-            $('#voTotalSum').text(formatTurkish(total, 2) + ' EUR');
+            $('#voTotalSum').text(formatTurkish(total, 2) + ' ' + '<?= get_setting('base_currency', 'EUR') ?>');
             $('#viewOutModal').modal('show');
         }, 'json');
     }
@@ -444,7 +448,7 @@ $totalBalance = array_sum(array_column($stocks, 'balance'));
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">EUR Karşılığı</label>
+                        <label class="form-label"><?= e(get_setting('base_currency', 'EUR')) ?> Karşılığı</label>
                         <div class="input-icon-wrap">
                             <i class="fas fa-coins field-icon"></i>
                             <input type="text" id="viEur" class="form-control text-primary font-weight-bold" readonly>
@@ -530,7 +534,7 @@ $totalBalance = array_sum(array_column($stocks, 'balance'));
                             <tr>
                                 <th class="ps-3">Ürün</th>
                                 <th class="text-end">Miktar</th>
-                                <th class="text-end">Birim (EUR)</th>
+                                <th class="text-end">Birim (<?= getCurrencySymbol() ?>)</th>
                                 <th class="text-end pe-3">Toplam</th>
                             </tr>
                         </thead>

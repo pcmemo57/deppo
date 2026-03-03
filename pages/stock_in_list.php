@@ -324,11 +324,10 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
           <select id="warehouseFilter" class="form-select form-select-sm" style="width:auto">
             <option value="">Tüm Depolar</option>
             <?php foreach ($warehouses as $w): ?>
-              <option value="<?= e($w['id']) ?>">
+              <option value="<?= e($w['id']) ?>" <?= count($warehouses) === 1 ? 'selected' : '' ?>>
                 <?= e($w['name']) ?>
               </option>
-              <?php
-            endforeach; ?>
+            <?php endforeach; ?>
           </select>
           <div class="input-group input-group-sm" style="width:200px">
             <input type="text" id="searchBox" class="form-control" placeholder="Ara...">
@@ -345,13 +344,12 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         <table class="table table-hover table-striped m-0 table-valign-middle">
           <thead class="bg-light">
             <tr>
-              <th style="width:60px" class="ps-3">#</th>
               <th>Ürün</th>
               <th>Depo</th>
               <th>Tedarikçi</th>
               <th class="num-align">Adet</th>
               <th class="num-align">Birim Fiyat</th>
-              <th class="num-align">EUR Fiyat</th>
+              <th class="num-align"><?= getCurrencySymbol() ?> Fiyat</th>
               <th style="width:100px" class="num-align">Tarih</th>
               <th style="width:120px">İşlemi Yapan</th>
               <th style="width:100px" class="text-center pe-3">İşlem</th>
@@ -457,9 +455,9 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         </div>
         <div class="row g-3 mb-1 mt-1">
           <div class="col-md-6">
-            <label class="form-label">EUR Karşılığı</label>
+            <label class="form-label"><?= e(get_setting('base_currency', 'EUR')) ?> Karşılığı</label>
             <div class="input-icon-wrap">
-              <i class="fas fa-euro-sign field-icon"></i>
+              <i class="fas fa-coins field-icon"></i>
               <input type="text" id="vEur" class="form-control num-align" disabled>
             </div>
           </div>
@@ -542,11 +540,9 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                 <select name="warehouse_id" id="warehouseSelect" class="form-select" required>
                   <option value="">— Depo Seçin —</option>
                   <?php foreach ($warehouses as $w): ?>
-                    <option value="<?= e($w['id']) ?>">
-                      <?= e($w['name']) ?>
+                    <option value="<?= e($w['id']) ?>" <?= count($warehouses) === 1 ? 'selected' : '' ?>><?= e($w['name']) ?>
                     </option>
-                    <?php
-                  endforeach; ?>
+                  <?php endforeach; ?>
                 </select>
               </div>
             </div>
@@ -789,6 +785,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
   var curPage = 1, curPerPage = 10, curSearch = '', searchTimer, warehouseFilter = 0;
   var apiUrl = '<?= BASE_URL ?>/api/stock_in.php';
   var eurRate = <?= (float) get_setting('eur_rate', '0') ?>;
+  var isSingleWarehouse = <?= count($warehouses) === 1 ? 'true' : 'false' ?>;
 
   function esc(v) { return $('<span>').text(v || '').html(); }
 
@@ -897,8 +894,9 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
   /* ─── Para birimi değişince EUR notu ─── */
   $('#currency').on('change', function () {
     var cur = $(this).val();
+    var baseCurrency = '<?= get_setting('base_currency', 'EUR') ?>';
     if ((cur === 'TL' || cur === 'USD') && eurRate > 0) {
-      $('#conversionNoteText').text(cur + ' → EUR dönüşümü otomatik yapılacak (1 EUR = ' + formatTurkish(eurRate.toFixed(2)) + ' TL)');
+      $('#conversionNoteText').text(cur + ' → ' + baseCurrency + ' dönüşümü otomatik yapılacak (1 ' + baseCurrency + ' = ' + formatTurkish(eurRate.toFixed(2)) + ' TL)');
       $('#conversionNote').show();
     } else {
       $('#conversionNote').hide();
@@ -931,13 +929,12 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
       var html = '';
       $.each(r.data.data, function (i, d) {
         html += '<tr>';
-        html += '<td class="ps-3">' + d.id + '</td>';
         html += '<td>' + esc(d.product) + '</td>';
         html += '<td>' + esc(d.warehouse) + '</td>';
         html += '<td>' + esc(d.supplier || '—') + '</td>';
         html += '<td class="num-align">' + formatQty(d.quantity) + '</td>';
         html += '<td class="num-align">' + formatTurkish(d.unit_price, 2) + ' ' + esc(d.currency) + '</td>';
-        html += '<td class="num-align">' + formatTurkish(d.price_eur, 2) + '</td>';
+        html += '<td class="num-align">' + formatTurkish(d.price_eur, 2) + ' <small>' + '<?= get_setting('base_currency', 'EUR') ?>' + '</small></td>';
         html += '<td class="num-align">' + (d.created_at ? d.created_at.split(' ')[0] : '—') + '</td>';
         html += '<td><small class="text-muted">' + esc(d.created_by_name || '—') + '</small></td>';
         html += '<td class="text-center pe-3">';
@@ -947,7 +944,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         html += '</div></td>';
         html += '</tr>';
       });
-      $('#tableBody').html(html || '<tr><td colspan="10" class="text-center text-muted p-4">Kayıt bulunamadı</td></tr>');
+      $('#tableBody').html(html || '<tr><td colspan="9" class="text-center text-muted p-4">Kayıt bulunamadı</td></tr>');
       $('#totalCount').text('Toplam: ' + formatQty(r.data.total) + ' kayıt');
       renderPag(r.data.total);
     }, 'json');
@@ -983,7 +980,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
       $('#vSupplier').val(d.supplier_name || '—');
       $('#vPrice').val(formatTurkish(d.unit_price, 2));
       $('#vCurrency').val(d.currency || '—');
-      $('#vEur').val(formatTurkish(d.price_eur, 2) + ' EUR');
+      $('#vEur').val(formatTurkish(d.price_eur, 2) + ' ' + '<?= get_setting('base_currency', 'EUR') ?>');
       $('#vDate').val(d.created_at || '—');
       $('#vUser').val(d.created_by_name || '—');
       $('#vUpdatedUser').val(d.updated_by_name || '—');

@@ -236,22 +236,22 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
             return;
         }
 
-        $('#stockBody').html('<tr><td colspan="5" class="text-center p-4"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Yükleniyor...</td></tr>');
+        $('#stockBody').html('<tr><td colspan="4" class="text-center p-4"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Yükleniyor...</td></tr>');
 
         $.get(apiUrl, { action: 'list', page: curPage, per_page: curPerPage, search: curSearch, warehouses: whs.join(',') }, function (r) {
             if (!r.success) {
-                $('#stockBody').html('<tr><td colspan="5" class="text-center text-danger p-3"><i class="fas fa-exclamation-triangle me-2"></i>Hata: ' + esc(r.message || 'Veri alınamadı') + '</td></tr>');
+                $('#stockBody').html('<tr><td colspan="4" class="text-center text-danger p-3"><i class="fas fa-exclamation-triangle me-2"></i>Hata: ' + esc(r.message || 'Veri alınamadı') + '</td></tr>');
                 return;
             }
             if (!r.data || !r.data.data) {
-                $('#stockBody').html('<tr><td colspan="5" class="text-center text-muted p-3">Veri bulunamadı</td></tr>');
+                $('#stockBody').html('<tr><td colspan="4" class="text-center text-muted p-3">Veri bulunamadı</td></tr>');
                 return;
             }
             currentData = r.data.data;
             currentCols = r.data.columns;
 
             // Thead
-            var headHtml = '<tr><th style="width:60px">#</th><th>Ürün</th><th>Depo</th><th class="num-align" style="width:120px">Kalan Miktar</th><th style="width:80px" class="text-center">İşlemler</th></tr>';
+            var headHtml = '<tr><th>Ürün</th><th>Depo</th><th class="num-align" style="width:120px">Kalan Miktar</th><th style="width:80px" class="text-center">İşlemler</th></tr>';
             $('#stockHead').html(headHtml);
 
             // Tbody
@@ -270,7 +270,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                     var qtyClass = qty < 0 ? 'text-danger fw-bold' : 'text-success text-bold';
 
                     html += '<tr class="' + (isLowStock ? 'table-warning' : '') + '">';
-                    html += '<td class="text-muted">' + rowIndexText + '</td><td>';
+                    html += '<td>';
                     if (row.image) { 
                         html += '<img src="' + imgSrc + '" style="width:32px;height:32px;object-fit:cover;border-radius:4px;margin-right:6px;cursor:pointer;" onerror="this.remove()" onclick="showImagePreview(\'' + imgSrc + '\')" title="Büyütmek için tıklayın">'; 
                     }
@@ -289,7 +289,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                     html += '</tr>';
                 });
             });
-            $('#stockBody').html(html || '<tr><td colspan="5" class="text-center text-muted p-3">Kayıt bulunamadı</td></tr>');
+            $('#stockBody').html(html || '<tr><td colspan="4" class="text-center text-muted p-3">Kayıt bulunamadı</td></tr>');
             $('#totalCount').text('Toplam: ' + formatQty(r.data.total) + ' ürün');
             renderPag(r.data.total);
         }, 'json');

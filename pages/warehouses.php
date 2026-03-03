@@ -31,7 +31,6 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                 <table class="table table-hover table-striped m-0 table-valign-middle">
                     <thead class="bg-light">
                         <tr>
-                            <th style="width:60px" class="ps-3">#</th>
                             <th>Depo Adı</th>
                             <th>Adres</th>
                             <th>Açıklama</th>
@@ -121,7 +120,7 @@ requireRole(ROLE_ADMIN, ROLE_USER);
             if (!r.success || !r.data.data) return;
             var html = '';
             $.each(r.data.data, function (i, u) {
-                html += '<tr><td>' + u.id + '</td><td><strong>' + esc(u.name) + '</strong></td><td>' + esc(u.address || '—') + '</td><td>' + esc(u.description || '—') + '</td>';
+                html += '<tr><td><strong>' + esc(u.name) + '</strong></td><td>' + esc(u.address || '—') + '</td><td>' + esc(u.description || '—') + '</td>';
                 html += '<td>' +
                     (u.is_active == 1
                         ? '<span class="status-badge active" onclick="toggleRow(' + u.id + ',1)"><i class="fas fa-check"></i> AKTİF</span>'
@@ -133,7 +132,7 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                 html += '<button class="btn btn-xs btn-danger" onclick="deleteRow(' + u.id + ')"><i class="fas fa-trash"></i></button>';
                 html += '</td></tr>';
             });
-            $('#tableBody').html(html || '<tr><td colspan="6" class="text-center text-muted p-3">Kayıt bulunamadı</td></tr>');
+            $('#tableBody').html(html || '<tr><td colspan="5" class="text-center text-muted p-3">Kayıt bulunamadı</td></tr>');
             $('#totalCount').text('Toplam: ' + formatQty(r.data.total) + ' kayıt');
             renderPag(r.data.total);
         }, 'json');

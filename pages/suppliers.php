@@ -213,7 +213,6 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                 <table class="table table-hover table-striped m-0 table-valign-middle">
                     <thead class="bg-light">
                         <tr>
-                            <th style="width:60px" class="ps-3">#</th>
                             <th>Tedarikçi Adı</th>
                             <th>Yetkili</th>
                             <th>E-posta</th>
@@ -346,7 +345,6 @@ requireRole(ROLE_ADMIN, ROLE_USER);
             var html = '';
             $.each(r.data.data, function (i, u) {
                 html += '<tr>' +
-                    '<td class="ps-3">' + u.id + '</td>' +
                     '<td><b>' + esc(u.name) + '</b></td>' +
                     '<td>' + esc(u.contact || '—') + '</td>' +
                     '<td>' + esc(u.email || '—') + '</td>' +
@@ -362,7 +360,7 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                     '<button class="btn btn-xs btn-outline-danger" onclick="deleteRow(' + u.id + ')" title="Sil"><i class="fas fa-trash"></i></button>' +
                     '</td></tr>';
             });
-            $('#tableBody').html(html || '<tr><td colspan="7" class="text-center text-muted p-4">Kayıt bulunamadı</td></tr>');
+            $('#tableBody').html(html || '<tr><td colspan="6" class="text-center text-muted p-4">Kayıt bulunamadı</td></tr>');
             $('#totalCount').text('Toplam: ' + formatQty(r.data.total) + ' kayıt');
             renderPag(r.data.total);
         }, 'json');

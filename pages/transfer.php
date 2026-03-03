@@ -264,7 +264,6 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                 <table class="table table-hover m-0 table-valign-middle transfer-table">
                     <thead class="bg-light text-muted small text-uppercase">
                         <tr>
-                            <th style="width:50px" class="ps-3 text-center">#</th>
                             <th>Kaynak Depo</th>
                             <th>Hedef Depo</th>
                             <th class="num-align">Kalem Sayısı</th>
@@ -275,7 +274,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="7" class="text-center p-4"><i class="fas fa-spinner fa-spin"></i> Yükleniyor...
+                            <td colspan="6" class="text-center p-4"><i class="fas fa-spinner fa-spin"></i> Yükleniyor...
                             </td>
                         </tr>
                     </tbody>
@@ -313,11 +312,10 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                                 <select id="fromWarehouse" class="form-control select2-modal" required>
                                     <option value="">— Seçiniz —</option>
                                     <?php foreach ($warehouses as $w): ?>
-                                        <option value="<?= e($w['id']) ?>">
+                                        <option value="<?= e($w['id']) ?>" <?= count($warehouses) === 1 ? 'selected' : '' ?>>
                                             <?= e($w['name']) ?>
                                         </option>
-                                        <?php
-                                    endforeach; ?>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                         </div>
@@ -410,6 +408,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
     var curPage = 1, curPerPage = 10, curSearch = '', searchTimer;
     var transferLines = [];
     var apiUrl = '<?= BASE_URL ?>/api/transfer.php';
+    var isSingleWarehouse = <?= count($warehouses) === 1 ? 'true' : 'false' ?>;
     function esc(v) { return $('<span>').text(v || '').html(); }
 
     function load() {
@@ -418,7 +417,6 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
             var html = '';
             $.each(r.data.data, function (i, d) {
                 html += '<tr class="transfer-row" onclick="toggleDetail(' + d.id + ', this)">' +
-                    '<td class="ps-3 text-center"><i class="fas fa-chevron-right expand-icon"></i></td>' +
                     '<td><div class="fw-bold text-primary">' + esc(d.source) + '</div></td>' +
                     '<td><div class="fw-bold text-danger">' + esc(d.target) + '</div></td>' +
                     '<td class="num-align"><span class="badge bg-light border text-dark ms-2" style="font-size:0.85rem; padding:5px 10px;">' + formatQty(d.item_count) + ' Ürün</span></td>' +
@@ -427,7 +425,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                     '<td class="text-center pe-3"><button class="btn btn-xs btn-outline-warning"><i class="fas fa-eye"></i></button></td>' +
                     '</tr>' +
                     '<tr class="detail-row" id="detail-' + d.id + '">' +
-                    '<td colspan="7">' +
+                    '<td colspan="6">' +
                     '<div class="detail-container">' +
                     '<div class="row"><div class="col-md-9"><strong><i class="fas fa-info-circle me-1 text-warning"></i> Transfer Notu:</strong> <span class="text-muted">' + esc(d.note || '—') + '</span></div>' +
                     '<div class="col-md-3 text-end"><small class="text-muted">İşlemi Yapan: ' + esc(d.created_by_name || '—') + '</small></div></div>' +
@@ -436,7 +434,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                     '</td>' +
                     '</tr>';
             });
-            $('#tableBody').html(html || '<tr><td colspan="7" class="text-center text-muted p-4">Henüz transfer kaydı bulunmuyor.</td></tr>');
+            $('#tableBody').html(html || '<tr><td colspan="6" class="text-center text-muted p-4">Henüz transfer kaydı bulunmuyor.</td></tr>');
             $('#totalCount').text('Toplam: ' + formatQty(r.data.total) + ' transfer');
             renderPag(r.data.total);
         }, 'json');
@@ -496,7 +494,12 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         transferLines = [];
         renderTransferLines();
         $('#formTransfer')[0].reset();
-        $('#fromWarehouse, #toWarehouse, #productSelect').val(null).trigger('change');
+        $('#toWarehouse, #productSelect').val(null).trigger('change');
+        if (!isSingleWarehouse) {
+            $('#fromWarehouse').val(null).trigger('change');
+        } else {
+            $('#fromWarehouse').trigger('change');
+        }
         $('#transferModal').modal('show');
     }
 

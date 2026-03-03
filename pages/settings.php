@@ -5,7 +5,7 @@
 requireRole(ROLE_ADMIN);
 
 $activeTab = $_GET['tab'] ?? 'mail';
-$tabs = ['mail', 'appearance', 'currency', 'general', 'data-mgmt', 'backup'];
+$tabs = ['mail', 'appearance', 'pdf', 'currency', 'general', 'data-mgmt', 'backup'];
 if (!in_array($activeTab, $tabs)) {
     $activeTab = 'mail';
 }
@@ -134,6 +134,12 @@ $googleFontList = [
                         <a class="nav-link tab-danger <?= $activeTab === 'data-mgmt' ? 'active' : '' ?>"
                             data-bs-toggle="tab" href="#tab-data-mgmt">
                             <i class="fas fa-trash-alt text-danger"></i>Veri Yönetimi
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= $activeTab === 'pdf' ? 'active' : '' ?>" data-bs-toggle="tab"
+                            href="#tab-pdf">
+                            <i class="fas fa-file-pdf"></i>PDF Ayarları
                         </a>
                     </li>
                     <li class="nav-item">
@@ -426,11 +432,25 @@ $googleFontList = [
                             <div class="col-md-6">
                                 <div class="card card-outline card-warning">
                                     <div class="card-header">
-                                        <h6 class="m-0">Manuel Kur Girişi</h6>
+                                        <h6 class="m-0">Manuel Kur Girişi & Ayarlar</h6>
                                     </div>
                                     <div class="card-body">
                                         <form id="formCurrency">
                                             <input type="hidden" name="action" value="save_currency">
+                                            <div class="mb-3">
+                                                <label class="form-label">Varsayılan Para Birimi (Sistem Geneli)</label>
+                                                <div class="input-icon-wrap">
+                                                    <i class="fas fa-coins field-icon"></i>
+                                                    <select name="base_currency" class="form-select select2-simple">
+                                                        <option value="EUR" <?= get_setting('base_currency', 'EUR') === 'EUR' ? 'selected' : '' ?>>EUR (Euro)</option>
+                                                        <option value="USD" <?= get_setting('base_currency', 'EUR') === 'USD' ? 'selected' : '' ?>>USD (Amerikan Doları)
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                                <small class="text-muted">Tüm hesaplamalar ve görüntülenecek ana birim
+                                                    budur.</small>
+                                            </div>
+                                            <hr>
                                             <div class="mb-3">
                                                 <label class="form-label">USD / TL</label>
                                                 <input type="text" name="usd_rate" class="form-control price-format"
@@ -442,7 +462,7 @@ $googleFontList = [
                                                     value="<?= e(formatPrice((float) get_setting('eur_rate', '0'))) ?>">
                                             </div>
                                             <button type="submit" class="btn btn-warning w-100">
-                                                <i class="fas fa-save me-1"></i>Manuel Kaydet
+                                                <i class="fas fa-save me-1"></i>Kaydet
                                             </button>
                                         </form>
                                     </div>
@@ -476,6 +496,43 @@ $googleFontList = [
                                             <div class="small text-muted">Bu ayar kapalıyken, içinde ürün bulunan
                                                 depolar pasif hale getirilemez.</div>
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary"><i
+                                    class="fas fa-save me-1"></i>Kaydet</button>
+                        </form>
+                    </div>
+
+                    <!-- ═══════════ PDF AYARLARI ═══════════ -->
+                    <div class="tab-pane fade <?= $activeTab === 'pdf' ? 'show active' : '' ?>" id="tab-pdf">
+                        <form id="formPdf">
+                            <input type="hidden" name="action" value="save_pdf">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-4">
+                                        <label class="form-label d-flex justify-content-between">
+                                            <span>PDF Çözünürlük Ölçeği (Scale)</span>
+                                            <span id="range-scale-val"
+                                                class="badge bg-primary"><?= e(get_setting('pdf_scale', '1.5')) ?></span>
+                                        </label>
+                                        <input type="range" name="pdf_scale" class="form-range" min="1" max="3"
+                                            step="0.1" value="<?= e(get_setting('pdf_scale', '1.5')) ?>"
+                                            oninput="$('#range-scale-val').text(this.value)">
+                                        <div class="small text-muted mt-1">Daha yüksek değerler daha net görüntü sağlar
+                                            ancak dosya boyutunu katlayarak artırır. (Önerilen: 1.5)</div>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="form-label d-flex justify-content-between">
+                                            <span>Resim Kalitesi (Quality)</span>
+                                            <span id="range-quality-val"
+                                                class="badge bg-primary"><?= e(get_setting('pdf_quality', '0.8')) ?></span>
+                                        </label>
+                                        <input type="range" name="pdf_quality" class="form-range" min="0.1" max="1"
+                                            step="0.05" value="<?= e(get_setting('pdf_quality', '0.8')) ?>"
+                                            oninput="$('#range-quality-val').text(this.value)">
+                                        <div class="small text-muted mt-1">PDF içindeki ürün resimlerinin kalitesini
+                                            belirler. (Önerilen: 0.8)</div>
                                     </div>
                                 </div>
                             </div>
@@ -677,6 +734,7 @@ $googleFontList = [
 
     $('#formMail').on('submit', function (e) { e.preventDefault(); submitSettingsForm('formMail'); });
     $('#formAppearance').on('submit', function (e) { e.preventDefault(); submitSettingsForm('formAppearance'); });
+    $('#formPdf').on('submit', function (e) { e.preventDefault(); submitSettingsForm('formPdf'); });
     $('#formCurrency').on('submit', function (e) { e.preventDefault(); submitSettingsForm('formCurrency'); });
     $('#formGeneral').on('submit', function (e) { e.preventDefault(); submitSettingsForm('formGeneral'); });
 

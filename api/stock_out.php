@@ -44,6 +44,7 @@ switch ($action) {
         $userId = $currentUser['id'];
         $userName = $currentUser['name'];
         $batchId = 'SO-' . date('YmdHis') . '-' . rand(1000, 9999);
+        $orderNo = (int) Database::fetchOne("SELECT MAX(order_no) as max_no FROM tbl_dp_stock_out")['max_no'] + 1;
 
         foreach ($lines as $line) {
             $productId = (int) ($line['product_id'] ?? 0);
@@ -54,10 +55,12 @@ switch ($action) {
             if (!$productId || $quantity <= 0)
                 continue;
 
+            $currency = sanitize($line['currency'] ?? 'EUR');
+
             Database::insert(
-                "INSERT INTO tbl_dp_stock_out (batch_id, warehouse_id, requester_id, customer_id, product_id, quantity, unit_price, total_price, note, created_by, created_by_name)
-                 VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-                [$batchId, $warehouseId, $requesterId, $customerId, $productId, $quantity, $unitPrice, $totalPrice, $note, $userId, $userName]
+                "INSERT INTO tbl_dp_stock_out (batch_id, order_no, warehouse_id, requester_id, customer_id, product_id, quantity, currency, unit_price, total_price, note, created_by, created_by_name)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                [$batchId, $orderNo, $warehouseId, $requesterId, $customerId, $productId, $quantity, $currency, $unitPrice, $totalPrice, $note, $userId, $userName]
             );
         }
 
@@ -91,8 +94,8 @@ switch ($action) {
                             <tr style='border-bottom: 1px solid #eee;'>
                                 <td style='padding: 10px; border: 1px solid #e5e7eb;'>" . e($item['product_name']) . "</td>
                                 <td style='padding: 10px; border: 1px solid #e5e7eb; text-align: right;'>" . formatQty($item['quantity']) . " " . e($item['unit']) . "</td>
-                                <td style='padding: 10px; border: 1px solid #e5e7eb; text-align: right;'>" . number_format($item['unit_price'], 2, ',', '.') . " €</td>
-                                <td style='padding: 10px; border: 1px solid #e5e7eb; text-align: right; font-weight: bold;'>" . number_format($item['total_price'], 2, ',', '.') . " €</td>
+                                <td style='padding: 10px; border: 1px solid #e5e7eb; text-align: right;'>" . number_format($item['unit_price'], 2, ',', '.') . " " . getCurrencySymbol() . "</td>
+                                <td style='padding: 10px; border: 1px solid #e5e7eb; text-align: right; font-weight: bold;'>" . number_format($item['total_price'], 2, ',', '.') . " " . getCurrencySymbol() . "</td>
                             </tr>
                         ";
                     }
@@ -110,6 +113,7 @@ switch ($action) {
                                 <div style='margin: 20px 0; padding: 15px; background-color: #f8fafc; border-left: 4px solid #3b82f6;'>
                                     <p style='margin: 0; font-size: 14px;'><strong>Depo:</strong> $warehouseName</p>
                                     <p style='margin: 5px 0 0 0; font-size: 14px;'><strong>Müşteri:</strong> $customerName</p>
+                                    <p style='margin: 5px 0 0 0; font-size: 14px;'><strong>Sipariş No:</strong> $orderNo</p>
                                     <p style='margin: 5px 0 0 0; font-size: 14px;'><strong>İşlem No:</strong> $batchId</p>
                                     <p style='margin: 5px 0 0 0; font-size: 14px;'><strong>Not:</strong> " . ($note ?: '—') . "</p>
                                 </div>
@@ -120,7 +124,7 @@ switch ($action) {
                                             <th style='padding: 12px; border: 1px solid #e5e7eb; text-align: left;'>Ürün</th>
                                             <th style='padding: 12px; border: 1px solid #e5e7eb; text-align: right;'>Miktar</th>
                                             <th style='padding: 12px; border: 1px solid #e5e7eb; text-align: right;'>Birim Fiyat</th>
-                                            <th style='padding: 12px; border: 1px solid #e5e7eb; text-align: right;'>Toplam (EUR)</th>
+                                            <th style='padding: 12px; border: 1px solid #e5e7eb; text-align: right;'>Toplam (" . get_setting('base_currency', 'EUR') . ")</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -129,7 +133,7 @@ switch ($action) {
                                     <tfoot>
                                         <tr style='background-color: #f8fafc;'>
                                             <td colspan='3' style='padding: 12px; border: 1px solid #e5e7eb; text-align: right; font-weight: bold;'>GENEL TOPLAM</td>
-                                            <td style='padding: 12px; border: 1px solid #e5e7eb; text-align: right; font-weight: bold; color: #1e40af; font-size: 16px;'>" . number_format($totalEur, 2, ',', '.') . " €</td>
+                                            <td style='padding: 12px; border: 1px solid #e5e7eb; text-align: right; font-weight: bold; color: #1e40af; font-size: 16px;'>" . number_format($totalEur, 2, ',', '.') . " " . getCurrencySymbol() . "</td>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -196,17 +200,22 @@ switch ($action) {
         $row = null;
         if ($warehouseId) {
             $row = Database::fetchOne(
-                "SELECT price_eur FROM tbl_dp_stock_in WHERE product_id=? AND warehouse_id=? ORDER BY created_at DESC LIMIT 1",
+                "SELECT unit_price, currency FROM tbl_dp_stock_in WHERE product_id=? AND warehouse_id=? ORDER BY created_at DESC LIMIT 1",
                 [$productId, $warehouseId]
             );
         }
         if (!$row) {
             $row = Database::fetchOne(
-                "SELECT price_eur FROM tbl_dp_stock_in WHERE product_id=? ORDER BY created_at DESC LIMIT 1",
+                "SELECT unit_price, currency FROM tbl_dp_stock_in WHERE product_id=? ORDER BY created_at DESC LIMIT 1",
                 [$productId]
             );
         }
-        jsonResponse(true, '', $row ?: ['price_eur' => 0]);
+
+        if ($row) {
+            $row['price_eur'] = toBaseCurrencyDisplay($row['unit_price'], $row['currency']);
+        }
+
+        jsonResponse(true, '', $row ?: ['unit_price' => 0, 'currency' => 'EUR', 'price_eur' => 0]);
 
     case 'recent':
         $rows = Database::fetchAll(
@@ -223,21 +232,40 @@ switch ($action) {
         $page = max(1, (int) ($_GET['page'] ?? 1));
         $perPage = min(100, max(5, (int) ($_GET['per_page'] ?? 10)));
         $search = sanitize($_GET['search'] ?? '');
+        $startDate = sanitize($_GET['start_date'] ?? '');
+        $endDate = sanitize($_GET['end_date'] ?? '');
         $offset = ($page - 1) * $perPage;
         $where = "1=1";
         $params = [];
+
         if ($search) {
-            $where .= " AND (p.name LIKE ? OR w.name LIKE ? OR c.name LIKE ?)";
-            $params = ["%$search%", "%$search%", "%$search%"];
+            $where .= " AND (p.name LIKE ? OR w.name LIKE ? OR c.name LIKE ? OR r.name LIKE ? OR r.surname LIKE ?)";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+        }
+
+        if ($startDate) {
+            $where .= " AND DATE(so.created_at) >= ?";
+            $params[] = $startDate;
+        }
+        if ($endDate) {
+            $where .= " AND DATE(so.created_at) <= ?";
+            $params[] = $endDate;
         }
         $total = Database::fetchOne(
             "SELECT COUNT(*) AS c FROM tbl_dp_stock_out so
              JOIN tbl_dp_products p ON p.id=so.product_id
-             JOIN tbl_dp_warehouses w ON w.id=so.warehouse_id WHERE $where",
+             JOIN tbl_dp_warehouses w ON w.id=so.warehouse_id 
+             LEFT JOIN tbl_dp_requesters r ON r.id=so.requester_id
+             LEFT JOIN tbl_dp_customers c ON c.id=so.customer_id
+             WHERE $where",
             $params
         )['c'] ?? 0;
         $rows = Database::fetchAll(
-            "SELECT so.id, so.batch_id, p.name AS product, p.unit, w.name AS warehouse,
+            "SELECT so.id, so.batch_id, so.order_no, p.name AS product, p.unit, w.name AS warehouse,
                     r.name AS requester_name, r.surname AS requester_surname,
                     c.name AS customer, so.quantity, so.unit_price, so.total_price, so.note,
                     so.created_by_name, so.updated_by_name,
@@ -250,6 +278,13 @@ switch ($action) {
              WHERE $where ORDER BY so.created_at DESC LIMIT $perPage OFFSET $offset",
             $params
         );
+        foreach ($rows as &$r) {
+            // For old records without currency, assume it was in the base currency at the time (simplified)
+            // or just use the stored total_price as is.
+            // But let's try to be as dynamic as possible.
+            $r['total_price'] = toBaseCurrencyDisplay($r['total_price'], $r['currency'] ?: 'EUR');
+            $r['unit_price'] = toBaseCurrencyDisplay($r['unit_price'], $r['currency'] ?: 'EUR');
+        }
         jsonResponse(true, '', ['data' => $rows, 'total' => (int) $total]);
 
     case 'list_grouped':
@@ -278,20 +313,26 @@ switch ($action) {
         )['c'] ?? 0;
 
         $rows = Database::fetchAll(
-            "SELECT so.batch_id, c.name AS customer_name, w.name AS warehouse_name,
+            "SELECT so.batch_id, so.order_no, c.name AS customer_name, w.name AS warehouse_name,
                     COUNT(so.id) AS item_count, SUM(so.total_price) AS total_eur,
                     MAX(so.created_at) AS created_at, so.note, MAX(so.created_by_name) AS created_by_name
              FROM tbl_dp_stock_out so
              LEFT JOIN tbl_dp_customers c ON c.id=so.customer_id
              LEFT JOIN tbl_dp_warehouses w ON w.id=so.warehouse_id
              WHERE $where 
-             GROUP BY so.batch_id
+             GROUP BY so.batch_id, so.order_no
              ORDER BY created_at DESC LIMIT $perPage OFFSET $offset",
             $params
         );
 
-        // Tarih formatla
+        // Dynamic conversion for grouped total
         foreach ($rows as &$r) {
+            $batchItems = Database::fetchAll("SELECT total_price, currency FROM tbl_dp_stock_out WHERE batch_id=?", [$r['batch_id']]);
+            $totalInBase = 0;
+            foreach ($batchItems as $item) {
+                $totalInBase += toBaseCurrencyDisplay($item['total_price'], $item['currency'] ?: 'EUR');
+            }
+            $r['total_eur'] = $totalInBase;
             $r['created_at_fmt'] = date('d.m.Y', strtotime($r['created_at']));
         }
 
@@ -313,7 +354,100 @@ switch ($action) {
              WHERE so.batch_id=?",
             [$batchId]
         );
-        jsonResponse(true, '', $items);
+        $totalBase = 0;
+        foreach ($items as &$item) {
+            $item['total_price_orig'] = $item['total_price'];
+            $item['total_price'] = toBaseCurrencyDisplay($item['total_price'], $item['currency'] ?: 'EUR');
+            $item['unit_price'] = toBaseCurrencyDisplay($item['unit_price'], $item['currency'] ?: 'EUR');
+            $totalBase += (float) $item['total_price'];
+        }
+        jsonResponse(true, '', ['items' => $items, 'data_total_eur' => $totalBase]);
+
+    case 'export_excel':
+        $search = sanitize($_GET['search'] ?? '');
+        $startDate = sanitize($_GET['start_date'] ?? '');
+        $endDate = sanitize($_GET['end_date'] ?? '');
+        $where = "1=1";
+        $params = [];
+
+        if ($search) {
+            $where .= " AND (p.name LIKE ? OR w.name LIKE ? OR c.name LIKE ? OR r.name LIKE ? OR r.surname LIKE ?)";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+        }
+
+        if ($startDate) {
+            $where .= " AND DATE(so.created_at) >= ?";
+            $params[] = $startDate;
+        }
+        if ($endDate) {
+            $where .= " AND DATE(so.created_at) <= ?";
+            $params[] = $endDate;
+        }
+
+        $rows = Database::fetchAll(
+            "SELECT so.id, p.name AS product, p.unit, w.name AS warehouse,
+                    CONCAT(COALESCE(r.name,''), ' ', COALESCE(r.surname,'')) AS requester,
+                    c.name AS customer, so.quantity, so.unit_price, so.total_price, so.currency, so.note,
+                    so.created_by_name, so.created_at
+             FROM tbl_dp_stock_out so
+             JOIN tbl_dp_products p ON p.id=so.product_id
+             JOIN tbl_dp_warehouses w ON w.id=so.warehouse_id
+             LEFT JOIN tbl_dp_requesters r ON r.id=so.requester_id
+             LEFT JOIN tbl_dp_customers c ON c.id=so.customer_id
+             WHERE $where ORDER BY so.created_at DESC",
+            $params
+        );
+
+        $filename = "stok_cikis_" . date('Ymd_His') . ".csv";
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=' . $filename);
+
+        $output = fopen('php://output', 'w');
+        // UTF-8 BOM for Excel
+        fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+        // Stylish Header Rows
+        fputcsv($output, ['DEPODAN ÇIKIŞ RAPORU'], ';');
+        fputcsv($output, ['Rapor Tarihi:', date('d.m.Y H:i')], ';');
+
+        $filterStr = [];
+        if ($search)
+            $filterStr[] = "Arama: $search";
+        if ($startDate)
+            $filterStr[] = "Başlangıç: $startDate";
+        if ($endDate)
+            $filterStr[] = "Bitiş: $endDate";
+        fputcsv($output, ['Uygulanan Filtreler:', !empty($filterStr) ? implode(' | ', $filterStr) : 'Yok'], ';');
+
+        fputcsv($output, [], ';'); // Empty row
+
+        // Column Headers
+        fputcsv($output, ['Sipariş No', 'İşlem No', 'Ürün', 'Birim', 'Depo', 'Talep Eden', 'Müşteri', 'Miktar', 'Birim Fiyat', 'Toplam Tutar', 'Para Birimi', 'Not', 'İşlemi Yapan', 'Tarih'], ';');
+
+        foreach ($rows as $r) {
+            fputcsv($output, [
+                $r['order_no'],
+                $r['batch_id'],
+                $r['product'],
+                $r['unit'],
+                $r['warehouse'],
+                trim($r['requester']),
+                $r['customer'],
+                $r['quantity'],
+                number_format((float) $r['unit_price'], 4, ',', ''),
+                number_format((float) $r['total_price'], 2, ',', ''),
+                $r['currency'] ?: 'EUR',
+                $r['note'],
+                $r['created_by_name'],
+                date('d.m.Y H:i', strtotime($r['created_at']))
+            ], ';');
+        }
+        fclose($output);
+        exit;
 
     default:
         jsonResponse(false, 'Geçersiz işlem.');

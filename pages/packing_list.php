@@ -246,6 +246,43 @@ $customers = Database::fetchAll("SELECT id, name FROM tbl_dp_customers WHERE hid
     </div>
 </div>
 
+<!-- Email Modal -->
+<div class="modal fade" id="emailModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow-lg" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header bg-info text-white border-0 py-3">
+                <h5 class="modal-title fw-bold"><i class="fas fa-envelope me-3"></i>Çeki Listesi Gönder</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Alıcı E-posta Adresi <span
+                            class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="fas fa-at text-muted"></i></span>
+                        <input type="email" id="emailTo" class="form-control" placeholder="ornek@mail.com" required>
+                    </div>
+                </div>
+                <div id="emailInfo" class="alert alert-light border small text-muted mb-0">
+                    <i class="fas fa-info-circle me-2"></i> Çeki listesi PDF olarak ekte gönderilecektir.
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-info btn-sm text-white px-4" id="btnSendEmail">
+                    <i class="fas fa-paper-plane me-2"></i> Gönder
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden container for PDF generation -->
+<div id="pdfExportContainer" style="position:fixed; left:-9999px; top:0; width:800px; background:white;"></div>
+
+<!-- html2pdf dependency -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
 <!-- Template: Koli Kartı -->
 <template id="parcelTemplate">
     <div class="card parcel-card mb-3 border-0 shadow-sm">
@@ -345,6 +382,7 @@ $customers = Database::fetchAll("SELECT id, name FROM tbl_dp_customers WHERE hid
                             <td class="text-center text-muted x-small">${new Date(row.created_at).toLocaleDateString('tr-TR')}</td>
                             <td class="text-end pe-3">
                                 <div class="btn-group btn-group-xs">
+                                    <button class="btn btn-outline-info" onclick="emailPackingList(${row.id})" title="E-posta Gönder"><i class="fas fa-envelope"></i></button>
                                     <button class="btn btn-outline-secondary" onclick="printPackingList(${row.id})" title="Yazdır"><i class="fas fa-print"></i></button>
                                     <button class="btn btn-outline-warning" onclick="downloadPDF(${row.id})" title="PDF İndir"><i class="fas fa-file-pdf"></i></button>
                                     <button class="btn btn-outline-primary" onclick="editPackingList(${row.id})" title="Düzenle"><i class="fas fa-edit"></i></button>
@@ -583,6 +621,60 @@ $customers = Database::fetchAll("SELECT id, name FROM tbl_dp_customers WHERE hid
     function downloadPDF(id) {
         window.open('pages/packing_list_print.php?id=' + id + '&format=pdf', '_blank');
     }
+
+    function emailPackingList(id) {
+        $('#emailTo').val('');
+        $('#emailModal').modal('show').data('id', id);
+    }
+
+    $('#btnSendEmail').on('click', function () {
+        let id = $('#emailModal').data('id');
+        let to = $('#emailTo').val();
+        if (!to) { showError('Lütfen bir e-posta adresi giriniz.'); return; }
+
+        let $btn = $(this);
+        let originalHtml = $btn.html();
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Hazırlanıyor...');
+
+        // PDF İçeriğini Çek (Print sayfasından)
+        $.get('pages/packing_list_print.php', { id: id }, function (html) {
+            // Script ve gereksiz butonları temizle
+            let cleanHtml = html.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "")
+                .replace(/<div class="no-print">([\s\S]*?)<\/div>/gim, "");
+
+            $('#pdfExportContainer').html(cleanHtml);
+            let element = document.getElementById('pdfContent');
+
+            const opt = {
+                margin: 10,
+                filename: 'temp.pdf',
+                image: { type: 'jpeg', quality: <?= (float) get_setting('pdf_quality', '0.8') ?> },
+                html2canvas: { scale: <?= (float) get_setting('pdf_scale', '1.5') ?>, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            $btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Gönderiliyor...');
+
+            html2pdf().set(opt).from(element).outputPdf('datauristring').then(function (pdfBase64) {
+                $.post('api/packing_list.php', {
+                    action: 'send_email',
+                    id: id,
+                    to: to,
+                    pdf_data: pdfBase64
+                }, function (r) {
+                    if (r.success) {
+                        showSuccess(r.message);
+                        $('#emailModal').modal('hide');
+                    } else {
+                        showError(r.message);
+                    }
+                }, 'json').always(function () {
+                    $btn.prop('disabled', false).html(originalHtml);
+                    $('#pdfExportContainer').empty();
+                });
+            });
+        });
+    });
 
     $(function () {
         loadPackingLists();

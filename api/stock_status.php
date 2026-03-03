@@ -224,7 +224,7 @@ switch ($action) {
         // Girişler ve Çıkışlar UNION
         // Not: Transferler ve Emanetler zaten bu tablolara kayıt atıyor.
         $query = "
-            (SELECT 'Giriş' AS type, i.id AS record_id, NULL AS batch_id, i.quantity, i.note, i.created_at,
+            (SELECT 'Giriş' AS type, i.id AS record_id, NULL AS batch_id, i.quantity, i.unit_price, i.currency, i.note, i.created_at,
                     (SELECT name FROM tbl_dp_suppliers WHERE id = i.supplier_id) AS contact,
                     (SELECT name FROM tbl_dp_admins WHERE id = i.created_by) AS creator,
                     w.name AS warehouse_name
@@ -233,7 +233,7 @@ switch ($action) {
              WHERE i.product_id = ? " . ($warehouseId ? "AND i.warehouse_id = ?" : "") .
             ($search ? " AND (i.note LIKE ? OR EXISTS (SELECT 1 FROM tbl_dp_suppliers s WHERE s.id = i.supplier_id AND s.name LIKE ?))" : "") . ")
             UNION ALL
-            (SELECT 'Çıkış' AS type, o.id AS record_id, o.batch_id, o.quantity, o.note, o.created_at,
+            (SELECT 'Çıkış' AS type, o.id AS record_id, o.batch_id, o.quantity, o.unit_price, o.currency, o.note, o.created_at,
                     COALESCE(
                         (SELECT CONCAT(name, ' ', surname) FROM tbl_dp_requesters WHERE id = o.requester_id),
                         (SELECT name FROM tbl_dp_customers WHERE id = o.customer_id)
@@ -269,6 +269,8 @@ switch ($action) {
         foreach ($rows as &$r) {
             $r['created_at_fmt'] = date('d.m.Y H:i', strtotime($r['created_at']));
             $r['quantity_fmt'] = formatQty($r['quantity']);
+            $r['price_base'] = toBaseCurrencyDisplay($r['unit_price'], $r['currency'] ?: 'EUR');
+            $r['total_base'] = $r['price_base'] * $r['quantity'];
         }
 
         jsonResponse(true, '', $rows);
