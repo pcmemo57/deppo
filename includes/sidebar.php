@@ -56,7 +56,6 @@ $warehouseCount = Database::fetchOne("SELECT COUNT(*) as c FROM tbl_dp_warehouse
                     <?php
                 else: ?>
 
-                    <!-- STOK DURUMU -->
                     <li class="nav-item">
                         <a href="<?= BASE_URL ?>/index.php?page=stock_status"
                             class="nav-link <?= $currentPage === 'stock_status' ? 'active' : '' ?>">
@@ -64,6 +63,23 @@ $warehouseCount = Database::fetchOne("SELECT COUNT(*) as c FROM tbl_dp_warehouse
                             <p>Stok Durumu</p>
                         </a>
                     </li>
+                    <!-- DEPO SAYIMI -->
+                    <li class="nav-item">
+                        <a href="<?= BASE_URL ?>/index.php?page=inventory"
+                            class="nav-link <?= $currentPage === 'inventory' ? 'active' : '' ?>">
+                            <i class="nav-icon fas fa-clipboard-check"></i>
+                            <p>Depo Sayımı</p>
+                        </a>
+                    </li>
+                    <?php if ($role === ROLE_ADMIN): ?>
+                        <li class="nav-item">
+                            <a href="<?= BASE_URL ?>/index.php?page=bulk_stock_update"
+                                class="nav-link <?= $currentPage === 'bulk_stock_update' ? 'active' : '' ?>">
+                                <i class="nav-icon fas fa-boxes"></i>
+                                <p>Toplu Stok Güncelleme</p>
+                            </a>
+                        </li>
+                    <?php endif; ?>
                     <!-- STOK HAREKETLERİ -->
 
 

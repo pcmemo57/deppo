@@ -37,6 +37,12 @@ switch ($action) {
         if (!$warehouseId || !$productId || $quantity <= 0) {
             jsonResponse(false, 'Depo, ürün ve adet zorunludur.');
         }
+
+        // Sayım kontrolü
+        if (isInventoryOpen($warehouseId)) {
+            jsonResponse(false, 'Bu depo için açık bir sayım oturumu bulunmaktadır. Sayım bitmeden stok hareketi yapılamaz.');
+        }
+
         if (!in_array($currency, ['TL', 'USD', 'EUR'])) {
             jsonResponse(false, 'Para birimi seçimi zorunludur.');
         }
@@ -151,6 +157,11 @@ switch ($action) {
 
         if (!$id || !$warehouseId || !$productId || $quantity <= 0)
             jsonResponse(false, 'Zorunlu alanlar eksik.');
+
+        // Sayım kontrolü
+        if (isInventoryOpen($warehouseId)) {
+            jsonResponse(false, 'Bu depo için açık bir sayım oturumu bulunmaktadır. Sayım bitmeden stok hareketi yapılamaz.');
+        }
         $priceEur = toEur($unitPrice, $currency);
 
         $user = currentUser();

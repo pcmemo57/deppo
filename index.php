@@ -14,7 +14,7 @@ $role = currentUser()['role'];
 $currentPage = sanitize($_GET['page'] ?? 'dashboard');
 
 // ─── Erişim Kontrol Matrisi ───────────────────────────────────────────────
-$adminOnly = ['settings', 'admin_users'];
+$adminOnly = ['settings', 'admin_users', 'bulk_stock_update'];
 $requesterOk = ['dashboard', 'stock_out'];
 
 if ($role === ROLE_ADMIN) {
@@ -53,6 +53,7 @@ $pageTitles = [
     'transfer_history' => 'Transfer Geçmişi',
     'stock_status' => 'Stok Durumu',
     'product_history' => 'Ürün Hareket Geçmişi',
+    'bulk_stock_update' => 'Toplu Stok Güncelleme',
 ];
 $pageTitle = $pageTitles[$currentPage] ?? 'Sayfa';
 

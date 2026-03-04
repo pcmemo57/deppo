@@ -68,6 +68,18 @@ if (!in_array($activeTab, $tabs))
         color: #1a56db !important;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
     }
+
+    /* Card footer flex düzeni */
+    .card-footer.clearfix {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .card-footer .float-start,
+    .card-footer .float-end {
+        float: none !important;
+    }
 </style>
 
 <div class="row">
@@ -130,7 +142,11 @@ if (!in_array($activeTab, $tabs))
                                 <tbody id="bodyAdmins"></tbody>
                             </table>
                         </div>
-                        <div class="p-3 border-top clearfix bg-light">
+                        <div class="card-footer clearfix bg-light">
+                            <div class="float-start">
+                                <span id="totalCountAdmins" class="text-muted small"></span>
+                            </div>
+                            <div id="paginationAdmins" class="float-end m-0"></div>
                         </div>
                     </div>
 
@@ -173,7 +189,10 @@ if (!in_array($activeTab, $tabs))
                                 <tbody id="bodyUsers"></tbody>
                             </table>
                         </div>
-                        <div class="p-3 border-top clearfix bg-light">
+                        <div class="card-footer clearfix bg-light">
+                            <div class="float-start">
+                                <span id="totalCountUsers" class="text-muted small"></span>
+                            </div>
                             <div id="paginationUsers" class="float-end m-0"></div>
                         </div>
                     </div>
@@ -270,6 +289,7 @@ if (!in_array($activeTab, $tabs))
                 html += '</td></tr>';
             });
             $('#bodyAdmins').html(html || '<tr><td colspan="5" class="text-center text-muted">Kayıt yok</td></tr>');
+            $('#totalCountAdmins').text('Toplam: ' + formatQty(r.data.total) + ' kayıt');
             renderPagination('#paginationAdmins', r.data.total, adminPerPage, adminPage, function (p) { adminPage = p; loadAdmins(); });
         }, 'json');
     }
@@ -291,6 +311,7 @@ if (!in_array($activeTab, $tabs))
                 html += '</td></tr>';
             });
             $('#bodyUsers').html(html || '<tr><td colspan="5" class="text-center text-muted">Kayıt yok</td></tr>');
+            $('#totalCountUsers').text('Toplam: ' + formatQty(r.data.total) + ' kayıt');
             renderPagination('#paginationUsers', r.data.total, userPerPage, userPage, function (p) { userPage = p; loadUsers(); });
         }, 'json');
     }

@@ -185,6 +185,16 @@ requireRole(ROLE_ADMIN, ROLE_USER);
         color: #fff;
     }
 
+    /* Card footer flex düzeni */
+    .card-footer.clearfix {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .card-footer .float-start,
+    .card-footer .float-end {
+        float: none !important;
     }
 </style>
 

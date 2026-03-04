@@ -385,3 +385,12 @@ function getCurrencySymbol($currency = null)
             return $currency;
     }
 }
+
+/**
+ * Belirli bir depo için açık bir sayım oturumu olup olmadığını kontrol et
+ */
+function isInventoryOpen(int $warehouseId): bool
+{
+    $row = Database::fetchOne("SELECT id FROM inventory_sessions WHERE warehouse_id = ? AND status = 'open'", [$warehouseId]);
+    return !empty($row);
+}

@@ -26,11 +26,16 @@ function getStockData(array $warehouseIds, string $search = '', int $page = 1, i
         $warehouseNames = array_column($warehouses, 'name');
         $warehouseMap = array_column($warehouses, 'name', 'id');
 
-        // Tüm ürünleri al (arama + sayfalama)
-        // Sadece seçili depolara en az bir kez girmiş ürünleri getir
+        // Sadece seçili depolarda toplam stoğu 0 olmayan aktif ürünleri getir
         $placeholders = implode(',', array_fill(0, count($warehouseIds), '?'));
-        $where = "p.hidden=0 AND p.is_active=1 AND EXISTS (SELECT 1 FROM tbl_dp_stock_in si WHERE si.product_id = p.id AND si.is_active=1 AND si.warehouse_id IN ($placeholders))";
-        $params = array_values($warehouseIds);
+        $where = "p.hidden=0 AND p.is_active=1 AND (
+            SELECT COALESCE(SUM(si.quantity), 0) - COALESCE((SELECT SUM(so.quantity) FROM tbl_dp_stock_out so WHERE so.product_id = p.id AND so.warehouse_id IN ($placeholders)), 0)
+            FROM tbl_dp_stock_in si 
+            WHERE si.product_id = p.id AND si.is_active=1 AND si.warehouse_id IN ($placeholders)
+        ) != 0";
+
+        // Parametreleri hazırla (where clause içinde placeholders 2 kez kullanılıyor)
+        $params = array_merge(array_values($warehouseIds), array_values($warehouseIds));
 
         if ($search) {
             $where .= " AND p.name LIKE ?";
@@ -42,7 +47,10 @@ function getStockData(array $warehouseIds, string $search = '', int $page = 1, i
 
         $offset = ($page - 1) * $perPage;
         $products = Database::fetchAll(
-            "SELECT p.id, p.name, p.image, p.unit, p.stock_alarm FROM tbl_dp_products p WHERE $where ORDER BY p.name LIMIT $perPage OFFSET $offset",
+            "SELECT p.id, p.name, p.image, p.unit, p.stock_alarm,
+                    (SELECT unit_price FROM tbl_dp_stock_in WHERE product_id = p.id AND is_active = 1 ORDER BY created_at DESC LIMIT 1) AS last_purchase_price,
+                    (SELECT currency FROM tbl_dp_stock_in WHERE product_id = p.id AND is_active = 1 ORDER BY created_at DESC LIMIT 1) AS last_purchase_currency
+             FROM tbl_dp_products p WHERE $where ORDER BY p.name LIMIT $perPage OFFSET $offset",
             $params
         );
 
@@ -91,6 +99,7 @@ function getStockData(array $warehouseIds, string $search = '', int $page = 1, i
                 'image' => $p['image'],
                 'unit' => $p['unit'],
                 'stock_alarm' => (int) $p['stock_alarm'],
+                'last_price_base' => (float) toBaseCurrencyDisplay($p['last_purchase_price'] ?? 0, $p['last_purchase_currency'] ?? 'EUR'),
                 'stocks' => [],
                 'total' => 0
             ];

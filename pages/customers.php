@@ -4,6 +4,19 @@
  */
 requireRole(ROLE_ADMIN, ROLE_USER);
 ?>
+<style>
+    /* Card footer flex düzeni */
+    .card-footer.clearfix {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .card-footer .float-start,
+    .card-footer .float-end {
+        float: none !important;
+    }
+</style>
 <div class="row">
     <div class="col-12">
         <div class="card card-warning card-outline">

@@ -3,7 +3,13 @@
  * Depolar Arası Transfer & Geçmiş
  */
 requireRole(ROLE_ADMIN, ROLE_USER);
-$warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hidden=0 AND is_active=1 ORDER BY name");
+$warehouses = Database::fetchAll("
+    SELECT w.id, w.name, 
+    (SELECT COUNT(*) FROM inventory_sessions WHERE warehouse_id = w.id AND status = 'open') > 0 as is_inventory_open 
+    FROM tbl_dp_warehouses w 
+    WHERE w.hidden=0 AND w.is_active=1 
+    ORDER BY w.name
+");
 ?>
 <style>
     /* Select2 Modal Border & Height Fix */
@@ -236,6 +242,18 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         border-color: #1a56db !important;
         box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.12) !important;
     }
+
+    /* Card footer flex düzeni */
+    .card-footer.clearfix {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .card-footer .float-start,
+    .card-footer .float-end {
+        float: none !important;
+    }
 </style>
 <div class="row transfer-history-row">
     <div class="col-12">
@@ -312,8 +330,10 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                                 <select id="fromWarehouse" class="form-control select2-modal" required>
                                     <option value="">— Seçiniz —</option>
                                     <?php foreach ($warehouses as $w): ?>
-                                        <option value="<?= e($w['id']) ?>" <?= count($warehouses) === 1 ? 'selected' : '' ?>>
-                                            <?= e($w['name']) ?>
+                                        <option value="<?= e($w['id']) ?>" 
+                                            <?= count($warehouses) === 1 && !$w['is_inventory_open'] ? 'selected' : '' ?>
+                                            <?= $w['is_inventory_open'] ? 'disabled style="color:red"' : '' ?>>
+                                            <?= e($w['name']) ?><?= $w['is_inventory_open'] ? ' (SAYIM DEVAM EDİYOR)' : '' ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -323,14 +343,14 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                             <label class="form-label">Hedef Depo *</label>
                             <div class="input-icon-wrap">
                                 <i class="fas fa-warehouse field-icon text-danger"></i>
-                                <select id="toWarehouse" class="form-control select2-modal" required>
+                                <select id="toWarehouse" class="form-control select2-modal" required disabled>
                                     <option value="">— Seçiniz —</option>
                                     <?php foreach ($warehouses as $w): ?>
-                                        <option value="<?= e($w['id']) ?>">
-                                            <?= e($w['name']) ?>
+                                        <option value="<?= e($w['id']) ?>" 
+                                            <?= $w['is_inventory_open'] ? 'disabled style="color:red"' : '' ?>>
+                                            <?= e($w['name']) ?><?= $w['is_inventory_open'] ? ' (SAYIM DEVAM EDİYOR)' : '' ?>
                                         </option>
-                                        <?php
-                                    endforeach; ?>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                         </div>
@@ -344,7 +364,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                             <label class="form-label">Ürün Seçin *</label>
                             <div class="input-icon-wrap">
                                 <i class="fas fa-box field-icon"></i>
-                                <select id="productSelect" class="form-control" style="width:100%"></select>
+                                <select id="productSelect" class="form-control" style="width:100%" disabled></select>
                             </div>
                         </div>
                         <div class="col-md-4 mb-3">
@@ -352,15 +372,11 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                             <div class="input-group input-group-sm" style="height: 40px;">
                                 <input type="number" id="transferQty" class="form-control text-end" min="0.001"
                                     step="any" placeholder="0.00"
-                                    style="padding-left:13px!important; height:100% !important;">
-                                <div class="input-group-append h-100">
-                                    <span class="input-group-text d-flex align-items-center" id="transferUnitLabel"
-                                        style="border-radius: 0; background: #f8fafd; border-left: 0; border-right: 0;">Adet</span>
-                                    <button type="button" class="btn btn-primary h-100" id="btnAddTransferLine"
-                                        style="border-top-right-radius: 8px; border-bottom-right-radius: 8px;">
-                                        <i class="fas fa-plus"></i> Ekle
-                                    </button>
-                                </div>
+                                    style="padding-left:13px!important; height:100% !important; border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important; border-right: 0 !important;" disabled>
+                                <button type="button" class="btn btn-primary h-100 px-3" id="btnAddTransferLine"
+                                    style="border-top-left-radius: 0 !important; border-bottom-left-radius: 0 !important; border-top-right-radius: 8px !important; border-bottom-right-radius: 8px !important;">
+                                    <i class="fas fa-plus"></i> Ekle
+                                </button>
                             </div>
                         </div>
                         <div class="col-12 mb-3">
@@ -389,14 +405,14 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                     <div class="row">
                         <div class="col-12 mb-0">
                             <label class="form-label">Transfer Notu</label>
-                            <textarea id="transferNote" class="form-control" rows="2" placeholder="Not..."></textarea>
+                            <textarea id="transferNote" class="form-control" rows="2" placeholder="Not..." disabled></textarea>
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">İptal</button>
-                <button type="button" class="btn-modal-save" id="btnSubmitTransfer">Transferi Onayla</button>
+                <button type="button" class="btn-modal-save" id="btnSubmitTransfer" disabled>Transferi Onayla</button>
             </div>
         </div>
     </div>
@@ -530,14 +546,33 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                     var src = $('#fromWarehouse').val();
                     if (src && data.id == src) return null;
                 }
+
+                // Sayım devam ediyor uyarısını kırmızı yap
+                if (data.text.indexOf('(SAYIM DEVAM EDİYOR)') !== -1) {
+                    return $('<span class="text-danger fw-bold"><i class="fas fa-exclamation-triangle me-1"></i> ' + data.text + '</span>');
+                }
                 return data.text;
             }
         });
 
-        $('#fromWarehouse').on('change', function () {
+        // Modal açıldığında depoya odaklan
+        $('#transferModal').on('shown.bs.modal', function() {
+            $('#fromWarehouse').select2('open');
+        });
+
+        // Depo seçilince diğerlerini aktif et
+        $('#fromWarehouse').on('change', function() {
             var val = $(this).val();
-            if ($('#toWarehouse').val() == val && val) {
-                $('#toWarehouse').val(null).trigger('change');
+            var selects = $('#toWarehouse, #productSelect');
+            var others = $('#transferQty, #btnAddTransferLine, #transferNote, #btnSubmitTransfer');
+            
+            if(val) {
+                selects.prop('disabled', false).trigger('change');
+                others.prop('disabled', false);
+                setTimeout(() => { $('#toWarehouse').select2('open'); }, 50);
+            } else {
+                selects.prop('disabled', true).trigger('change');
+                others.prop('disabled', true);
             }
         });
 
@@ -586,9 +621,8 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         $('#productSelect').on('select2:select', function (e) {
             $(this).select2('close');
             var data = e.params.data;
-            $('#transferUnitLabel').text(data.unit || 'Adet');
             $(this).data('current-stock', data.stock || 0);
-            $('#transferQty').focus().attr('placeholder', 'Mevcut: ' + formatQty(data.stock || 0));
+            $('#transferQty').focus().val('').attr('placeholder', 'Mevcut: ' + formatQty(data.stock || 0));
         });
 
         $('#btnAddTransferLine').on('click', function () {
@@ -603,7 +637,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                 return;
             }
 
-            var pid = sel[0].id, pname = sel[0].text, unit = sel[0].unit || 'Adet';
+            var pid = sel[0].id, pname = sel[0].text, unit = sel[0].unit || '';
             var found = false;
             $.each(transferLines, function (i, l) {
                 if (l.product_id == pid) {
@@ -623,7 +657,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
             if (!found) transferLines.push({ product_id: pid, product_name: pname, quantity: qty, unit: unit });
             renderTransferLines();
             $('#productSelect').val(null).trigger('change').select2('open');
-            $('#transferQty').val('');
+            $('#transferQty').val('').attr('placeholder', '0.00');
         });
 
         $('#btnSubmitTransfer').on('click', function () {

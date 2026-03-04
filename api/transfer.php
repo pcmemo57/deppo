@@ -31,6 +31,15 @@ switch ($action) {
         if (empty($lines))
             jsonResponse(false, 'En az 1 ürün gerekli.');
 
+        // Sayım kontrolü (Kaynak)
+        if (isInventoryOpen($sourceId)) {
+            jsonResponse(false, 'Kaynak depoda (#' . $sourceId . ') açık bir sayım oturumu bulunmaktadır. Sayım bitmeden stok hareketi yapılamaz.');
+        }
+        // Sayım kontrolü (Hedef)
+        if (isInventoryOpen($targetId)) {
+            jsonResponse(false, 'Hedef depoda (#' . $targetId . ') açık bir sayım oturumu bulunmaktadır. Sayım bitmeden stok hareketi yapılamaz.');
+        }
+
         foreach ($lines as $line) {
             $productId = (int) ($line['product_id'] ?? 0);
             $quantity = (float) ($line['quantity'] ?? 0);

@@ -285,35 +285,69 @@ $procurementStatuses = [
 </script>
 
 <style>
-    /* ─── PREMIUM MODAL TASARIMI (dashboard focus) ─── */
-    .premium-modal.modal-content {
-        border: none;
-        border-radius: 16px !important;
-        overflow: hidden;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    /* ───────────────────────────────────────────
+   MODAL TASARIMI (entrusted.php ile senkron)
+─────────────────────────────────────────── */
+    #addModal .modal-dialog,
+    #actionModal .modal-dialog,
+    #historyModal .modal-dialog {
+        max-width: 860px;
     }
 
-    .modal-header.bg-premium {
-        background: linear-gradient(135deg, #1a56db 0%, #0c3daa 100%) !important;
+    #addModal .modal-content,
+    #actionModal .modal-content,
+    #historyModal .modal-content {
+        border: none;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+    }
+
+    #addModal .modal-header {
+        background: linear-gradient(135deg, #1a56db 0%, #0c3daa 100%);
         padding: 20px 28px;
+        border-bottom: none;
+    }
+
+    #actionModal .modal-header {
+        background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
+        padding: 20px 28px;
+        border-bottom: none;
+    }
+
+    #addModal .modal-title,
+    #actionModal .modal-title,
+    #historyModal .modal-title {
+        font-size: 1.05rem;
+        font-weight: 600;
+    }
+
+    #addModal .modal-body,
+    #actionModal .modal-body,
+    #historyModal .modal-body {
+        padding: 28px 32px 12px;
+        background: #f8fafd;
+    }
+
+    #addModal .modal-footer,
+    #actionModal .modal-footer {
+        padding: 16px 32px 20px;
+        background: #f8fafd;
+        border-top: 1px solid #e4e9f0;
     }
 
     .modal-section-label {
-        font-size: 0.72rem;
+        font-size: 0.7rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.08em;
         color: #6b7a99;
-        margin-bottom: 16px;
-        padding-bottom: 8px;
+        margin-bottom: 14px;
+        padding-bottom: 6px;
         border-bottom: 2px solid #e4e9f0;
         display: flex;
         align-items: center;
-        gap: 12px;
-    }
-
-    .modal-section-label i {
-        margin-right: 0px;
+        gap: 6px;
     }
 
     .input-icon-wrap {
@@ -322,64 +356,34 @@ $procurementStatuses = [
 
     .input-icon-wrap .field-icon {
         position: absolute;
-        left: 18px;
+        left: 11px;
         top: 50%;
         transform: translateY(-50%);
         color: #9aa5be;
-        font-size: 1.1rem;
+        font-size: 0.82rem;
         z-index: 5;
-    }
-
-    .input-icon-wrap .form-control,
-    .input-icon-wrap .form-select {
-        border-radius: 10px;
-        border: 1.5px solid #d1d9e6;
-        padding-top: 12px;
-        padding-bottom: 12px;
-        transition: all 0.2s;
-    }
-
-    .input-icon-wrap .form-control:focus,
-    .input-icon-wrap .form-select:focus {
-        border-color: #1a56db;
-        box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.1);
+        pointer-events: none;
     }
 
     .btn-modal-cancel {
         background: transparent;
         border: 1.5px solid #c9d3e0;
         color: #4a5568;
-        border-radius: 10px;
-        padding: 10px 28px;
-        font-size: 0.9rem;
-        font-weight: 600;
-        transition: all 0.2s;
-    }
-
-    .btn-modal-cancel:hover {
-        background: #f0f4f9;
-        border-color: #a0aec0;
-        color: #1f2937;
+        border-radius: 8px;
+        padding: 9px 22px;
+        font-size: 0.87rem;
+        font-weight: 500;
     }
 
     .btn-modal-save {
         background: linear-gradient(135deg, #1a56db, #0c3daa);
         border: none;
         color: #fff;
-        border-radius: 10px;
-        padding: 10px 35px;
-        font-size: 0.9rem;
+        border-radius: 8px;
+        padding: 9px 32px;
+        font-size: 0.87rem;
         font-weight: 600;
-        letter-spacing: 0.02em;
-        box-shadow: 0 6px 16px rgba(26, 86, 219, 0.25);
-        transition: all 0.2s;
-    }
-
-    .btn-modal-save:hover {
-        background: linear-gradient(135deg, #1d4ed8, #0a35a0);
-        box-shadow: 0 8px 20px rgba(26, 86, 219, 0.35);
-        transform: translateY(-1px);
-        color: #fff;
+        box-shadow: 0 4px 12px rgba(26, 86, 219, 0.3);
     }
 </style>
 
@@ -420,32 +424,45 @@ $entrustedCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_entrusted
         </a>
     </div>
     <div class="col-lg-3 col-6">
-    <a href="javascript:void(0)" class="small-box shadow-sm border"
-        style="background: #f8f9fa; color: #495057; cursor: default;">
-        <div class="inner p-2">
-            <table class="table table-sm table-borderless mb-0 m-0 w-100" style="font-size: 0.82rem; color: inherit;">
-                <tbody>
-                    <tr>
-                        <td class="p-0 border-0 pb-1 w-75"><i class="fas fa-users me-2 text-secondary opacity-75"></i> Müşteri</td>
-                        <td class="p-0 border-0 pb-1 fw-bold" style="text-align: right;"><?= e(formatQty($customerCount)) ?></td>
-                    </tr>
-                    <tr>
-                        <td class="p-0 border-0 pb-1 w-75"><i class="fas fa-truck-moving me-2 text-secondary opacity-75"></i> Tedarikçi</td>
-                        <td class="p-0 border-0 pb-1 fw-bold" style="text-align: right;"><?= e(formatQty($supplierCount)) ?></td>
-                    </tr>
-                    <tr>
-                        <td class="p-0 border-0 pb-1 w-75"><i class="fas fa-user-friends me-2 text-secondary opacity-75"></i> Personel</td>
-                        <td class="p-0 border-0 pb-1 fw-bold" style="text-align: right;"><?= e(formatQty($requesterCount)) ?></td>
-                    </tr>
-                    <tr>
-                        <td class="p-0 border-0 w-75"><i class="fas fa-boxes me-2 text-secondary opacity-75"></i> Ürün</td>
-                        <td class="p-0 border-0 fw-bold" style="text-align: right;"><?= e(formatQty($productCount)) ?></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </a>
-</div>
+        <a href="javascript:void(0)" class="small-box shadow-sm border"
+            style="background: #f8f9fa; color: #495057; cursor: default;">
+            <div class="inner p-2">
+                <table class="table table-sm table-borderless mb-0 m-0 w-100"
+                    style="font-size: 0.82rem; color: inherit;">
+                    <tbody>
+                        <tr>
+                            <td class="p-0 border-0 pb-1 w-75"><i
+                                    class="fas fa-users me-2 text-secondary opacity-75"></i> Müşteri</td>
+                            <td class="p-0 border-0 pb-1 fw-bold" style="text-align: right;">
+                                <?= e(formatQty($customerCount)) ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="p-0 border-0 pb-1 w-75"><i
+                                    class="fas fa-truck-moving me-2 text-secondary opacity-75"></i> Tedarikçi</td>
+                            <td class="p-0 border-0 pb-1 fw-bold" style="text-align: right;">
+                                <?= e(formatQty($supplierCount)) ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="p-0 border-0 pb-1 w-75"><i
+                                    class="fas fa-user-friends me-2 text-secondary opacity-75"></i> Personel</td>
+                            <td class="p-0 border-0 pb-1 fw-bold" style="text-align: right;">
+                                <?= e(formatQty($requesterCount)) ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="p-0 border-0 w-75"><i class="fas fa-boxes me-2 text-secondary opacity-75"></i>
+                                Ürün</td>
+                            <td class="p-0 border-0 fw-bold" style="text-align: right;">
+                                <?= e(formatQty($productCount)) ?>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </a>
+    </div>
 </div>
 <!-- 
 <div class="row">
@@ -606,47 +623,41 @@ $entrustedCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_entrusted
     </div>
 <?php endif; ?>
 
-<!-- Action Modal (Return/Sale) -->
 <div class="modal fade" id="actionModal" tabindex="-1">
     <div class="modal-dialog">
-        <div class="modal-content premium-modal border-0 shadow-lg">
-            <div class="modal-header bg-info py-3 shadow-sm">
-                <h5 class="modal-title text-white fw-bold"><i class="fas fa-exchange-alt me-3 opacity-75"></i>Emanet
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white fw-bold"><i class="fas fa-exchange-alt me-2 opacity-75"></i>Emanet
                     İşlemi</h5>
                 <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i
                         class="fas fa-times"></i></button>
             </div>
-            <div class="modal-body p-4 bg-light">
+            <div class="modal-body">
                 <div class="modal-section-label">
-                    <i class="fas fa-box text-primary me-2"></i> Ürün Bilgisi
+                    <i class="fas fa-box"></i> Ürün Bilgisi
                 </div>
-                <h6 id="actionProduct" class="fw-bold text-dark mb-2 fs-5"></h6>
-                <div class="alert alert-warning border-0 small py-3 mb-4 shadow-sm d-flex align-items-center">
-                    <i class="fas fa-exclamation-circle fs-4 me-3 text-warning"></i>
-                    <div>
-                        <span class="text-muted d-block">Emanette Kalan</span>
-                        <b id="actionRemaining" class="text-danger fs-5">0</b>
-                    </div>
+                <h6 id="actionProduct" class="fw-bold text-primary mb-2"></h6>
+                <div class="alert alert-light border small py-2 mb-4 bg-white shadow-sm">
+                    Emanette Kalan: <b id="actionRemaining" class="text-danger">0</b>
                 </div>
 
                 <form id="formAction">
                     <input type="hidden" id="actionId">
 
                     <div class="modal-section-label">
-                        <i class="fas fa-cog text-primary me-2"></i> İşlem Detayları
+                        <i class="fas fa-cog"></i> İşlem Detayları
                     </div>
-                    <div class="mb-4">
-                        <label class="form-label d-block text-center mb-3 fw-bold text-muted small text-uppercase">İşlem
-                            Türü</label>
+                    <div class="mb-3">
+                        <label class="form-label d-block text-center mb-3">İşlem Türü</label>
                         <div class="d-flex justify-content-center">
-                            <div class="status-btn-group shadow-sm p-1 bg-white rounded-pill border">
-                                <button type="button" class="status-btn-item rounded-pill px-4 py-2 border-0 fw-bold"
-                                    id="set_return" onclick="setActionType('return')">
-                                    <i class="fas fa-undo me-2"></i> İade Al
+                            <div class="status-btn-group shadow-sm">
+                                <button type="button" class="status-btn-item" id="set_return"
+                                    onclick="setActionType('return')">
+                                    <i class="fas fa-undo me-1"></i> İade Al
                                 </button>
-                                <button type="button" class="status-btn-item rounded-pill px-4 py-2 border-0 fw-bold"
-                                    id="set_sale" onclick="setActionType('sale')">
-                                    <i class="fas fa-shopping-cart me-2"></i> Müşteriye Çık
+                                <button type="button" class="status-btn-item" id="set_sale"
+                                    onclick="setActionType('sale')">
+                                    <i class="fas fa-shopping-cart me-1"></i> Müşteriye Çık
                                 </button>
                             </div>
                         </div>
@@ -654,36 +665,33 @@ $entrustedCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_entrusted
                     </div>
 
                     <div class="mb-3" id="customerDiv" style="display:none">
-                        <label class="form-label fw-bold">Müşteri Seçin <span class="text-danger">*</span></label>
+                        <label class="form-label">Müşteri Seçin <span class="text-danger">*</span></label>
                         <div class="input-icon-wrap">
                             <i class="fas fa-building field-icon"></i>
-                            <select id="actionCustomerId" class="form-select border-2"></select>
+                            <select id="actionCustomerId" class="form-select"></select>
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold">İşlem Miktarı <span class="text-danger">*</span></label>
+                        <label class="form-label">İşlem Miktarı <span class="text-danger">*</span></label>
                         <div class="input-icon-wrap">
                             <i class="fas fa-sort-numeric-up field-icon"></i>
-                            <input type="number" id="actionQty" class="form-control border-2" step="any" required>
+                            <input type="number" id="actionQty" class="form-control" step="any" required>
                         </div>
                     </div>
 
                     <div class="modal-section-label mt-4">
-                        <i class="fas fa-comment-dots text-primary me-2"></i> Not
+                        <i class="fas fa-comment-dots"></i> Not
                     </div>
                     <div class="mb-3">
-                        <textarea id="actionNote" class="form-control border-2" rows="2"
-                            placeholder="İşlem notu..."></textarea>
+                        <textarea id="actionNote" class="form-control" rows="2" placeholder="İşlem notu..."></textarea>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer bg-light border-top py-3 px-4">
-                <button type="button" class="btn-modal-cancel me-auto" data-bs-dismiss="modal">Kapat</button>
-                <button type="button" class="btn-modal-save bg-info"
-                    style="box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);" id="btnSubmitAction">
-                    <i class="fas fa-check-circle me-2"></i>İşlemi Onayla
-                </button>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-modal-cancel me-auto" data-bs-dismiss="modal">Kapat</button>
+                <button type="button" class="btn btn-info text-white shadow-sm fw-bold px-4" id="btnSubmitAction">İşlemi
+                    Onayla</button>
             </div>
         </div>
     </div>
@@ -724,9 +732,17 @@ $entrustedCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_entrusted
         $('#btnSubmitAction').on('click', function () {
             var qty = parseFloat($('#actionQty').val());
             if (!qty || qty <= 0) { showError('Geçerli bir miktar girin.'); return; }
+
             var btn = $(this);
             var btnHtml = btn.html();
-            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> İşleniyor...');
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> E-posta gönderiliyor...');
+
+            Swal.fire({
+                title: 'İşlem yapılıyor...',
+                text: 'Lütfen bekleyiniz, e-posta bildirimi gönderiliyor.',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
 
             $.post('<?= BASE_URL ?>/api/entrusted.php', {
                 action: 'process_action',
@@ -742,15 +758,16 @@ $entrustedCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_entrusted
                     setTimeout(() => location.reload(), 1000);
                 } else {
                     showError(r.message);
-                    btn.prop('disabled', false).html(btnHtml);
                 }
-            }, 'json');
+            }, 'json').always(function () {
+                btn.prop('disabled', false).html(btnHtml);
+            });
         });
     });
 </script>
 
 <div class="row">
-<!-- Son Stok Çıkışları -->
+    <!-- Son Stok Çıkışları -->
     <div class="col-md-6">
         <div class="card card-outline card-danger">
             <div class="card-header">
@@ -845,6 +862,6 @@ $entrustedCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_entrusted
         </div>
     </div>
 
-    
-    
+
+
 </div>

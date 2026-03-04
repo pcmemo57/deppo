@@ -63,6 +63,8 @@ if (isset($googleFonts[$selectedFont])) {
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/vendor/css/select2-bootstrap-5-theme.min.css">
     <!-- SweetAlert2 -->
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/vendor/css/sweetalert2.min.css">
+    <!-- Cropper.js -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <style>
         :root {
             --font-family:
@@ -74,6 +76,8 @@ if (isset($googleFonts[$selectedFont])) {
             --header-color:
                 <?= e($headerColor) ?>
             ;
+            --common-radius: 4px;
+            /* Global Köşe Yuvarlaklığı Standardı */
         }
 
         body,
@@ -124,7 +128,7 @@ if (isset($googleFonts[$selectedFont])) {
         }
 
         .nav-sidebar .nav-icon {
-            margin-right: 0.75rem !important;
+            margin-right: 10px !important;
             text-align: left !important;
             width: auto !important;
             margin-left: 0 !important;
@@ -164,7 +168,7 @@ if (isset($googleFonts[$selectedFont])) {
         /* Standardize status badges (pill style) */
         .status-badge {
             padding: 4px 12px;
-            border-radius: 20px;
+            border-radius: var(--common-radius) !important;
             font-size: 0.72rem;
             font-weight: 700;
             text-transform: uppercase;
@@ -260,7 +264,7 @@ if (isset($googleFonts[$selectedFont])) {
         .form-control,
         .form-select {
             border: 1.5px solid #d1d9e6 !important;
-            border-radius: 8px !important;
+            border-radius: var(--common-radius) !important;
             padding: 9px 13px;
             font-size: 0.88rem;
             color: #1f2937;
@@ -294,6 +298,38 @@ if (isset($googleFonts[$selectedFont])) {
             font-size: 0.82rem;
             z-index: 5;
             pointer-events: none;
+            margin-right: 0 !important;
+            /* İkon mesafesinden muaf */
+        }
+
+        /* ══════════════════════════════════════════
+           GLOBAL İKON MESAFE AYARI (EN AZ 10PX)
+        ══════════════════════════════════════════ */
+        i.fas,
+        i.far,
+        i.fab,
+        i.fa {
+            margin-right: 10px !important;
+        }
+
+        /* İstisnalar: Bu alanlarda ikonlar bitişik kalmalı veya kendi özel mesafesini kullanmalı */
+        .field-icon,
+        .input-group-text i,
+        .status-badge i,
+        .btn-group i,
+        .no-margin i,
+        .swal2-icon i,
+        .pagination i,
+        .nav-link i.fa-angle-left {
+            margin-right: 0 !important;
+        }
+
+        /* Eğer ikon kapsayıcı içindeki tek elemansa mesafe verme (ortalamayı bozmamak için) */
+        /* Not: Metin düğümleri element sayılmadığı için bu kural tekil ikonlu butonlarda çalışır */
+        .btn i:only-child,
+        .btn-sm i:only-child,
+        .nav-link i:only-child {
+            margin-right: 0 !important;
         }
 
         .input-icon-wrap .form-control,
@@ -308,7 +344,7 @@ if (isset($googleFonts[$selectedFont])) {
         /* Select2 Bootstrap 5 Custom Styling (Global) */
         .select2-container--bootstrap-5 .select2-selection {
             border: 1.5px solid #d1d9e6 !important;
-            border-radius: 8px !important;
+            border-radius: var(--common-radius) !important;
             min-height: 40px !important;
             padding: 6px 10px 6px 32px !important;
             font-size: 0.88rem !important;
@@ -393,6 +429,30 @@ if (isset($googleFonts[$selectedFont])) {
             align-items: center;
             justify-content: center;
             gap: 5px;
+            border-radius: var(--common-radius) !important;
+        }
+
+        /* ══════════════════════════════════════════
+           ARAMA KUTULARI "KESKİN BİRLEŞTİR" (GLOBAL)
+           Sağında büyüteç olan tüm input-group'lar
+        ══════════════════════════════════════════ */
+        .input-group:has(.fa-search) .form-control {
+            border-top-right-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+            border-right: 0 !important;
+        }
+
+        .input-group:has(.fa-search) .input-group-text {
+            border-top-left-radius: 0 !important;
+            border-bottom-left-radius: 0 !important;
+            background-color: #fff !important;
+            color: #9aa5be !important;
+        }
+
+        /* input-group-append yapısı için ek destek */
+        .input-group .input-group-append .input-group-text {
+            border-top-left-radius: 0 !important;
+            border-bottom-left-radius: 0 !important;
         }
 
         /* blok butonlar için display: flex */

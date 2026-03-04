@@ -76,4 +76,9 @@ class Database
     {
         return self::getInstance()->rollBack();
     }
+
+    public static function inTransaction(): bool
+    {
+        return self::getInstance()->inTransaction();
+    }
 }

@@ -139,6 +139,18 @@ $customers = Database::fetchAll("SELECT id, name FROM tbl_dp_customers WHERE hid
         border-color: #3b82f6 !important;
         box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
     }
+
+    /* Card footer flex düzeni */
+    .card-footer.clearfix {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .card-footer .float-start,
+    .card-footer .float-end {
+        float: none !important;
+    }
 </style>
 
 <div class="row">
@@ -174,6 +186,12 @@ $customers = Database::fetchAll("SELECT id, name FROM tbl_dp_customers WHERE hid
                     </table>
                 </div>
             </div>
+            <div class="card-footer clearfix">
+                <div class="float-start">
+                    <span id="totalCount" class="text-muted small"></span>
+                </div>
+                <div id="pagination" class="float-end m-0"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -200,18 +218,23 @@ $customers = Database::fetchAll("SELECT id, name FROM tbl_dp_customers WHERE hid
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">Liste No <span class="text-danger">*</span></label>
                             <div class="input-group input-group-sm">
-                                <span class="input-group-text bg-white"><i class="fas fa-hashtag text-muted"></i></span>
+                                <span class="input-group-text bg-white"
+                                    style="border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important; border-right: 0 !important;"><i
+                                        class="fas fa-hashtag text-muted"></i></span>
                                 <input type="text" name="list_no" id="pl_list_no" class="form-control"
-                                    placeholder="PL-2024-001" required>
+                                    placeholder="PL-2024-001" required
+                                    style="border-top-left-radius: 0 !important; border-bottom-left-radius: 0 !important;">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">Notlar</label>
                             <div class="input-group input-group-sm">
-                                <span class="input-group-text bg-white"><i
+                                <span class="input-group-text bg-white"
+                                    style="border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important; border-right: 0 !important;"><i
                                         class="fas fa-sticky-note text-muted"></i></span>
                                 <input type="text" name="notes" id="pl_notes" class="form-control"
-                                    placeholder="İşlem notu...">
+                                    placeholder="İşlem notu..."
+                                    style="border-top-left-radius: 0 !important; border-bottom-left-radius: 0 !important;">
                             </div>
                         </div>
                     </div>
@@ -393,6 +416,7 @@ $customers = Database::fetchAll("SELECT id, name FROM tbl_dp_customers WHERE hid
                     `;
                 });
                 $('#packingListBody').html(html || '<tr><td colspan="7" class="text-center p-5 text-muted">Henüz kayıtlı çeki listesi bulunmuyor.</td></tr>');
+                $('#totalCount').text('Toplam: ' + formatQty(r.data.length) + ' kayıt');
             }
         });
     }

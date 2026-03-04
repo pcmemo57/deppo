@@ -32,6 +32,8 @@ $footerText = get_setting('footer_text', '© 2026 Depo Yönetim Sistemi');
 <script src="<?= BASE_URL ?>/assets/vendor/js/sweetalert2.all.min.js"></script>
 <!-- XLSX-JS-STYLE (Excel export with styles) -->
 <script src="<?= BASE_URL ?>/assets/vendor/js/xlsx.bundle.js"></script>
+<!-- Cropper.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
 <script>
     // Global SweetAlert tema

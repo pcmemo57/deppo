@@ -1,6 +1,12 @@
 <?php
 requireRole(ROLE_ADMIN, ROLE_USER);
-$warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hidden=0 AND is_active=1 ORDER BY name");
+$warehouses = Database::fetchAll("
+    SELECT w.id, w.name, 
+    (SELECT COUNT(*) FROM inventory_sessions WHERE warehouse_id = w.id AND status = 'open') > 0 as is_inventory_open 
+    FROM tbl_dp_warehouses w 
+    WHERE w.hidden=0 AND w.is_active=1 
+    ORDER BY w.name
+");
 ?>
 
 <style>
@@ -131,6 +137,18 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         border: 1px solid #eee;
         background: #fff;
     }
+
+    /* Card footer flex düzeni */
+    .card-footer.clearfix {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .card-footer .float-start,
+    .card-footer .float-end {
+        float: none !important;
+    }
 </style>
 
 <div class="row stock-out-row">
@@ -205,8 +223,10 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                                 <select name="warehouse_id" id="warehouseSelect" class="form-select" required>
                                     <option value="">— Seçiniz —</option>
                                     <?php foreach ($warehouses as $w): ?>
-                                        <option value="<?= e($w['id']) ?>" <?= count($warehouses) === 1 ? 'selected' : '' ?>>
-                                            <?= e($w['name']) ?>
+                                        <option value="<?= e($w['id']) ?>" 
+                                            <?= count($warehouses) === 1 && !$w['is_inventory_open'] ? 'selected' : '' ?>
+                                            <?= $w['is_inventory_open'] ? 'disabled style="color:red"' : '' ?>>
+                                            <?= e($w['name']) ?><?= $w['is_inventory_open'] ? ' (SAYIM DEVAM EDİYOR)' : '' ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -216,14 +236,14 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                             <label class="form-label">Emanet Alan Kişi <span class="text-danger">*</span></label>
                             <div class="input-icon-wrap">
                                 <i class="fas fa-user field-icon"></i>
-                                <select name="requester_id" id="requesterSelect" class="form-select" required></select>
+                                <select name="requester_id" id="requesterSelect" class="form-select" required disabled></select>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Tahmini İade Tarihi</label>
                             <div class="input-icon-wrap">
                                 <i class="fas fa-calendar-alt field-icon"></i>
-                                <input type="date" name="expected_return_at" class="form-control">
+                                <input type="date" name="expected_return_at" class="form-control" disabled>
                             </div>
                         </div>
                     </div>
@@ -237,19 +257,17 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                             <div class="col-md-8">
                                 <div class="input-icon-wrap">
                                     <i class="fas fa-box field-icon"></i>
-                                    <select id="productAdd" class="form-select"></select>
+                                    <select id="productAdd" class="form-select" disabled></select>
                                 </div>
                             </div>
-                            <div class="col-md-3">
-                                <div class="input-icon-wrap">
-                                    <i class="fas fa-sort-numeric-up field-icon"></i>
-                                    <input type="number" id="qtyInput" class="form-control" placeholder="Miktar"
-                                        step="any">
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <input type="number" id="qtyInput" class="form-control text-end" placeholder="Miktar"
+                                        step="any" style="border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important; border-right: 0 !important;" disabled>
+                                    <button type="button" class="btn btn-success px-3" id="btnAddLine" style="border-top-left-radius: 0 !important; border-bottom-left-radius: 0 !important;" disabled>
+                                        <i class="fas fa-plus me-1"></i> Ekle
+                                    </button>
                                 </div>
-                            </div>
-                            <div class="col-md-1">
-                                <button type="button" class="btn btn-success w-100" id="btnAddLine"><i
-                                        class="fas fa-plus"></i></button>
                             </div>
                         </div>
                     </div>
@@ -273,13 +291,13 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                         <i class="fas fa-comment-dots"></i> Not
                     </div>
                     <div class="col-12 mb-3">
-                        <textarea name="note" class="form-control" rows="2" placeholder="İşlem notu..."></textarea>
+                        <textarea name="note" class="form-control" rows="2" placeholder="İşlem notu..." disabled></textarea>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-modal-cancel" data-bs-dismiss="modal">Vazgeç</button>
-                <button type="button" class="btn btn-modal-save px-4" id="btnSubmit">Kaydet</button>
+                <button type="button" class="btn btn-modal-save px-4" id="btnSubmit" disabled>Kaydet</button>
             </div>
         </div>
     </div>
@@ -468,7 +486,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         $('#lineContainer').show();
         var html = '';
         $.each(lines, function (i, l) {
-            html += '<tr><td>' + esc(l.product_name) + '</td><td>' + formatQty(l.quantity) + '</td>' +
+            html += '<tr><td>' + esc(l.product_name) + '</td><td class="text-center">' + formatQty(l.quantity) + ' ' + esc(l.unit || '') + '</td>' +
                 '<td><button type="button" class="btn btn-xs btn-link text-danger p-0" onclick="removeLine(' + i + ')"><i class="fas fa-times"></i></button></td></tr>';
         });
         $('#lineBody').html(html);
@@ -529,11 +547,35 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
         load();
 
         $('#warehouseSelect').select2({
-            theme: 'bootstrap-5', placeholder: '— Seçiniz —', width: '100%', dropdownParent: $('#addModal')
-        }).on('select2:select', function () {
-            $(this).select2('close');
-            $('#requesterSelect').prop('disabled', false);
-            setTimeout(() => { $('#requesterSelect').select2('open'); }, 50);
+            theme: 'bootstrap-5', placeholder: '— Seçiniz —', width: '100%', dropdownParent: $('#addModal'),
+            templateResult: function (data) {
+                if (!data.id) return data.text;
+                if (data.text.indexOf('(SAYIM DEVAM EDİYOR)') !== -1) {
+                    return $('<span class="text-danger fw-bold"><i class="fas fa-exclamation-triangle me-1"></i> ' + data.text + '</span>');
+                }
+                return data.text;
+            }
+        });
+
+        // Modal açıldığında depoya odaklan
+        $('#addModal').on('shown.bs.modal', function() {
+            $('#warehouseSelect').select2('open');
+        });
+
+        // Depo seçilince diğerlerini aktif et
+        $('#warehouseSelect').on('change', function() {
+            var val = $(this).val();
+            var selects = $('#requesterSelect, #productAdd');
+            var others = $('[name="expected_return_at"], #qtyInput, #btnAddLine, [name="note"], #btnSubmit');
+            
+            if(val) {
+                selects.prop('disabled', false).trigger('change');
+                others.prop('disabled', false);
+                setTimeout(() => { $('#requesterSelect').select2('open'); }, 50);
+            } else {
+                selects.prop('disabled', true).trigger('change');
+                others.prop('disabled', true);
+            }
         });
 
         $('#requesterSelect').select2({
@@ -606,7 +648,7 @@ $warehouses = Database::fetchAll("SELECT id,name FROM tbl_dp_warehouses WHERE hi
                 return;
             }
 
-            lines.push({ product_id: sel[0].id, product_name: sel[0].text, quantity: qty });
+            lines.push({ product_id: sel[0].id, product_name: sel[0].text, quantity: qty, unit: sel[0].unit || '' });
             renderLines();
             $('#productAdd').val(null).trigger('change');
             $('#qtyInput').val('');

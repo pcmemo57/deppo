@@ -1,9 +1,26 @@
 <?php
 /**
- * Ürün Yönetimi — Resimli
- */
+* Ürün Yönetimi — Resimli
+* QR Kod kütüphanesi eklendi
+*/
+?>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<?php
 requireRole(ROLE_ADMIN, ROLE_USER);
 ?>
+<style>
+    /* Card footer flex düzeni */
+    .card-footer.clearfix {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .card-footer .float-start,
+    .card-footer .float-end {
+        float: none !important;
+    }
+</style>
 <div class="row">
     <div class="col-12">
         <div class="card card-success card-outline">
@@ -159,6 +176,48 @@ requireRole(ROLE_ADMIN, ROLE_USER);
     </div>
 </div>
 
+<!-- Image Crop Modal -->
+<div class="modal fade" id="cropModal" data-bs-backdrop="static" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-crop-alt me-2"></i>Görseli Düzenle</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="img-container" style="max-height: 500px;">
+                    <img id="cropImage" src="" style="max-width: 100%;">
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" id="btnDoCrop">
+                    <i class="fas fa-check me-1"></i>Kırp ve Uygula
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- QR Code Modal -->
+<div class="modal fade" id="qrModal" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-dark text-white py-2">
+                <h6 class="modal-title">Ürün Barkodu</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <div id="qrcode" class="d-inline-block p-3 bg-white rounded shadow-sm"></div>
+                <div class="mt-3 fw-bold text-dark" id="qrText"></div>
+                <div class="text-muted small" id="qrSubText"></div>
+            </div>
+            <div class="modal-footer bg-light py-2">
+                <button type="button" class="btn btn-secondary btn-sm w-100" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     $(function () {
         $('[name="unit"]').select2({
@@ -199,6 +258,7 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                     'Alarm: ' + alarmText + ' (Stok: ' + formatQty(u.total_stock || 0) + ')</small></td>';
                 html += '<td><strong>' + (u.last_price_eur ? formatTurkish(parseFloat(u.last_price_eur).toFixed(2)) : '—') + '</strong> <small>' + baseCurrency + '</small></td>';
                 html += '<td>';
+                html += '<button class="btn btn-xs btn-outline-dark me-1" onclick="showQR(\'' + (u.code || u.id) + '\', \'' + esc(u.name) + '\')" title="Barkod Göster"><i class="fas fa-qrcode"></i></button>';
                 html += '<button class="btn btn-xs btn-info me-1" onclick="editRow(' + u.id + ')"><i class="fas fa-edit"></i></button>';
                 html += '<button class="btn btn-xs btn-danger" onclick="deleteRow(' + u.id + ')"><i class="fas fa-trash"></i></button>';
                 html += '</td></tr>';
@@ -244,22 +304,97 @@ requireRole(ROLE_ADMIN, ROLE_USER);
     function toggleRow(id, cur) { $.post(apiUrl, { action: 'toggle', id: id, status: cur == 1 ? 0 : 1 }, function (r) { r.success ? showSuccess(r.message) : showError(r.message); load(); }, 'json'); }
     function deleteRow(id) { confirmAction('Bu ürünü silmek istediğinize emin misiniz?', function () { $.post(apiUrl, { action: 'delete', id: id }, function (r) { r.success ? showSuccess(r.message) : showError(r.message); load(); }, 'json'); }); }
 
-    // Resim önizleme
+    var cropper;
+    var croppedBlob = null;
+
+    // Resim seçildiğinde cropper modali aç
     $('#imageInput').on('change', function () {
         var file = this.files[0];
-        if (file) { var reader = new FileReader(); reader.onload = function (e) { $('#previewImg').attr('src', e.target.result); }; reader.readAsDataURL(file); }
+        if (!file) return;
+
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            $('#cropImage').attr('src', e.target.result);
+            $('#cropModal').modal('show');
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // Modal açıldığında cropper'ı başlat
+    $('#cropModal').on('shown.bs.modal', function () {
+        cropper = new Cropper(document.getElementById('cropImage'), {
+            aspectRatio: 1,
+            viewMode: 2,
+            autoCropArea: 1,
+        });
+    }).on('hidden.bs.modal', function () {
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+        // Eğer kırpma yapılmadıysa inputu temizle (isteğe bağlı)
+        if (!croppedBlob) {
+            $('#imageInput').val('');
+        }
+    });
+
+    // Kırpma işlemini uygula
+    $('#btnDoCrop').on('click', function () {
+        if (!cropper) return;
+
+        var canvas = cropper.getCroppedCanvas({
+            width: 800,
+            height: 800,
+        });
+
+        canvas.toBlob(function (blob) {
+            croppedBlob = blob;
+            var url = URL.createObjectURL(blob);
+            $('#previewImg').attr('src', url);
+            $('#cropModal').modal('hide');
+        }, 'image/jpeg', 0.9);
     });
 
     // Form kaydet (FormData ile dosya yükleme)
     $('#btnSave').on('click', function () {
         var formData = new FormData($('#crudForm')[0]);
+
+        // Eğer yeni bir görsel kırpıldıysa onu ekle
+        if (croppedBlob) {
+            formData.set('image', croppedBlob, 'product.jpg');
+        }
+
         $.ajax({
             url: apiUrl, type: 'POST', data: formData, processData: false, contentType: false,
-            success: function (r) { if (r.success) { showSuccess(r.message); $('#crudModal').modal('hide'); load(); } else showError(r.message); },
+            success: function (r) {
+                if (r.success) {
+                    showSuccess(r.message);
+                    $('#crudModal').modal('hide');
+                    load();
+                    croppedBlob = null; // Reset
+                } else showError(r.message);
+            },
             error: function () { showError('Bağlantı hatası.'); },
             dataType: 'json'
         });
     });
+
+    // QR Code Function
+    var qr;
+    function showQR(code, name) {
+        $('#qrText').text(name);
+        $('#qrSubText').text('Kod: ' + code);
+        $('#qrcode').html('');
+        qr = new QRCode(document.getElementById("qrcode"), {
+            text: code,
+            width: 200,
+            height: 200,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+        $('#qrModal').modal('show');
+    }
 
     $('#searchBox').on('input', function () { clearTimeout(searchTimer); curSearch = $(this).val(); searchTimer = setTimeout(function () { curPage = 1; load(); }, 400); });
     $('#perPage').on('change', function () { curPerPage = parseInt($(this).val()); curPage = 1; load(); });

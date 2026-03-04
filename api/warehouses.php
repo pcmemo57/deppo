@@ -101,7 +101,13 @@ switch ($action) {
 
     // Aktif depo listesi (dropdown için)
     case 'active_list':
-        $rows = Database::fetchAll("SELECT id, name FROM `$table` WHERE hidden=0 AND is_active=1 ORDER BY name");
+        $rows = Database::fetchAll("
+            SELECT w.id, w.name, 
+            (SELECT COUNT(*) FROM inventory_sessions WHERE warehouse_id = w.id AND status = 'open') > 0 as is_inventory_open 
+            FROM `$table` w 
+            WHERE w.hidden=0 AND w.is_active=1 
+            ORDER BY w.name
+        ");
         jsonResponse(true, '', $rows);
 
     default:

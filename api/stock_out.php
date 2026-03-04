@@ -48,6 +48,11 @@ switch ($action) {
         if (empty($lines))
             jsonResponse(false, 'En az 1 ürün gereklidir.');
 
+        // Sayım kontrolü
+        if (isInventoryOpen($warehouseId)) {
+            jsonResponse(false, 'Bu depo için açık bir sayım oturumu bulunmaktadır. Sayım bitmeden stok hareketi yapılamaz.');
+        }
+
         $currentUser = currentUser();
         $userId = $currentUser['id'];
         $userName = $currentUser['name'];
@@ -170,6 +175,70 @@ switch ($action) {
 
         jsonResponse(true, 'Çıkış kaydedildi.');
 
+    case 'save_batch':
+        $batchId = sanitize($_POST['batch_id'] ?? '');
+        if (!$batchId)
+            jsonResponse(false, 'Batch ID eksik.');
+
+        $warehouseId = (int) ($_POST['warehouse_id'] ?? 0);
+        $requesterId = (int) ($_POST['requester_id'] ?? 0) ?: null;
+        $customerId = (int) ($_POST['customer_id'] ?? 0) ?: null;
+        $note = sanitize($_POST['note'] ?? '');
+        $linesJson = $_POST['lines'] ?? '[]';
+        $lines = json_decode($linesJson, true);
+
+        if (!$warehouseId)
+            jsonResponse(false, 'Depo seçimi zorunludur.');
+        if (empty($lines))
+            jsonResponse(false, 'En az 1 ürün gereklidir.');
+
+        // Sayım kontrolü
+        if (isInventoryOpen($warehouseId)) {
+            jsonResponse(false, 'Bu depo için açık bir sayım oturumu bulunmaktadır. Sayım bitmeden stok hareketi yapılamaz.');
+        }
+
+        // Get the original order_no to preserve it
+        $originalOrder = Database::fetchOne("SELECT order_no, created_at, created_by, created_by_name FROM tbl_dp_stock_out WHERE batch_id=? LIMIT 1", [$batchId]);
+        if (!$originalOrder)
+            jsonResponse(false, 'Orijinal sipariş bulunamadı.');
+        $orderNo = $originalOrder['order_no'];
+        $createdAt = $originalOrder['created_at'];
+        $createdBy = $originalOrder['created_by'];
+        $createdByName = $originalOrder['created_by_name'];
+
+        $currentUser = currentUser();
+        $updatedBy = $currentUser['id'];
+        $updatedByName = $currentUser['name'];
+
+        Database::beginTransaction();
+        try {
+            // Remove existing items for this batch
+            Database::execute("DELETE FROM tbl_dp_stock_out WHERE batch_id=?", [$batchId]);
+
+            // Insert new items
+            foreach ($lines as $line) {
+                $productId = (int) ($line['product_id'] ?? 0);
+                $quantity = (float) ($line['quantity'] ?? 0);
+                $unitPrice = (float) ($line['unit_price'] ?? 0);
+                $totalPrice = (float) ($line['total'] ?? 0);
+                $currency = sanitize($line['currency'] ?? 'EUR');
+
+                if (!$productId || $quantity <= 0)
+                    continue;
+
+                Database::insert(
+                    "INSERT INTO tbl_dp_stock_out (batch_id, order_no, warehouse_id, requester_id, customer_id, product_id, quantity, currency, unit_price, total_price, note, created_at, created_by, created_by_name, updated_by, updated_by_name)
+                     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    [$batchId, $orderNo, $warehouseId, $requesterId, $customerId, $productId, $quantity, $currency, $unitPrice, $totalPrice, $note, $createdAt, $createdBy, $createdByName, $updatedBy, $updatedByName]
+                );
+            }
+            Database::commit();
+            jsonResponse(true, 'Sipariş başarıyla güncellendi.');
+        } catch (Exception $e) {
+            Database::rollBack();
+            jsonResponse(false, 'Güncelleme sırasında bir hata oluştu: ' . $e->getMessage());
+        }
+
     case 'edit':
         $id = (int) ($_POST['id'] ?? 0);
         $warehouseId = (int) ($_POST['warehouse_id'] ?? 0);
@@ -188,6 +257,11 @@ switch ($action) {
             jsonResponse(false, 'Depo seçimi zorunludur.');
         if (!$line)
             jsonResponse(false, 'Ürün bilgisi eksik.');
+
+        // Sayım kontrolü
+        if (isInventoryOpen($warehouseId)) {
+            jsonResponse(false, 'Bu depo için açık bir sayım oturumu bulunmaktadır. Sayım bitmeden stok hareketi yapılamaz.');
+        }
 
         $productId = (int) ($line['product_id'] ?? 0);
         $quantity = (float) ($line['quantity'] ?? 0);
