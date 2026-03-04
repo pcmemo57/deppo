@@ -41,16 +41,32 @@ switch ($action) {
         jsonResponse(true, '', $row);
     case 'add':
         $name = sanitize($_POST['name'] ?? '');
+        $email = sanitize($_POST['email'] ?? '');
         if (!$name)
             jsonResponse(false, 'Müşteri adı zorunludur.');
-        Database::insert("INSERT INTO `$table` (name,contact,email,phone,address,is_active) VALUES (?,?,?,?,?,?)", [$name, sanitize($_POST['contact'] ?? ''), sanitize($_POST['email'] ?? ''), sanitize($_POST['phone'] ?? ''), sanitize($_POST['address'] ?? ''), (int) ($_POST['is_active'] ?? 1)]);
+
+        if ($email) {
+            $exists = Database::fetchOne("SELECT id FROM `$table` WHERE email = ? AND hidden = 0", [$email]);
+            if ($exists)
+                jsonResponse(false, 'Bu e-posta adresi zaten bir müşteri tarafından kullanılıyor.');
+        }
+
+        Database::insert("INSERT INTO `$table` (name,contact,email,phone,address,is_active) VALUES (?,?,?,?,?,?)", [$name, sanitize($_POST['contact'] ?? ''), $email, sanitize($_POST['phone'] ?? ''), sanitize($_POST['address'] ?? ''), (int) ($_POST['is_active'] ?? 1)]);
         jsonResponse(true, 'Müşteri eklendi.');
     case 'edit':
         $id = (int) ($_POST['id'] ?? 0);
         $name = sanitize($_POST['name'] ?? '');
+        $email = sanitize($_POST['email'] ?? '');
         if (!$id || !$name)
             jsonResponse(false, 'Müşteri adı zorunludur.');
-        Database::execute("UPDATE `$table` SET name=?,contact=?,email=?,phone=?,address=?,is_active=? WHERE id=?", [sanitize($_POST['name'] ?? ''), sanitize($_POST['contact'] ?? ''), sanitize($_POST['email'] ?? ''), sanitize($_POST['phone'] ?? ''), sanitize($_POST['address'] ?? ''), (int) ($_POST['is_active'] ?? 1), $id]);
+
+        if ($email) {
+            $exists = Database::fetchOne("SELECT id FROM `$table` WHERE email = ? AND id != ? AND hidden = 0", [$email, $id]);
+            if ($exists)
+                jsonResponse(false, 'Bu e-posta adresi başka bir müşteri tarafından kullanılıyor.');
+        }
+
+        Database::execute("UPDATE `$table` SET name=?,contact=?,email=?,phone=?,address=?,is_active=? WHERE id=?", [sanitize($_POST['name'] ?? ''), sanitize($_POST['contact'] ?? ''), $email, sanitize($_POST['phone'] ?? ''), sanitize($_POST['address'] ?? ''), (int) ($_POST['is_active'] ?? 1), $id]);
         jsonResponse(true, 'Müşteri güncellendi.');
     case 'toggle':
         $id = (int) ($_POST['id'] ?? 0);
@@ -68,6 +84,14 @@ switch ($action) {
     case 'active_list':
         $rows = Database::fetchAll("SELECT id,name FROM `$table` WHERE hidden=0 AND is_active=1 ORDER BY name");
         jsonResponse(true, '', $rows);
+
+    case 'check_email':
+        $email = sanitize($_GET['email'] ?? '');
+        $id = (int) ($_GET['id'] ?? 0);
+        if (!$email)
+            jsonResponse(true);
+        $exists = Database::fetchOne("SELECT id FROM `$table` WHERE email = ? AND id != ? AND hidden = 0", [$email, $id]);
+        jsonResponse(true, '', ['exists' => (bool) $exists]);
 
     case 'search':
         $q = sanitize($_GET['q'] ?? '');

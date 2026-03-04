@@ -202,5 +202,17 @@ requireRole(ROLE_ADMIN, ROLE_USER);
     $('#btnSave').on('click', function () { $.post(apiUrl, $('#crudForm').serialize(), function (r) { if (r.success) { showSuccess(r.message); $('#crudModal').modal('hide'); load(); } else showError(r.message); }, 'json'); });
     $('#searchBox').on('input', function () { clearTimeout(searchTimer); curSearch = $(this).val(); searchTimer = setTimeout(function () { curPage = 1; load(); }, 400); });
     $('#perPage').on('change', function () { curPerPage = parseInt($(this).val()); curPage = 1; load(); });
+
+    $('[name="email"]').on('blur', function () {
+        var email = $(this).val();
+        var id = $('#formId').val();
+        if (!email) return;
+        $.get(apiUrl, { action: 'check_email', email: email, id: id }, function (r) {
+            if (r.success && r.data.exists) {
+                showError('Bu e-posta adresi zaten bir talep eden tarafından kullanılıyor.');
+            }
+        }, 'json');
+    });
+
     load();
 </script>

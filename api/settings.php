@@ -7,7 +7,7 @@ require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/functions.php';
 
-requireRole(ROLE_ADMIN);
+requireLogin();
 header('Content-Type: application/json; charset=utf-8');
 
 // CSRF check
@@ -22,6 +22,7 @@ $action = sanitize($_POST['action'] ?? $_GET['action'] ?? '');
 
 switch ($action) {
     case 'save_mail':
+        requireRole(ROLE_ADMIN);
         $keys = ['mail_host', 'mail_port', 'mail_secure', 'mail_user', 'mail_from', 'mail_from_name'];
         foreach ($keys as $key) {
             if (isset($_POST[$key])) {
@@ -35,6 +36,7 @@ switch ($action) {
         jsonResponse(true, 'Mail ayarları kaydedildi.');
 
     case 'save_appearance':
+        requireRole(ROLE_ADMIN);
         $keys = ['header_bg', 'header_color', 'footer_bg', 'footer_color', 'footer_text', 'google_font', 'system_logo_width', 'system_logo_height'];
         foreach ($keys as $key) {
             if (isset($_POST[$key])) {
@@ -44,6 +46,7 @@ switch ($action) {
         jsonResponse(true, 'Görünüm ayarları kaydedildi.');
 
     case 'save_currency':
+        requireRole(ROLE_ADMIN);
         foreach (['usd_rate', 'eur_rate', 'base_currency'] as $key) {
             if (isset($_POST[$key])) {
                 if ($key === 'base_currency') {
@@ -57,6 +60,7 @@ switch ($action) {
         jsonResponse(true, 'Döviz kurları ve ayarları kaydedildi.');
 
     case 'save_general':
+        requireRole(ROLE_ADMIN);
         if (isset($_POST['site_name'])) {
             set_setting('site_name', sanitize($_POST['site_name']));
         }
@@ -66,6 +70,7 @@ switch ($action) {
         jsonResponse(true, 'Genel ayarlar kaydedildi.');
 
     case 'save_pdf':
+        requireRole(ROLE_ADMIN);
         if (isset($_POST['pdf_scale'])) {
             set_setting('pdf_scale', sanitize($_POST['pdf_scale']));
         }
@@ -75,6 +80,7 @@ switch ($action) {
         jsonResponse(true, 'PDF ayarları kaydedildi.');
 
     case 'update_currency':
+        requireRole(ROLE_ADMIN, ROLE_USER);
         // TCMB XML
         $xml = @simplexml_load_file('https://www.tcmb.gov.tr/kurlar/today.xml');
         if (!$xml) {
@@ -105,6 +111,7 @@ switch ($action) {
         ]);
 
     case 'test_mail':
+        requireRole(ROLE_ADMIN);
         $to = sanitize($_POST['to'] ?? '');
         if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
             jsonResponse(false, 'Geçerli bir e-posta adresi girin.');
@@ -117,6 +124,7 @@ switch ($action) {
         }
 
     case 'save_logo':
+        requireRole(ROLE_ADMIN);
         if (!isset($_FILES['system_logo_file']) || $_FILES['system_logo_file']['error'] !== UPLOAD_ERR_OK) {
             jsonResponse(false, 'Dosya yüklenemedi veya seçilmedi.');
         }

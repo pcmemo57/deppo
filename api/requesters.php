@@ -51,6 +51,12 @@ switch ($action) {
         if (!$name || !$surname)
             jsonResponse(false, 'Ad ve soyad zorunludur.');
 
+        if ($email) {
+            $exists = Database::fetchOne("SELECT id FROM `$table` WHERE email = ? AND hidden = 0", [$email]);
+            if ($exists)
+                jsonResponse(false, 'Bu e-posta adresi zaten bir talep eden tarafından kullanılıyor.');
+        }
+
         Database::insert(
             "INSERT INTO `$table` (name, surname, email, title, is_active) VALUES (?,?,?,?,?)",
             [$name, $surname, $email, $title, $active]
@@ -67,6 +73,12 @@ switch ($action) {
 
         if (!$id || !$name || !$surname)
             jsonResponse(false, 'Ad ve soyad zorunludur.');
+
+        if ($email) {
+            $exists = Database::fetchOne("SELECT id FROM `$table` WHERE email = ? AND id != ? AND hidden = 0", [$email, $id]);
+            if ($exists)
+                jsonResponse(false, 'Bu e-posta adresi başka bir talep eden tarafından kullanılıyor.');
+        }
 
         Database::execute(
             "UPDATE `$table` SET name=?, surname=?, email=?, title=?, is_active=? WHERE id=?",
@@ -92,6 +104,14 @@ switch ($action) {
     case 'active_list':
         $rows = Database::fetchAll("SELECT id, name, surname FROM `$table` WHERE hidden=0 AND is_active=1 ORDER BY name ASC");
         jsonResponse(true, '', $rows);
+
+    case 'check_email':
+        $email = sanitize($_GET['email'] ?? '');
+        $id = (int) ($_GET['id'] ?? 0);
+        if (!$email)
+            jsonResponse(true);
+        $exists = Database::fetchOne("SELECT id FROM `$table` WHERE email = ? AND id != ? AND hidden = 0", [$email, $id]);
+        jsonResponse(true, '', ['exists' => (bool) $exists]);
 
     default:
         jsonResponse(false, 'Geçersiz işlem.');
