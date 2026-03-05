@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/functions.php';
 
-requireRole(ROLE_ADMIN, ROLE_USER);
+requireRole(ROLE_ADMIN, ROLE_USER, ROLE_REQUESTER);
 header('Content-Type: application/json; charset=utf-8');
 
 // CSRF check
@@ -53,6 +53,7 @@ switch ($action) {
         jsonResponse(true, '', $row);
 
     case 'add':
+        requireRole(ROLE_ADMIN, ROLE_USER);
         $name = sanitize($_POST['name'] ?? '');
         if (!$name)
             jsonResponse(false, 'Ürün adı zorunludur.');
@@ -80,6 +81,7 @@ switch ($action) {
         jsonResponse(true, 'Ürün eklendi.');
 
     case 'edit':
+        requireRole(ROLE_ADMIN, ROLE_USER);
         $id = (int) ($_POST['id'] ?? 0);
         $name = sanitize($_POST['name'] ?? '');
         if (!$id || !$name)
@@ -117,12 +119,14 @@ switch ($action) {
         jsonResponse(true, 'Ürün güncellendi.');
 
     case 'toggle':
+        requireRole(ROLE_ADMIN, ROLE_USER);
         $id = (int) ($_POST['id'] ?? 0);
         $status = (int) ($_POST['status'] ?? 0);
         Database::execute("UPDATE `$table` SET is_active=? WHERE id=?", [$status, $id]);
         jsonResponse(true, $status ? 'Ürün aktifleştirildi.' : 'Ürün pasifize edildi.');
 
     case 'delete':
+        requireRole(ROLE_ADMIN, ROLE_USER);
         $id = (int) ($_POST['id'] ?? 0);
         if (hasMovement($table, 'id', $id)) {
             Database::execute("UPDATE `$table` SET hidden=1 WHERE id=?", [$id]);
@@ -145,10 +149,7 @@ switch ($action) {
             ["%$q%", "%$q%"]
         );
         $results = array_map(function ($r) use ($warehouseId) {
-            $stock = 0;
-            if ($warehouseId > 0) {
-                $stock = getProductStock($r['id'], $warehouseId);
-            }
+            $stock = getProductStock($r['id'], $warehouseId);
             return [
                 'id' => $r['id'],
                 'text' => $r['name'] . ($r['code'] ? ' [' . $r['code'] . ']' : ''),
@@ -160,11 +161,25 @@ switch ($action) {
         echo json_encode(['results' => $results]);
         exit;
 
+    case 'check_stock_batch':
+        $warehouseId = (int) ($_GET['warehouse_id'] ?? 0);
+        $productIds = array_filter(array_map('intval', explode(',', $_GET['product_ids'] ?? '')));
+        if (!$warehouseId || empty($productIds)) {
+            jsonResponse(true, '', []);
+        }
+
+        $results = [];
+        foreach ($productIds as $pid) {
+            $results[$pid] = getProductStock($pid, $warehouseId);
+        }
+        jsonResponse(true, '', $results);
+
     case 'active_list':
         $rows = Database::fetchAll("SELECT id,name,code,image,unit FROM `$table` WHERE hidden=0 AND is_active=1 ORDER BY name");
         jsonResponse(true, '', $rows);
 
     case 'update_procurement':
+        requireRole(ROLE_ADMIN, ROLE_USER);
         $id = (int) ($_POST['id'] ?? 0);
         $status = (int) ($_POST['status'] ?? 0);
         $note = sanitize($_POST['note'] ?? '');

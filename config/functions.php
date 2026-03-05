@@ -184,7 +184,7 @@ function getProductStock(int $productId, int $warehouseId = 0): float
     }
 
     $in = Database::fetchOne("SELECT SUM(quantity) as qty FROM tbl_dp_stock_in WHERE $whereIn", $paramsIn)['qty'] ?? 0;
-    $out = Database::fetchOne("SELECT SUM(quantity) as qty FROM tbl_dp_stock_out WHERE $whereOut", $paramsOut)['qty'] ?? 0;
+    $out = Database::fetchOne("SELECT SUM(quantity) as qty FROM tbl_dp_stock_out WHERE $whereOut AND status=1", $paramsOut)['qty'] ?? 0;
     return (float) round($in - $out, 3);
 }
 
@@ -198,7 +198,7 @@ function isWarehouseEmpty(int $warehouseId): bool
                 SELECT product_id, SUM(q) as stock FROM (
                     SELECT product_id, quantity as q FROM tbl_dp_stock_in WHERE warehouse_id = ? AND is_active = 1
                     UNION ALL
-                    SELECT product_id, -quantity as q FROM tbl_dp_stock_out WHERE warehouse_id = ?
+                    SELECT product_id, -quantity as q FROM tbl_dp_stock_out WHERE warehouse_id = ? AND status=1
                 ) t GROUP BY product_id HAVING ROUND(SUM(q), 3) != 0
             ) final";
     $res = Database::fetchOne($sql, [$warehouseId, $warehouseId]);

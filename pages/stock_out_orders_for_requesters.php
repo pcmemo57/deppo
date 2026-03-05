@@ -2,7 +2,7 @@
 /**
  * Sipariş Bazlı Çıkış Listesi — Gruplandırılmış Görünüm
  */
-requireRole(ROLE_ADMIN, ROLE_USER);
+requireRole(ROLE_REQUESTER);
 $warehouses = Database::fetchAll("
     SELECT w.id, w.name, 
     (SELECT COUNT(*) FROM inventory_sessions WHERE warehouse_id = w.id AND status = 'open') > 0 as is_inventory_open 
@@ -271,7 +271,7 @@ $warehouses = Database::fetchAll("
     <div class="col-12">
         <div class="card card-warning card-outline">
             <div class="card-header">
-                <h3 class="card-title text-bold"><i class="fas fa-check-circle me-2"></i> Tamamlanan Depo Çıkışları</h3>
+                <h3 class="card-title text-bold"><i class="fas fa-list-ul me-2"></i> Taleplerim (Sipariş Bazlı)</h3>
                 <div class="card-tools d-flex gap-2">
                     <select id="perPage" class="form-select form-select-sm" style="width:auto">
                         <option value="10" selected>10</option>
@@ -279,23 +279,14 @@ $warehouses = Database::fetchAll("
                         <option value="50">50</option>
                         <option value="100">100</option>
                     </select>
-                    <div class="input-group input-group-sm me-2" style="width: 140px;">
-                        <span class="input-group-text"><i class="fas fa-filter"></i></span>
-                        <select id="statusFilter" class="form-select">
-                            <option value="">— Tüm Durumlar —</option>
-                            <option value="0">Beklemede</option>
-                            <option value="1" selected>Onaylandı</option>
-                            <option value="2">Reddedildi</option>
-                        </select>
-                    </div>
                     <div class="input-group input-group-sm me-2" style="width: 200px;">
-                        <input type="text" id="searchBox" class="form-control" placeholder="Müşteri veya depo ara...">
+                        <input type="text" id="searchBox" class="form-control" placeholder="Müşteri ara...">
                         <span class="input-group-text"><i class="fas fa-search"></i></span>
                     </div>
-                    <a href="?page=stock_out_pending" class="btn btn-warning btn-sm px-3 shadow-sm">
-                        <i class="fas fa-clock me-1"></i> Onay Bekleyenler</a>
+                    <a href="?page=stock_out_requests" class="btn btn-secondary btn-sm px-3 shadow-sm">
+                        <i class="fas fa-list me-1" style="margin-right: 5px;"></i>Ürün Talep Listesi</a>
                     <button class="btn btn-primary btn-sm px-3 shadow-sm" onclick="openAddModal()">
-                        <i class="fas fa-plus me-1"></i> Yeni Çıkış Ekle
+                        <i class="fas fa-plus me-1" style="margin-right: 5px;"></i>Yeni Talep Oluştur
                     </button>
                 </div>
             </div>
@@ -305,11 +296,10 @@ $warehouses = Database::fetchAll("
                         <tr>
                             <th width="100">Sip. #</th>
                             <th>Müşteri / Muhatap</th>
-                            <th>Depo</th>
                             <th class="num-align">Kalem Sayısı</th>
                             <th class="num-align">Toplam Tutar</th>
-                            <th>İşlemi Yapan</th>
                             <th class="num-align">Tarih</th>
+                            <th class="text-center">Durum</th>
                             <th style="width:80px" class="text-center pe-3">İşlemler</th>
                         </tr>
                     </thead>
@@ -335,7 +325,7 @@ $warehouses = Database::fetchAll("
     <div class="modal-dialog modal-xl modal-xl-custom">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-sign-out-alt me-2"></i> Yeni Stok Çıkışı</h5>
+                <h5 class="modal-title"><i class="fas fa-sign-out-alt me-2"></i> Ürün Talep Ekranı</h5>
                 <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i
                         class="fas fa-times"></i></button>
             </div>
@@ -348,35 +338,14 @@ $warehouses = Database::fetchAll("
                         <i class="fas fa-map-marker-alt"></i> Konum &amp; Muhatap Bilgileri
                     </div>
                     <div class="row g-3 mb-4">
-                        <div class="col-md-4">
-                            <label class="form-label">Depo <span class="text-danger">*</span></label>
-                            <div class="input-icon-wrap">
-                                <i class="fas fa-warehouse field-icon"></i>
-                                <select name="warehouse_id" id="warehouseSelect" class="form-select" required>
-                                    <option value="">— Seçiniz —</option>
-                                    <?php foreach ($warehouses as $w): ?>
-                                        <option value="<?= e($w['id']) ?>" <?= count($warehouses) === 1 && !$w['is_inventory_open'] ? 'selected' : '' ?>     <?= $w['is_inventory_open'] ? 'disabled style="color:red"' : '' ?>>
-                                            <?= e($w['name']) ?>
-                                            <?= $w['is_inventory_open'] ? ' (SAYIM DEVAM EDİYOR)' : '' ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Talep Eden <span class="text-danger">*</span></label>
-                            <div class="input-icon-wrap">
-                                <i class="fas fa-user field-icon"></i>
-                                <select name="requester_id" id="requesterSelect" class="form-select" required
-                                    disabled></select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
+                        <input type="hidden" name="warehouse_id" id="warehouseSelect" value="">
+                        <input type="hidden" name="requester_id" id="requesterSelect"
+                            value="<?= $_SESSION['dp_user_id'] ?>">
+                        <div class="col-md-12">
                             <label class="form-label">Müşteri <span class="text-danger">*</span></label>
                             <div class="input-icon-wrap">
                                 <i class="fas fa-handshake field-icon"></i>
-                                <select name="customer_id" id="customerSelect" class="form-select" required
-                                    disabled></select>
+                                <select name="customer_id" id="customerSelect" class="form-select" required></select>
                             </div>
                         </div>
                     </div>
@@ -451,42 +420,13 @@ $warehouses = Database::fetchAll("
             <div class="modal-footer">
                 <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">Vazgeç</button>
                 <button type="button" class="btn-modal-save" id="btnSubmitOut" disabled>
-                    <i class="fas fa-save me-1"></i> <span id="btnSubmitText">Çıkışı Kaydet</span>
+                    <span id="btnSubmitText">Ürün Talebini Kaydet</span>
                 </button>
             </div>
         </div>
     </div>
 </div>
 
-
-<!-- View Modal -->
-<div class="modal fade" id="viewModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #6b7280 0%, #374151 100%);">
-                <h5 class="modal-title"><i class="fas fa-eye me-2 text-white"></i> <span class="text-white">İşlem
-                        Detayı</span></h5>
-                <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i
-                        class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body" id="viewBody">
-                <div class="text-center p-5"><i class="fas fa-spinner fa-spin fa-2x text-muted"></i></div>
-            </div>
-            <div class="modal-footer d-flex justify-content-between"
-                style="background: #f8fafd; border-top: 1px solid #e4e9f0;">
-                <div id="approvalActions" style="display:none;">
-                    <button type="button" class="btn btn-success px-4 fw-bold" id="btnApprove">
-                        <i class="fas fa-check me-1"></i> Onayla
-                    </button>
-                    <button type="button" class="btn btn-danger px-4 fw-bold" id="btnReject">
-                        <i class="fas fa-times me-1"></i> Reddet
-                    </button>
-                </div>
-                <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Kapat</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <script>
     var eurExchangeRate = <?= (float) get_setting('eur_rate', '0') ?>;
@@ -499,8 +439,7 @@ $warehouses = Database::fetchAll("
     function esc(v) { return $('<span>').text(v || '').html(); }
 
     function load() {
-        var status = $('#statusFilter').val();
-        $.get(apiUrl, { action: 'list_grouped', page: curPage, per_page: curPerPage, search: curSearch, status: status }, function (r) {
+        $.get(apiUrl, { action: 'list_grouped', page: curPage, per_page: curPerPage, search: curSearch }, function (r) {
             if (!r.success) { showError(r.message); return; }
             var html = '';
             var baseCurrency = '<?= get_setting('base_currency', 'EUR') ?>';
@@ -508,15 +447,18 @@ $warehouses = Database::fetchAll("
                 html += '<tr class="order-row" onclick="toggleDetail(\'' + d.batch_id + '\', this)">' +
                     '<td><span class="badge bg-primary px-2">' + d.order_no + '</span></td>' +
                     '<td><div class="fw-bold text-primary">' + esc(d.customer_name || '—') + '</div></td>' +
-                    '<td><i class="fas fa-warehouse me-1 opacity-50"></i> ' + esc(d.warehouse_name || '— Atanmadı') + '</td>' +
                     '<td class="num-align"><span class="badge bg-light border text-dark ms-2 badge-item-count">' + formatQty(d.item_count) + ' Ürün</span></td>' +
                     '<td class="num-align"><strong>' + formatTurkish((parseFloat(d.total_eur) || 0).toFixed(2)) + '</strong> <small>' + baseCurrency + '</small></td>' +
-                    '<td><small class="text-muted">' + esc(d.created_by_name || '—') + '</small></td>' +
                     '<td class="num-align"><span class="text-muted small"><i class="far fa-calendar-alt me-1"></i> ' + d.created_at_fmt + '</span></td>' +
+                    '<td class="text-center">' +
+                    (d.status == 0 ? '<span class="badge bg-warning">BEKLEMEDE</span>' :
+                        (d.status == 2 ? '<span class="badge bg-danger">REDDEDİLDİ</span>' :
+                            '<span class="badge bg-success">TESLİM EDİLDİ</span>')) +
+                    '</td>' +
                     '<td class="text-center pe-3 text-nowrap">' +
                     '<a href="pages/stock_out_print.php?batch_id=' + d.batch_id + '" target="_blank" class="btn btn-xs btn-outline-secondary me-1" onclick="event.stopPropagation();" title="Yazdır"><i class="fas fa-print"></i></a>' +
                     '<button class="btn btn-xs btn-outline-warning me-1" onclick="event.stopPropagation(); editBatch(\'' + d.batch_id + '\')" title="Düzenle"><i class="fas fa-edit"></i></button>' +
-                    '<button class="btn btn-xs btn-outline-info" onclick="event.stopPropagation(); viewBatch(\'' + d.batch_id + '\')" title="İncele"><i class="fas fa-eye"></i></button>' +
+                    '<button class="btn btn-xs btn-outline-info" title="İncele"><i class="fas fa-eye"></i></button>' +
                     '</td>' +
                     '</tr>' +
                     '<tr class="detail-row" id="detail-' + d.batch_id + '">' +
@@ -528,7 +470,7 @@ $warehouses = Database::fetchAll("
                     '</td>' +
                     '</tr>';
             });
-            $('#tableBody').html(html || '<tr><td colspan="8" class="text-center text-muted p-4">Henüz gruplandırılmış kayıt bulunmuyor.</td></tr>');
+            $('#tableBody').html(html || '<tr><td colspan="8" class="text-center text-muted p-4">Henüz kayıt bulunmuyor.</td></tr>');
             $('#totalCount').text('Toplam: ' + formatQty(r.data.total) + ' sipariş');
             renderPag(r.data.total);
         }, 'json');
@@ -540,90 +482,13 @@ $warehouses = Database::fetchAll("
         $('#editId').val('');
         $('#editBatchId').val('');
         $('#formStockOut')[0].reset();
-        $('#requesterSelect, #customerSelect, #productAdd').val(null).trigger('change');
 
-        // Initial state: disable all except warehouse
-        $('#requesterSelect, #customerSelect, #productAdd, #qtyInput, #btnAddLine, [name="note"], #btnSubmitOut').prop('disabled', true).trigger('change');
+        $('#customerSelect').val(null).trigger('change');
+        $('#productAdd, #qtyInput, #btnAddLine, [name="note"], #btnSubmitOut').prop('disabled', true).trigger('change');
 
-        if (isSingleWarehouse) {
-            $('#warehouseSelect').prop('disabled', false).trigger('change');
-        } else {
-            $('#warehouseSelect').val(null).prop('disabled', false).trigger('change');
-        }
-
-        $('#addModal .modal-title').html('<i class="fas fa-sign-out-alt me-2"></i> Yeni Stok Çıkışı');
-        $('#btnSubmitText').text('Çıkışı Kaydet');
+        $('#addModal .modal-title').html('<i class="fas fa-sign-out-alt me-2"></i> Ürün Talep Ekranı');
+        $('#btnSubmitText').text('Ürün Talebini Kaydet');
         $('#addModal').modal('show');
-
-        // Delay focus to ensure modal is ready
-        setTimeout(function () {
-            if (!isSingleWarehouse) {
-                $('#warehouseSelect').select2('open');
-            } else {
-                $('#requesterSelect').select2('open');
-            }
-        }, 500);
-    }
-
-    function viewBatch(batchId) {
-        $('#viewBody').html('<div class="text-center p-5"><i class="fas fa-spinner fa-spin fa-2x text-muted"></i></div>');
-        $('#approvalActions').hide();
-        $('#viewModal').modal('show');
-
-        $.get(apiUrl, { action: 'get_batch', batch_id: batchId }, function (r) {
-            if (!r.success) { $('#viewBody').html('<div class="alert alert-danger">' + r.message + '</div>'); return; }
-
-            var d = r.data.items[0];
-            var baseCurrency = '<?= get_setting('base_currency', 'EUR') ?>';
-
-            var html = '<div class="row mb-4">' +
-                '<div class="col-md-6">' +
-                '<label class="text-muted small mb-0">Muhatap (Talep Eden / Müşteri)</label><div class="fw-bold">' + esc(d.requester_name + ' ' + (d.requester_surname || '')) + ' / ' + esc(d.customer_name || '—') + '</div>' +
-                '</div>' +
-                '<div class="col-md-6 text-md-end">' +
-                '<label class="text-muted small mb-0">Depo</label><div class="fw-bold">' + esc(d.warehouse_name || '— Atanmadı') + '</div>' +
-                '<label class="text-muted small mb-0 mt-2">Tarih</label><div class="fw-bold">' + d.created_at + '</div>' +
-                '</div>' +
-                '</div>';
-
-            html += '<table class="table table-sm table-bordered"><thead><tr class="bg-light"><th>Ürün</th><th class="text-end">Miktar</th><th class="text-end">Birim Fiyat</th><th class="text-end">Toplam</th></tr></thead><tbody>';
-            $.each(r.data.items, function (i, item) {
-                html += '<tr>' +
-                    '<td>' + esc(item.product_name) + '</td>' +
-                    '<td class="text-end">' + formatQty(item.quantity) + ' ' + esc(item.unit) + '</td>' +
-                    '<td class="text-end">' + formatTurkish((parseFloat(item.unit_price) || 0).toFixed(4)) + '</td>' +
-                    '<td class="text-end"><strong>' + formatTurkish((parseFloat(item.total_price) || 0).toFixed(2)) + '</strong></td>' +
-                    '</tr>';
-            });
-            html += '</tbody><tfoot class="bg-light fw-bold">' +
-                '<tr><td colspan="3" class="text-end">TOPLAM:</td><td class="text-end">' + formatTurkish((parseFloat(r.data.data_total_eur || 0)).toFixed(2)) + ' ' + baseCurrency + '</td></tr>' +
-                '</tfoot></table>';
-
-            if (d.note) {
-                html += '<div class="mt-3 p-2 bg-light border rounded small"><strong>Not:</strong> ' + esc(d.note) + '</div>';
-            }
-
-            $('#viewBody').html(html);
-
-            // Approval actions only if pending
-            if (d.status == 0) {
-                $('#approvalActions').show();
-                $('#btnApprove').off('click').on('click', function () {
-                    if (!confirm('Onaylamak istediğinize emin misiniz?')) return;
-                    $.post(apiUrl, { action: 'approve', batch_id: batchId }, function (res) {
-                        if (res.success) { showSuccess(res.message); $('#viewModal').modal('hide'); load(); }
-                        else showError(res.message);
-                    }, 'json');
-                });
-                $('#btnReject').off('click').on('click', function () {
-                    if (!confirm('Reddetmek istediğinize emin misiniz?')) return;
-                    $.post(apiUrl, { action: 'reject', batch_id: batchId }, function (res) {
-                        if (res.success) { showSuccess(res.message); $('#viewModal').modal('hide'); load(); }
-                        else showError(res.message);
-                    }, 'json');
-                });
-            }
-        }, 'json');
     }
 
     function editBatch(batchId) {
@@ -750,35 +615,6 @@ $warehouses = Database::fetchAll("
     $(document).ready(function () {
         load();
         // Select2 Styles & Logic
-        $('#warehouseSelect').select2({
-            theme: 'bootstrap-5', placeholder: '— Depo Seçin —', width: '100%', dropdownParent: $('#addModal'),
-            templateResult: function (data) {
-                if (!data.id) return data.text;
-                if (data.text.indexOf('(SAYIM DEVAM EDİYOR)') !== -1) {
-                    return $('<span class="text-danger fw-bold"><i class="fas fa-exclamation-triangle me-1"></i> ' + data.text + '</span>');
-                }
-                return data.text;
-            }
-        });
-
-        // Modal açıldığında depoya odaklan
-        $('#addModal').on('shown.bs.modal', function () {
-            $('#warehouseSelect').select2('open');
-        });
-
-
-        $('#requesterSelect').select2({
-            theme: 'bootstrap-5', placeholder: '— Talep Eden —', allowClear: true, width: '100%', dropdownParent: $('#addModal'),
-            ajax: {
-                url: '<?= BASE_URL ?>/api/requesters.php',
-                data: function (p) { return { action: 'active_list', search: p.term || '' }; },
-                processResults: function (d) {
-                    return { results: $.map(d.data, function (u) { return { id: u.id, text: u.name + ' ' + u.surname }; }) };
-                },
-                delay: 300
-            }
-        });
-
         $('#customerSelect').select2({
             theme: 'bootstrap-5', placeholder: '— Müşteri —', allowClear: true, width: '100%', dropdownParent: $('#addModal'),
             ajax: { url: '<?= BASE_URL ?>/api/customers.php', data: function (p) { return { action: 'active_list', search: p.term || '' }; }, processResults: function (d) { return { results: $.map(d.data, function (u) { return { id: u.id, text: u.name }; }) }; }, delay: 300 }
@@ -791,19 +627,11 @@ $warehouses = Database::fetchAll("
                 data: function (p) {
                     return {
                         action: 'search_select2',
-                        q: p.term || '',
-                        warehouse_id: $('#warehouseSelect').val()
+                        q: p.term || ''
                     };
                 },
                 processResults: function (d) {
-                    var warehouseId = $('#warehouseSelect').val();
-                    var results = $.map(d.results, function (item) {
-                        if (warehouseId && parseFloat(item.stock || 0) <= 0) {
-                            item.disabled = true;
-                        }
-                        return item;
-                    });
-                    return { results: results };
+                    return { results: d.results };
                 },
                 delay: 300
             },
@@ -811,29 +639,25 @@ $warehouses = Database::fetchAll("
                 if (i.loading) return i.text;
                 var no = '<?= BASE_URL ?>/assets/no-image.png', img = i.image ? '<?= BASE_URL ?>/images/UrunResim/' + i.image : no;
                 var stockVal = parseFloat(i.stock || 0);
-                var badgeClass = stockVal <= 0 ? 'bg-danger' : 'bg-success';
-                var stockInfo = i.id ? ' <span class="badge ' + badgeClass + ' float-end">' + formatQty(stockVal) + ' ' + (i.unit || '') + '</span>' : '';
+                var stockInfo = i.id ? ' <span class="badge bg-light text-dark border float-end">Toplam Stok: ' + formatQty(stockVal) + ' ' + (i.unit || '') + '</span>' : '';
                 return $('<span><img src="' + img + '" class="select2-product-img" onerror="this.src=\'' + no + '\'"> ' + esc(i.text) + stockInfo + '</span>');
             }
         });
 
-        // Depo seçilince diğerlerini aktif et
-        $('#warehouseSelect').on('change', function () {
+        // Müşteri seçilince ürün menüsünü aktif et
+        $('#customerSelect').on('change', function () {
             var val = $(this).val();
-            var selects = $('#requesterSelect, #customerSelect, #productAdd');
+            var productAdd = $('#productAdd');
             var others = $('#qtyInput, [name="note"], #btnSubmitOut');
 
             if (val) {
-                selects.prop('disabled', false).trigger('change');
+                productAdd.prop('disabled', false);
                 others.prop('disabled', false);
             } else {
-                selects.prop('disabled', true).trigger('change');
+                productAdd.prop('disabled', true);
                 others.prop('disabled', true);
             }
         });
-
-        // Sayfa/Modal ilk açıldığında kilitleri uygula
-        $('#warehouseSelect').trigger('change');
 
         $('#productAdd').on('select2:select', function (e) {
             var data = e.params.data;
@@ -849,30 +673,59 @@ $warehouses = Database::fetchAll("
             var qty = parseFloat($('#qtyInput').val());
             if (!qty || qty <= 0) { showError('Geçerli bir adet girin.'); return; }
 
-            var curStock = $('#productAdd').data('current-stock') || 0;
-            if (qty > curStock) {
-                showError('Yetersiz stok! Mevcut: ' + formatQty(curStock));
+            var productId = sel[0].id, productName = sel[0].text, unit = $('#productAdd').data('current-unit') || '', warehouseId = '';
+            var availableStock = $('#productAdd').data('current-stock') || 0;
+
+            var existingIndex = lines.findIndex(function (l) { return l.product_id == productId; });
+            var totalQtyAfterAdd = qty + (existingIndex !== -1 ? lines[existingIndex].quantity : 0);
+
+            if (totalQtyAfterAdd > availableStock) {
+                showError('Yetersiz stok! Toplam talep (' + totalQtyAfterAdd + ') mevcut stoğu (' + formatQty(availableStock) + ') aşıyor.');
                 return;
             }
 
-            var productId = sel[0].id, productName = sel[0].text, unit = $('#productAdd').data('current-unit') || '', warehouseId = $('#warehouseSelect').val();
-            if (!warehouseId) { showError('Önce depo seçmelisiniz.'); return; }
-
-            $.get(apiUrl, { action: 'get_last_price', product_id: productId, warehouse_id: warehouseId }, function (r) {
-                var unitPrice = r.success && r.data ? parseFloat(r.data.price_eur) : 0;
-                lines.push({ product_id: productId, product_name: productName, quantity: qty, unit: unit, unit_price: unitPrice, total: unitPrice * qty });
+            // Sync update if product already in list
+            if (existingIndex !== -1) {
+                lines[existingIndex].quantity = totalQtyAfterAdd;
+                lines[existingIndex].total = lines[existingIndex].quantity * lines[existingIndex].unit_price;
+                Swal.fire({ icon: 'success', title: 'Ürün Miktarı Güncellendi', text: productName + ' miktarı ' + lines[existingIndex].quantity + ' ' + unit + ' olarak güncellendi.', position: 'center', showConfirmButton: false, timer: 2000 });
                 renderLines();
                 $('#productAdd').val(null).trigger('change');
                 $('#qtyInput').val('').prop('disabled', true);
                 $('#btnAddLine').prop('disabled', true);
-                // Cycle back to product add
                 setTimeout(function () { $('#productAdd').select2('open'); }, 100);
-            }, 'json');
+                return;
+            }
+
+            // Fetch price for new product
+            var btn = $('#btnAddLine');
+            var originalHtml = btn.html();
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+            $.get(apiUrl, { action: 'get_last_price', product_id: productId, warehouse_id: warehouseId }, function (r) {
+                btn.prop('disabled', false).html(originalHtml);
+                var unitPrice = r.success && r.data ? parseFloat(r.data.price_eur) : 0;
+
+                // Final check before push
+                var finalIndex = lines.findIndex(function (l) { return l.product_id == productId; });
+                if (finalIndex !== -1) {
+                    lines[finalIndex].quantity += qty;
+                    lines[finalIndex].total = lines[finalIndex].quantity * lines[finalIndex].unit_price;
+                } else {
+                    lines.push({ product_id: productId, product_name: productName, quantity: qty, unit: unit, unit_price: unitPrice, total: unitPrice * qty });
+                }
+
+                renderLines();
+                $('#productAdd').val(null).trigger('change');
+                $('#qtyInput').val('').prop('disabled', true);
+                $('#btnAddLine').prop('disabled', true);
+                setTimeout(function () { $('#productAdd').select2('open'); }, 100);
+            }, 'json').fail(function () { btn.prop('disabled', false).html(originalHtml); });
         });
 
         $('#btnSubmitOut').on('click', function () {
             if (!lines.length) { showError('En az 1 ürün ekleyin.'); return; }
-            if (!$('#warehouseSelect').val() || !$('#requesterSelect').val() || !$('#customerSelect').val()) {
+            if (!$('#requesterSelect').val() || !$('#customerSelect').val()) {
                 showError('Lütfen tüm zorunlu alanları doldurun.');
                 return;
             }
@@ -891,7 +744,7 @@ $warehouses = Database::fetchAll("
             };
 
             $.post(apiUrl, data, function (r) {
-                btn.prop('disabled', false).html('<i class="fas fa-save me-1"></i> ' + $('#btnSubmitText').text());
+                btn.prop('disabled', false).html($('#btnSubmitText').text());
                 if (r.success) {
                     showSuccess(r.message);
                     $('#addModal').modal('hide');
@@ -906,6 +759,5 @@ $warehouses = Database::fetchAll("
 
         $('#searchBox').on('input', function () { clearTimeout(searchTimer); curSearch = $(this).val(); searchTimer = setTimeout(function () { curPage = 1; load(); }, 400); });
         $('#perPage').on('change', function () { curPerPage = parseInt($(this).val()); curPage = 1; load(); });
-        $('#statusFilter').on('change', function () { curPage = 1; load(); });
     });
 </script>

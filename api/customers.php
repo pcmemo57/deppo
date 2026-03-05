@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/functions.php';
 
-requireRole(ROLE_ADMIN, ROLE_USER);
+requireRole(ROLE_ADMIN, ROLE_USER, ROLE_REQUESTER);
 header('Content-Type: application/json; charset=utf-8');
 
 // CSRF check
@@ -40,6 +40,7 @@ switch ($action) {
             jsonResponse(false, 'Kayıt bulunamadı.');
         jsonResponse(true, '', $row);
     case 'add':
+        requireRole(ROLE_ADMIN, ROLE_USER);
         $name = sanitize($_POST['name'] ?? '');
         $email = sanitize($_POST['email'] ?? '');
         if (!$name)
@@ -54,6 +55,7 @@ switch ($action) {
         Database::insert("INSERT INTO `$table` (name,contact,email,phone,address,is_active) VALUES (?,?,?,?,?,?)", [$name, sanitize($_POST['contact'] ?? ''), $email, sanitize($_POST['phone'] ?? ''), sanitize($_POST['address'] ?? ''), (int) ($_POST['is_active'] ?? 1)]);
         jsonResponse(true, 'Müşteri eklendi.');
     case 'edit':
+        requireRole(ROLE_ADMIN, ROLE_USER);
         $id = (int) ($_POST['id'] ?? 0);
         $name = sanitize($_POST['name'] ?? '');
         $email = sanitize($_POST['email'] ?? '');
@@ -74,6 +76,7 @@ switch ($action) {
         Database::execute("UPDATE `$table` SET is_active=? WHERE id=?", [$status, $id]);
         jsonResponse(true, $status ? 'Aktifleştirildi.' : 'Pasifize edildi.');
     case 'delete':
+        requireRole(ROLE_ADMIN, ROLE_USER);
         $id = (int) ($_POST['id'] ?? 0);
         if (hasMovement($table, 'id', $id)) {
             Database::execute("UPDATE `$table` SET hidden=1 WHERE id=?", [$id]);

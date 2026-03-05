@@ -34,22 +34,34 @@ $warehouseCount = Database::fetchOne("SELECT COUNT(*) as c FROM tbl_dp_warehouse
         <nav class="mt-2">
             <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
 
-                <!-- Dashboard — herkese görünür -->
-                <li class="nav-item">
-                    <a href="<?= BASE_URL ?>/index.php?page=dashboard"
-                        class="nav-link <?= $currentPage === 'dashboard' ? 'active' : '' ?>">
-                        <i class="nav-icon fas fa-tachometer-alt"></i>
-                        <p>Kontrol Paneli</p>
-                    </a>
-                </li>
+                <!-- Dashboard — herkese görünür (Talep eden hariç) -->
+                <?php if ($role !== ROLE_REQUESTER): ?>
+                    <li class="nav-item">
+                        <a href="<?= BASE_URL ?>/index.php?page=dashboard"
+                            class="nav-link <?= $currentPage === 'dashboard' ? 'active' : '' ?>">
+                            <i class="nav-icon fas fa-tachometer-alt"></i>
+                            <p>Kontrol Paneli</p>
+                        </a>
+                    </li>
+                <?php endif; ?>
 
                 <?php if ($role === ROLE_REQUESTER): ?>
                     <!-- Talep eden sadece çıkış yapabilir -->
                     <li class="nav-item">
-                        <a href="<?= BASE_URL ?>/index.php?page=stock_out"
-                            class="nav-link <?= $currentPage === 'stock_out' ? 'active' : '' ?>">
+                        <a href="<?= BASE_URL ?>/index.php?page=stock_out_requests"
+                            class="nav-link <?= $currentPage === 'stock_out_requests' ? 'active' : '' ?>">
                             <i class="nav-icon fas fa-truck-loading"></i>
-                            <p>Ürün Talep Et</p>
+                            <p>Taleplerim (Satır Bazlı)</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="<?= BASE_URL ?>/index.php?page=stock_out_orders_for_requesters"
+                            class="nav-link <?= $currentPage === 'stock_out_orders_for_requesters' ? 'active' : '' ?>">
+                            <i class="nav-icon fas fa-list-ul"></i>
+                            <p>Taleplerim (Sipariş)
+                                <span id="sidebar-requester-pending" class="right badge badge-danger"
+                                    style="display:none;">0</span>
+                            </p>
                         </a>
                     </li>
 
@@ -85,18 +97,31 @@ $warehouseCount = Database::fetchOne("SELECT COUNT(*) as c FROM tbl_dp_warehouse
 
                     <!-- STOK HAREKETLERİ -->
                     <li
-                        class="nav-item has-treeview <?= in_array($currentPage, ['stock_movements', 'stock_in', 'stock_in_list', 'stock_out', 'stock_out_orders', 'transfer', 'transfer_history', 'entrusted']) ? 'menu-open' : '' ?>">
+                        class="nav-item has-treeview <?= in_array($currentPage, ['stock_movements', 'stock_in', 'stock_in_list', 'stock_out', 'stock_out_orders', 'stock_out_pending', 'transfer', 'transfer_history', 'entrusted', 'packing_list']) ? 'menu-open' : '' ?>">
                         <a href="<?= BASE_URL ?>/index.php?page=stock_movements"
-                            class="nav-link <?= in_array($currentPage, ['stock_movements', 'stock_in', 'stock_in_list', 'stock_out', 'stock_out_orders', 'transfer', 'transfer_history', 'entrusted']) ? 'active' : '' ?>">
+                            class="nav-link <?= in_array($currentPage, ['stock_movements', 'stock_in', 'stock_in_list', 'stock_out', 'stock_out_orders', 'stock_out_pending', 'transfer', 'transfer_history', 'entrusted', 'packing_list']) ? 'active' : '' ?>">
                             <i class="nav-icon fas fa-exchange-alt"></i>
-                            <p>Stok Hareketleri <i class="right fas fa-angle-left"></i></p>
+                            <p>Stok Hareketleri <i class="right fas fa-angle-left"></i>
+                                <span id="sidebar-pending-total" class="right badge badge-danger"
+                                    style="display:none;">0</span>
+                            </p>
                         </a>
                         <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a href="<?= BASE_URL ?>/index.php?page=stock_out_pending"
+                                    class="nav-link <?= $currentPage === 'stock_out_pending' ? 'active' : '' ?>">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Onay Bekleyenler
+                                        <span id="sidebar-pending-out" class="right badge badge-danger"
+                                            style="display:none;">0</span>
+                                    </p>
+                                </a>
+                            </li>
                             <li class="nav-item">
                                 <a href="<?= BASE_URL ?>/index.php?page=stock_out_orders"
                                     class="nav-link <?= $currentPage === 'stock_out_orders' ? 'active' : '' ?>">
                                     <i class="far fa-circle nav-icon"></i>
-                                    <p>Depodan Çıkış</p>
+                                    <p>Depodan Çıkış Listesi</p>
                                 </a>
                             </li>
                             <li class="nav-item">

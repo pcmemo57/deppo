@@ -269,12 +269,6 @@ unset($item);
                 </td>
             </tr>
             <tr>
-                <td class="info-label">Depo (Warehouse):</td>
-                <td class="info-value">
-                    <?= e($warehouseName) ?>
-                </td>
-            </tr>
-            <tr>
                 <td class="info-label">Talep Eden (Requester):</td>
                 <td class="info-value">
                     <?= e($requesterName) ?>
@@ -290,12 +284,6 @@ unset($item);
                 <td class="info-label">Tarih (Date):</td>
                 <td class="info-value">
                     <?= e($date) ?>
-                </td>
-            </tr>
-            <tr>
-                <td class="info-label">İşlemi Yapan (Created By):</td>
-                <td class="info-value">
-                    <?= e($createdBy) ?>
                 </td>
             </tr>
             <tr>

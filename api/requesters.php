@@ -45,11 +45,12 @@ switch ($action) {
         $name = sanitize($_POST['name'] ?? '');
         $surname = sanitize($_POST['surname'] ?? '');
         $email = sanitize($_POST['email'] ?? '');
+        $password = $_POST['password'] ?? '';
         $title = sanitize($_POST['title'] ?? '');
         $active = (int) ($_POST['is_active'] ?? 1);
 
-        if (!$name || !$surname)
-            jsonResponse(false, 'Ad ve soyad zorunludur.');
+        if (!$name || !$surname || !$password)
+            jsonResponse(false, 'Ad, soyad ve şifre zorunludur.');
 
         if ($email) {
             $exists = Database::fetchOne("SELECT id FROM `$table` WHERE email = ? AND hidden = 0", [$email]);
@@ -57,9 +58,11 @@ switch ($action) {
                 jsonResponse(false, 'Bu e-posta adresi zaten bir talep eden tarafından kullanılıyor.');
         }
 
+        $hashed = hashPassword($password);
+
         Database::insert(
-            "INSERT INTO `$table` (name, surname, email, title, is_active) VALUES (?,?,?,?,?)",
-            [$name, $surname, $email, $title, $active]
+            "INSERT INTO `$table` (name, surname, email, password, title, is_active) VALUES (?,?,?,?,?,?)",
+            [$name, $surname, $email, $hashed, $title, $active]
         );
         jsonResponse(true, 'Talep eden eklendi.');
 
@@ -68,6 +71,7 @@ switch ($action) {
         $name = sanitize($_POST['name'] ?? '');
         $surname = sanitize($_POST['surname'] ?? '');
         $email = sanitize($_POST['email'] ?? '');
+        $password = $_POST['password'] ?? '';
         $title = sanitize($_POST['title'] ?? '');
         $active = (int) ($_POST['is_active'] ?? 1);
 
@@ -80,10 +84,15 @@ switch ($action) {
                 jsonResponse(false, 'Bu e-posta adresi başka bir talep eden tarafından kullanılıyor.');
         }
 
-        Database::execute(
-            "UPDATE `$table` SET name=?, surname=?, email=?, title=?, is_active=? WHERE id=?",
-            [$name, $surname, $email, $title, $active, $id]
-        );
+        $sql = "UPDATE `$table` SET name=?, surname=?, email=?, title=?, is_active=? WHERE id=?";
+        $params = [$name, $surname, $email, $title, $active, $id];
+
+        if (!empty($password)) {
+            $sql = "UPDATE `$table` SET name=?, surname=?, email=?, title=?, is_active=?, password=? WHERE id=?";
+            $params = [$name, $surname, $email, $title, $active, hashPassword($password), $id];
+        }
+
+        Database::execute($sql, $params);
         jsonResponse(true, 'Talep eden güncellendi.');
 
     case 'toggle':

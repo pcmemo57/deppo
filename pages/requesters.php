@@ -107,6 +107,14 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
+                                <label class="form-label">Şifre <span class="text-danger" id="pwd_req">*</span></label>
+                                <input type="password" name="password" class="form-control" placeholder="••••••••">
+                                <small class="text-muted" id="pwd_hint" style="display:none">Değiştirmek istemiyorsanız
+                                    boş bırakın.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
                                 <label class="d-block mb-2">Durum</label>
                                 <input type="hidden" name="is_active" id="is_active_input" value="1">
                                 <div class="status-btn-group">
@@ -173,7 +181,7 @@ requireRole(ROLE_ADMIN, ROLE_USER);
         $('#pagination').html(html).find('a').on('click', function (e) { e.preventDefault(); curPage = parseInt($(this).data('p')); load(); });
     }
 
-    function openModal() { $('#formAction').val('add'); $('#formId').val(''); $('#crudForm')[0].reset(); setStatus(1); $('#modalTitle').text('Talep Eden Ekle'); $('#crudModal').modal('show'); }
+    function openModal() { $('#formAction').val('add'); $('#formId').val(''); $('#crudForm')[0].reset(); setStatus(1); $('#modalTitle').text('Talep Eden Ekle'); $('#pwd_req').show(); $('#pwd_hint').hide(); $('[name="password"]').prop('required', true); $('#crudModal').modal('show'); }
     function editRow(id) {
         $.get(apiUrl, { action: 'get', id: id }, function (r) {
             if (!r.success) return showError(r.message);
@@ -182,7 +190,10 @@ requireRole(ROLE_ADMIN, ROLE_USER);
             $('[name="name"]').val(u.name); $('[name="surname"]').val(u.surname);
             $('[name="email"]').val(u.email); $('[name="title"]').val(u.title);
             setStatus(u.is_active);
-            $('#modalTitle').text('Talep Eden Düzenle'); $('#crudModal').modal('show');
+            $('#modalTitle').text('Talep Eden Düzenle');
+            $('#pwd_req').hide(); $('#pwd_hint').show();
+            $('[name="password"]').prop('required', false).val('');
+            $('#crudModal').modal('show');
         }, 'json');
     }
 

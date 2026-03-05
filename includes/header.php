@@ -513,10 +513,12 @@ if (isset($googleFonts[$selectedFont])) {
                             <span class="badge bg-primary shadow-sm" id="nav-eur-rate">
                                 <i class="fas fa-euro-sign me-1"></i>EUR: <?= formatPrice($eur) ?>
                             </span>
-                            <button id="btnNavbarUpdateCurrency" class="badge bg-info border-0 shadow-sm"
-                                style="cursor: pointer; font-weight: 500;">
-                                <i class="fas fa-sync-alt me-1"></i>Güncelle (<?= $updateTime ?>)
-                            </button>
+                            <?php if (currentUser()['role'] !== ROLE_REQUESTER): ?>
+                                <button id="btnNavbarUpdateCurrency" class="badge bg-info border-0 shadow-sm"
+                                    style="cursor: pointer; font-weight: 500;">
+                                    <i class="fas fa-sync-alt me-1"></i>Güncelle (<?= $updateTime ?>)
+                                </button>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </li>

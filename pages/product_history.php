@@ -217,7 +217,7 @@ $totalBalance = array_sum(array_column($stocks, 'balance'));
                         </thead>
                         <tbody id="historyPageBody">
                             <tr>
-                                <td colspan="6" class="text-center p-4">
+                                <td colspan="8" class="text-center p-4">
                                     <div class="spinner-border spinner-border-sm text-primary"></div> Yükleniyor...
                                 </td>
                             </tr>
@@ -245,12 +245,12 @@ $totalBalance = array_sum(array_column($stocks, 'balance'));
                 search: search
             }, function (r) {
                 if (!r.success) {
-                    $('#historyPageBody').html('<tr><td colspan="6" class="text-center text-danger p-4">' + r.message + '</td></tr>');
+                    $('#historyPageBody').html('<tr><td colspan="8" class="text-center text-danger p-4">' + r.message + '</td></tr>');
                     return;
                 }
 
                 if (r.data.length === 0) {
-                    $('#historyPageBody').html('<tr><td colspan="6" class="text-center text-muted p-4">Bu ürün için henüz hareket kaydı bulunmuyor.</td></tr>');
+                    $('#historyPageBody').html('<tr><td colspan="8" class="text-center text-muted p-4">Bu ürün için henüz hareket kaydı bulunmuyor.</td></tr>');
                     return;
                 }
 
@@ -285,7 +285,7 @@ $totalBalance = array_sum(array_column($stocks, 'balance'));
                 });
                 $('#historyPageBody').html(html);
             }, 'json').fail(function () {
-                $('#historyPageBody').html('<tr><td colspan="6" class="text-center text-danger p-4">Bağlantı hatası oluştu.</td></tr>');
+                $('#historyPageBody').html('<tr><td colspan="8" class="text-center text-danger p-4">Bağlantı hatası oluştu.</td></tr>');
             });
         }
 
@@ -310,8 +310,8 @@ $totalBalance = array_sum(array_column($stocks, 'balance'));
             $('#viUrun').val(d.product_name);
             $('#viMiktar').val(formatQty(d.quantity) + ' ' + d.unit);
             $('#viTedarikci').val(d.supplier_name || '—');
-            $('#viFiyat').val(formatTurkish(parseFloat(d.unit_price).toFixed(2)) + ' ' + d.currency);
-            $('#viEur').val(formatTurkish(parseFloat(d.price_eur).toFixed(2)) + ' ' + '<?= get_setting('base_currency', 'EUR') ?>');
+            $('#viFiyat').val(formatTurkish((parseFloat(d.unit_price) || 0).toFixed(2)) + ' ' + d.currency);
+            $('#viEur').val(formatTurkish((parseFloat(d.price_eur) || 0).toFixed(2)) + ' ' + '<?= get_setting('base_currency', 'EUR') ?>');
             $('#viTarih').val(d.created_at);
             $('#viYapan').val(d.created_by_name);
             $('#viNot').val(d.note || '—');

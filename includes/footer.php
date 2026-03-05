@@ -69,14 +69,8 @@ $footerText = get_setting('footer_text', '© 2026 Depo Yönetim Sistemi');
         });
     }
 
-    /**
-     * Türkçe Sayı Formatlama
-     * @param {any} val - Değer
-     * @param {number} decimals - Ondalık hane sayısı (Default: 2)
-     */
-    function formatTurkish(val, decimals) {
+    function formatTurkish(val, decimals = 2) {
         if (val === null || val === undefined || val === '') return '';
-        if (decimals === undefined) decimals = 2;
 
         var str = String(val).trim();
         var num;
@@ -87,22 +81,13 @@ $footerText = get_setting('footer_text', '© 2026 Depo Yönetim Sistemi');
             if (str.indexOf(',') !== -1) {
                 // Kesin Türk formatı: 1.234,56
                 num = parseFloat(str.replace(/\./g, '').replace(',', '.'));
-            } else if (str.indexOf('.') !== -1) {
-                // Virgül yok ama nokta var. Ambiguous: 1.000 (Bin) mi 1.23 (JS Float) mü?
-                var parts = str.split('.');
-                if (parts.length === 2 && parts[1].length === 3) {
-                    // Noktadan sonra 3 hane varsa binler ayıracı kabul et (Örn: 1.000)
-                    num = parseFloat(str.replace(/\./g, ''));
-                } else {
-                    // Değilse JS float kabul et (Örn: 1234.56)
-                    num = parseFloat(str);
-                }
             } else {
+                // Standart float (virgül yok): "1.000" veya "1000" -> 1.0 veya 1000.0
                 num = parseFloat(str);
             }
         }
 
-        if (isNaN(num)) return val;
+        if (isNaN(num)) return '0,00';
 
         var fixed = num.toFixed(decimals);
         var p = fixed.split('.');
@@ -197,6 +182,23 @@ $footerText = get_setting('footer_text', '© 2026 Depo Yönetim Sistemi');
             'X-CSRF-Token': $('meta[name="csrf-token"]').attr('content')
         }
     });
+
+    // Sidebar rozetlerini güncelle
+    function updatePendingBadges() {
+        $.get('<?= BASE_URL ?>/api/stock_out.php', { action: 'pending_count' }, function (r) {
+            if (r.success && r.data.count > 0) {
+                $('#sidebar-pending-total').text(r.data.count).show();
+                $('#sidebar-pending-out').text(r.data.count).show();
+                $('#sidebar-requester-pending').text(r.data.count).show();
+            } else {
+                $('#sidebar-pending-total').hide();
+                $('#sidebar-pending-out').hide();
+                $('#sidebar-requester-pending').hide();
+            }
+        }, 'json');
+    }
+    updatePendingBadges();
+    setInterval(updatePendingBadges, 60000); // 1 dakikada bir güncelle
 </script>
 
 <?php if (isset($extraScripts))

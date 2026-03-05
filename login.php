@@ -46,20 +46,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$user) {
             $error = 'Bu e-posta adresiyle kayıtlı aktif bir kullanıcı bulunamadı.';
         } else {
-            // Şifre kontrolü (Requester hariç)
-            if ($role === ROLE_REQUESTER) {
-                // Requester için şifre yok
-                $login_allowed = true;
+            // Şifre kontrolü (Tüm roller için şifre zorunlu hale getirildi)
+            if (empty($password)) {
+                $error = 'Lütfen şifrenizi girin.';
+                $login_allowed = false;
+            } elseif (!verifyPassword($password, $user['password'])) {
+                $error = 'Şifre hatalı.';
+                $login_allowed = false;
             } else {
-                if (empty($password)) {
-                    $error = 'Lütfen şifrenizi girin.';
-                    $login_allowed = false;
-                } elseif (!verifyPassword($password, $user['password'])) {
-                    $error = 'Şifre hatalı.';
-                    $login_allowed = false;
-                } else {
-                    $login_allowed = true;
-                }
+                $login_allowed = true;
             }
 
             if ($login_allowed) {
@@ -71,9 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['dp_role'] = $role;
 
                 // Son giriş güncelle
-                if ($role !== ROLE_REQUESTER) {
-                    Database::execute("UPDATE `$table` SET last_login = NOW() WHERE id = ?", [$user['id']]);
-                }
+                Database::execute("UPDATE `$table` SET last_login = NOW() WHERE id = ?", [$user['id']]);
 
                 header('Location: ' . BASE_URL . '/index.php');
                 exit;
@@ -290,6 +283,9 @@ if (isset($googleFonts[$selectedFont])) {
                     <button type="submit" class="btn btn-login text-white">
                         <i class="fas fa-sign-in-alt me-2"></i> GİRİŞ YAP
                     </button>
+                    <div class="text-center mt-3">
+                        <a href="forgot_password.php" class="text-muted small">Şifremi Unuttum</a>
+                    </div>
                 </form>
             </div>
         </div>
@@ -311,25 +307,9 @@ if (isset($googleFonts[$selectedFont])) {
             }
         });
 
-        // E-posta girildiğinde rolü kontrol et ve şifre alanını göster/gizle
-        document.getElementById('emailInput').addEventListener('input', function () {
-            const email = this.value;
-            if (email.includes('@')) {
-                fetch('api/check_email.php?email=' + encodeURIComponent(email))
-                    .then(response => response.json())
-                    .then(data => {
-                        const passwordGroup = document.getElementById('passwordGroup');
-                        const passwordInput = document.getElementById('passwordInput');
-                        if (data.success && data.role === 'requester') {
-                            passwordGroup.style.display = 'none';
-                            passwordInput.required = false;
-                        } else {
-                            passwordGroup.style.display = 'block';
-                            passwordInput.required = true;
-                        }
-                    });
-            }
-        });
+        // Şifre alanı her zaman görünür olmalı
+        const passwordInput = document.getElementById('passwordInput');
+        passwordInput.required = true;
 
         // Sayfa yüklendiğinde mevcut e-posta varsa kontrol et
         window.addEventListener('load', function () {

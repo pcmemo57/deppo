@@ -234,6 +234,17 @@ $googleFontList = [
                                                 value="<?= e(get_setting('mail_from', '')) ?>">
                                         </div>
                                     </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Program Yöneticisi E-posta</label>
+                                        <div class="input-icon-wrap">
+                                            <i class="fas fa-user-shield field-icon"></i>
+                                            <input type="email" name="program_manager_email" class="form-control"
+                                                value="<?= e(get_setting('program_manager_email', '')) ?>"
+                                                placeholder="yonetici@ornek.com">
+                                        </div>
+                                        <small class="text-muted">Ürün taleplerinde bu adrese de bilgi maili
+                                            gönderilir.</small>
+                                    </div>
                                 </div>
                             </div>
                             <div class="d-flex gap-2">

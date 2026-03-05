@@ -23,7 +23,7 @@ $action = sanitize($_POST['action'] ?? $_GET['action'] ?? '');
 switch ($action) {
     case 'save_mail':
         requireRole(ROLE_ADMIN);
-        $keys = ['mail_host', 'mail_port', 'mail_secure', 'mail_user', 'mail_from', 'mail_from_name'];
+        $keys = ['mail_host', 'mail_port', 'mail_secure', 'mail_user', 'mail_from', 'mail_from_name', 'program_manager_email'];
         foreach ($keys as $key) {
             if (isset($_POST[$key])) {
                 set_setting($key, sanitize($_POST[$key]));

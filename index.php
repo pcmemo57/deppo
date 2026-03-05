@@ -11,21 +11,28 @@ require_once __DIR__ . '/config/functions.php';
 requireLogin();
 
 $role = currentUser()['role'];
-$currentPage = sanitize($_GET['page'] ?? 'dashboard');
-
 // ─── Erişim Kontrol Matrisi ───────────────────────────────────────────────
 $adminOnly = ['settings', 'admin_users', 'bulk_stock_update'];
-$requesterOk = ['dashboard', 'stock_out'];
+$requesterOk = ['stock_out_requests', 'stock_out_orders_for_requesters'];
 
 if ($role === ROLE_ADMIN) {
     // Admin her sayfaya erişebilir
+    $currentPage = sanitize($_GET['page'] ?? 'dashboard');
 } elseif ($role === ROLE_USER) {
+    $currentPage = sanitize($_GET['page'] ?? 'dashboard');
     if (in_array($currentPage, $adminOnly, true)) {
         $currentPage = 'dashboard';
     }
 } elseif ($role === ROLE_REQUESTER) {
+    // Default page for requester if no page or dashboard is requested
+    if (!isset($_GET['page']) || $_GET['page'] === 'dashboard') {
+        $currentPage = 'stock_out_orders_for_requesters';
+    } else {
+        $currentPage = sanitize($_GET['page']);
+    }
+
     if (!in_array($currentPage, $requesterOk, true)) {
-        $currentPage = 'stock_out';
+        $currentPage = 'stock_out_orders_for_requesters';
     }
 }
 
@@ -47,8 +54,11 @@ $pageTitles = [
     'suppliers' => 'Tedarikçiler',
     'stock_in' => 'Depoya Ürün Girişi',
     'stock_in_list' => 'Ürün Giriş Listesi',
-    'stock_out' => 'Depodan Çıkış',
-    'stock_out_orders' => 'Sipariş Bazlı Çıkış Listesi',
+    'stock_out' => 'Depodan Çıkış (Satır Bazlı)',
+    'stock_out_orders' => 'Depodan Çıkış Listesi',
+    'stock_out_pending' => 'Onay Bekleyen Talepler',
+    'stock_out_requests' => 'Taleplerim (Satır Bazlı)',
+    'stock_out_orders_for_requesters' => 'Taleplerim',
     'transfer' => 'Depolar Arası Transfer',
     'transfer_history' => 'Transfer Geçmişi',
     'stock_status' => 'Stok Durumu',
