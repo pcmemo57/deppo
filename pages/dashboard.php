@@ -399,32 +399,40 @@ $entrustedCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_entrusted
 <!-- Bilgi Rozetleri -->
 <div class="row mt-1 mb-3">
     <div class="col-lg-3 col-6">
-        <span
-            class="badge rounded shadow-sm py-2 px-3 fw-normal bg-white text-dark info-badge-blue-border info-badge-hover d-block w-100 text-start">
-            <i class="fas fa-users text-primary me-2"></i> Müşteri: <span
-                class="fw-bold ms-1 text-primary float-end"><?= e(formatQty($customerCount)) ?></span>
-        </span>
+        <a href="<?= BASE_URL ?>/index.php?page=customers" class="text-decoration-none">
+            <span
+                class="badge rounded shadow-sm py-2 px-3 fw-normal bg-white text-dark info-badge-blue-border info-badge-hover d-block w-100 text-start">
+                <i class="fas fa-users text-primary me-2"></i> Müşteri: <span
+                    class="fw-bold ms-1 text-primary float-end"><?= e(formatQty($customerCount)) ?></span>
+            </span>
+        </a>
     </div>
     <div class="col-lg-3 col-6">
-        <span
-            class="badge rounded shadow-sm py-2 px-3 fw-normal bg-white text-dark info-badge-blue-border info-badge-hover d-block w-100 text-start">
-            <i class="fas fa-truck-moving text-success me-2"></i> Tedarikçi: <span
-                class="fw-bold ms-1 text-success float-end"><?= e(formatQty($supplierCount)) ?></span>
-        </span>
+        <a href="<?= BASE_URL ?>/index.php?page=suppliers" class="text-decoration-none">
+            <span
+                class="badge rounded shadow-sm py-2 px-3 fw-normal bg-white text-dark info-badge-blue-border info-badge-hover d-block w-100 text-start">
+                <i class="fas fa-truck-moving text-success me-2"></i> Tedarikçi: <span
+                    class="fw-bold ms-1 text-success float-end"><?= e(formatQty($supplierCount)) ?></span>
+            </span>
+        </a>
     </div>
     <div class="col-lg-3 col-6">
-        <span
-            class="badge rounded shadow-sm py-2 px-3 fw-normal bg-white text-dark info-badge-blue-border info-badge-hover d-block w-100 text-start">
-            <i class="fas fa-user-friends text-info me-2"></i> Personel: <span
-                class="fw-bold ms-1 text-info float-end"><?= e(formatQty($requesterCount)) ?></span>
-        </span>
+        <a href="<?= BASE_URL ?>/index.php?page=requesters" class="text-decoration-none">
+            <span
+                class="badge rounded shadow-sm py-2 px-3 fw-normal bg-white text-dark info-badge-blue-border info-badge-hover d-block w-100 text-start">
+                <i class="fas fa-user-friends text-info me-2"></i> Personel: <span
+                    class="fw-bold ms-1 text-info float-end"><?= e(formatQty($requesterCount)) ?></span>
+            </span>
+        </a>
     </div>
     <div class="col-lg-3 col-6">
-        <span
-            class="badge rounded shadow-sm py-2 px-3 fw-normal bg-white text-dark info-badge-blue-border info-badge-hover d-block w-100 text-start">
-            <i class="fas fa-boxes text-danger me-2"></i> Ürün: <span
-                class="fw-bold ms-1 text-danger float-end"><?= e(formatQty($productCount)) ?></span>
-        </span>
+        <a href="<?= BASE_URL ?>/index.php?page=products" class="text-decoration-none">
+            <span
+                class="badge rounded shadow-sm py-2 px-3 fw-normal bg-white text-dark info-badge-blue-border info-badge-hover d-block w-100 text-start">
+                <i class="fas fa-boxes text-danger me-2"></i> Ürün: <span
+                    class="fw-bold ms-1 text-danger float-end"><?= e(formatQty($productCount)) ?></span>
+            </span>
+        </a>
     </div>
 </div>
 
@@ -474,7 +482,7 @@ $entrustedCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_entrusted
 
     .info-badge-hover {
         transition: all 0.2s ease-in-out;
-        cursor: default;
+        cursor: pointer;
     }
 
     .info-badge-hover:hover {
