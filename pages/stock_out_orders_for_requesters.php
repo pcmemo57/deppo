@@ -457,7 +457,7 @@ $warehouses = Database::fetchAll("
                     '</td>' +
                     '<td class="text-center pe-3 text-nowrap">' +
                     '<a href="pages/stock_out_print.php?batch_id=' + d.batch_id + '" target="_blank" class="btn btn-xs btn-outline-secondary me-1" onclick="event.stopPropagation();" title="Yazdır"><i class="fas fa-print"></i></a>' +
-                    '<button class="btn btn-xs btn-outline-warning me-1" onclick="event.stopPropagation(); editBatch(\'' + d.batch_id + '\')" title="Düzenle"><i class="fas fa-edit"></i></button>' +
+                    (d.status == 0 ? '<button class="btn btn-xs btn-outline-warning me-1" onclick="event.stopPropagation(); editBatch(\'' + d.batch_id + '\')" title="Düzenle"><i class="fas fa-edit"></i></button>' : '') +
                     '<button class="btn btn-xs btn-outline-info" title="İncele"><i class="fas fa-eye"></i></button>' +
                     '</td>' +
                     '</tr>' +

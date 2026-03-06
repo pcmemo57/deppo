@@ -234,11 +234,19 @@ $warehouses = Database::fetchAll("
         transition: all 0.2s;
     }
 
-    .btn-modal-save:hover {
+    .btn-modal-save:hover:not(:disabled) {
         background: linear-gradient(135deg, #1d4ed8, #0a35a0);
         box-shadow: 0 6px 16px rgba(26, 86, 219, 0.38);
         transform: translateY(-1px);
         color: #fff;
+    }
+
+    .btn-modal-save:disabled {
+        background: #e2e8f0;
+        color: #94a3b8;
+        box-shadow: none;
+        cursor: not-allowed;
+        transform: none;
     }
 
     /* Select2 boostrap-5 focus styling */
@@ -654,8 +662,8 @@ $warehouses = Database::fetchAll("
 
             renderLines();
             $('#requesterSelect, #customerSelect, #productAdd').prop('disabled', false).trigger('change');
-            $('#qtyInput, #btnAddLine, [name="note"], #btnSubmitOut').prop('disabled', false);
-            
+            $('#qtyInput, #btnAddLine, [name="note"]').prop('disabled', false);
+
             checkStockLevels(); // Initial check for edit modal
             $('#addModal').modal('show');
         }, 'json');
@@ -665,9 +673,11 @@ $warehouses = Database::fetchAll("
         if (!lines.length) { $('#lineContainer').hide(); return; }
         $('#lineContainer').show();
         var html = '', totalSum = 0;
+        var hasInsufficientStock = false;
+
         $.each(lines, function (i, l) {
             totalSum += l.total;
-            
+
             var stockIcon = '';
             if ($('#warehouseSelect').val()) {
                 var avail = currentStockLevels[l.product_id] || 0;
@@ -675,7 +685,10 @@ $warehouses = Database::fetchAll("
                     stockIcon = '<i class="fas fa-check-circle text-success me-2" title="Stok Yeterli (Mevcut: ' + formatQty(avail) + ')"></i>';
                 } else {
                     stockIcon = '<i class="fas fa-times-circle text-danger me-2" title="Stok Yetersiz! (Mevcut: ' + formatQty(avail) + ')"></i>';
+                    hasInsufficientStock = true;
                 }
+            } else {
+                hasInsufficientStock = true; // No warehouse, can't approve
             }
 
             html += '<tr>' +
@@ -691,6 +704,9 @@ $warehouses = Database::fetchAll("
 
         var totalSumTL = totalSum * eurExchangeRate;
         $('#totalSumTLLabel').text(formatTurkish((totalSumTL || 0).toFixed(2)) + ' TL');
+
+        // Manage Save button state
+        $('#btnSubmitOut').prop('disabled', hasInsufficientStock);
     }
 
     function checkStockLevels() {
@@ -701,8 +717,8 @@ $warehouses = Database::fetchAll("
             return;
         }
 
-        var productIds = lines.map(function(l) { return l.product_id; }).join(',');
-        $.get('<?= BASE_URL ?>/api/products.php', { action: 'check_stock_batch', warehouse_id: warehouseId, product_ids: productIds }, function(r) {
+        var productIds = lines.map(function (l) { return l.product_id; }).join(',');
+        $.get('<?= BASE_URL ?>/api/products.php', { action: 'check_stock_batch', warehouse_id: warehouseId, product_ids: productIds }, function (r) {
             if (r.success) {
                 currentStockLevels = r.data;
                 renderLines();

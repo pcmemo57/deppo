@@ -11,6 +11,7 @@ $requesterCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_requester
 $stockInToday = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_stock_in WHERE DATE(created_at)=CURDATE()')['c'] ?? 0;
 $stockOutToday = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_stock_out WHERE DATE(created_at)=CURDATE()')['c'] ?? 0;
 $transferCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_transfers WHERE DATE(created_at)=CURDATE()')['c'] ?? 0;
+$pendingRequestsCount = Database::fetchOne('SELECT COUNT(DISTINCT batch_id) AS c FROM tbl_dp_stock_out WHERE status = 0')['c'] ?? 0;
 
 // Son 5 stok girişi
 $recentIn = Database::fetchAll(
@@ -395,6 +396,38 @@ $transferCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_transfers'
 $entrustedCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_entrusted WHERE remaining_quantity > 0')['c'] ?? 0;
 ?>
 
+<!-- Bilgi Rozetleri -->
+<div class="row mt-1 mb-3">
+    <div class="col-lg-3 col-6">
+        <span
+            class="badge rounded shadow-sm py-2 px-3 fw-normal bg-white text-dark info-badge-blue-border info-badge-hover d-block w-100 text-start">
+            <i class="fas fa-users text-primary me-2"></i> Müşteri: <span
+                class="fw-bold ms-1 text-primary float-end"><?= e(formatQty($customerCount)) ?></span>
+        </span>
+    </div>
+    <div class="col-lg-3 col-6">
+        <span
+            class="badge rounded shadow-sm py-2 px-3 fw-normal bg-white text-dark info-badge-blue-border info-badge-hover d-block w-100 text-start">
+            <i class="fas fa-truck-moving text-success me-2"></i> Tedarikçi: <span
+                class="fw-bold ms-1 text-success float-end"><?= e(formatQty($supplierCount)) ?></span>
+        </span>
+    </div>
+    <div class="col-lg-3 col-6">
+        <span
+            class="badge rounded shadow-sm py-2 px-3 fw-normal bg-white text-dark info-badge-blue-border info-badge-hover d-block w-100 text-start">
+            <i class="fas fa-user-friends text-info me-2"></i> Personel: <span
+                class="fw-bold ms-1 text-info float-end"><?= e(formatQty($requesterCount)) ?></span>
+        </span>
+    </div>
+    <div class="col-lg-3 col-6">
+        <span
+            class="badge rounded shadow-sm py-2 px-3 fw-normal bg-white text-dark info-badge-blue-border info-badge-hover d-block w-100 text-start">
+            <i class="fas fa-boxes text-danger me-2"></i> Ürün: <span
+                class="fw-bold ms-1 text-danger float-end"><?= e(formatQty($productCount)) ?></span>
+        </span>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-lg-3 col-6">
         <a href="<?= BASE_URL ?>/index.php?page=stock_out_orders" class="small-box bg-success shadow-sm">
@@ -424,46 +457,32 @@ $entrustedCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_entrusted
         </a>
     </div>
     <div class="col-lg-3 col-6">
-        <a href="javascript:void(0)" class="small-box shadow-sm border"
-            style="background: #f8f9fa; color: #495057; cursor: default;">
-            <div class="inner p-2">
-                <table class="table table-sm table-borderless mb-0 m-0 w-100"
-                    style="font-size: 0.82rem; color: inherit;">
-                    <tbody>
-                        <tr>
-                            <td class="p-0 border-0 pb-1 w-75"><i
-                                    class="fas fa-users me-2 text-secondary opacity-75"></i> Müşteri</td>
-                            <td class="p-0 border-0 pb-1 fw-bold" style="text-align: right;">
-                                <?= e(formatQty($customerCount)) ?>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="p-0 border-0 pb-1 w-75"><i
-                                    class="fas fa-truck-moving me-2 text-secondary opacity-75"></i> Tedarikçi</td>
-                            <td class="p-0 border-0 pb-1 fw-bold" style="text-align: right;">
-                                <?= e(formatQty($supplierCount)) ?>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="p-0 border-0 pb-1 w-75"><i
-                                    class="fas fa-user-friends me-2 text-secondary opacity-75"></i> Personel</td>
-                            <td class="p-0 border-0 pb-1 fw-bold" style="text-align: right;">
-                                <?= e(formatQty($requesterCount)) ?>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="p-0 border-0 w-75"><i class="fas fa-boxes me-2 text-secondary opacity-75"></i>
-                                Ürün</td>
-                            <td class="p-0 border-0 fw-bold" style="text-align: right;">
-                                <?= e(formatQty($productCount)) ?>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+        <a href="<?= BASE_URL ?>/index.php?page=stock_out_pending" class="small-box bg-warning shadow-sm">
+            <div class="inner">
+                <h3><?= e(formatQty($pendingRequestsCount)) ?></h3>
+                <p>Onay Bekleyen Talepler</p>
             </div>
+            <div class="icon"><i class="fas fa-clock"></i></div>
         </a>
     </div>
 </div>
+
+<style>
+    .info-badge-blue-border {
+        border: 1px solid #c7d9f5 !important;
+    }
+
+    .info-badge-hover {
+        transition: all 0.2s ease-in-out;
+        cursor: default;
+    }
+
+    .info-badge-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08) !important;
+        border-color: #3b82f6 !important;
+    }
+</style>
 <!-- 
 <div class="row">
     <div class="col-lg-3 col-6">
