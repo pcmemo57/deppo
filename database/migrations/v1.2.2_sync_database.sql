@@ -1,5 +1,5 @@
 -- Depo Yönetim Sistemi - Veritabanı Senkronizasyon Migrasyonu
--- Sürüm: v1.2.2
+-- Sürüm: v1.2.2 (Final Fixed Syntax)
 
 -- 1. Eksik Tabloları Oluştur
 CREATE TABLE IF NOT EXISTS `inventory_sessions` (
@@ -67,24 +67,20 @@ CREATE TABLE IF NOT EXISTS `tbl_dp_password_resets` (
   `token` varchar(255) NOT NULL,
   `role` varchar(50) NOT NULL,
   `expires_at` datetime NOT NULL,
-  `created_at" timestamp NOT NULL DEFAULT current_timestamp(),
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 2. Eksik Kolonları Ekle (MariaDB 10.2.19+ desteği gerektirir)
--- Ürünler
+-- 2. Eksik Kolonları Ekle
 ALTER TABLE `tbl_dp_products` ADD COLUMN IF NOT EXISTS `procurement_status` int(11) DEFAULT 0;
 ALTER TABLE `tbl_dp_products` ADD COLUMN IF NOT EXISTS `procurement_note` text;
 
--- Personel
-ALTER TABLE `tbl_dp_requesters` ADD COLUMN IF NOT EXISTS `password" varchar(255) DEFAULT NULL;
+ALTER TABLE `tbl_dp_requesters` ADD COLUMN IF NOT EXISTS `password` varchar(255) DEFAULT NULL;
 ALTER TABLE `tbl_dp_requesters` ADD COLUMN IF NOT EXISTS `last_login` datetime DEFAULT NULL;
 
--- Stok Giriş
 ALTER TABLE `tbl_dp_stock_in` ADD COLUMN IF NOT EXISTS `currency` enum('TL','USD','EUR') DEFAULT 'EUR';
 ALTER TABLE `tbl_dp_stock_in` ADD COLUMN IF NOT EXISTS `price_eur` decimal(15,4) DEFAULT 0.0000;
 
--- Stok Çıkış
 ALTER TABLE `tbl_dp_stock_out` ADD COLUMN IF NOT EXISTS `order_no` int(11) DEFAULT NULL;
 ALTER TABLE `tbl_dp_stock_out` ADD COLUMN IF NOT EXISTS `currency` enum('TL','USD','EUR') DEFAULT 'EUR';
 ALTER TABLE `tbl_dp_stock_out` ADD COLUMN IF NOT EXISTS `status` tinyint(1) DEFAULT 1;
