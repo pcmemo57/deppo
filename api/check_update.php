@@ -36,6 +36,7 @@ if (preg_match("/define\('APP_VERSION',\s*'([^']+)'\)/", $remote_config, $matche
 
     jsonResponse(true, 'Kontrol tamamlandı.', [
         'current_version' => APP_VERSION,
+        'current_db_version' => get_setting('db_version', '1.0.0'),
         'remote_version' => $remote_version,
         'update_available' => $update_available,
         'message' => $update_available ? "Yeni bir sürüm mevcut: v$remote_version" : "Sisteminiz güncel."

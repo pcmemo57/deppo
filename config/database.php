@@ -81,4 +81,12 @@ class Database
     {
         return self::getInstance()->inTransaction();
     }
+
+    /**
+     * Birden fazla SQL komutunu (dosya içeriği gibi) çalıştırır
+     */
+    public static function executeSql(string $sql): bool|int
+    {
+        return self::getInstance()->exec($sql);
+    }
 }

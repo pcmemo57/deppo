@@ -18,9 +18,9 @@ requireRole(ROLE_ADMIN);
                     <div class="mb-4">
                         <i class="fas fa-cloud-download-alt text-primary" style="font-size: 4rem;"></i>
                     </div>
-                    <h4>Mevcut Sürüm: <span class="badge bg-secondary">v
-                            <?= APP_VERSION ?>
-                        </span></h4>
+                    <h4>Mevcut Sürüm: <span class="badge bg-secondary">v<?= APP_VERSION ?></span></h4>
+                    <h4>Veritabanı Sürümü: <span class="badge bg-info"
+                            id="current-db-version">v<?= e(get_setting('db_version', '1.0.0')) ?></span></h4>
                     <p class="text-muted mt-2">Sisteminizin güncel olduğundan emin olun. Yeni özellikleri ve güvenlik
                         düzeltmelerini almak için düzenli olarak güncellemeleri kontrol edin.</p>
 
@@ -85,6 +85,9 @@ requireRole(ROLE_ADMIN);
                 $('#update-status').addClass('d-none');
 
                 if (r.success) {
+                    if (r.data.current_db_version) {
+                        $('#current-db-version').text('v' + r.data.current_db_version);
+                    }
                     if (r.data.update_available) {
                         $('#remote-version').text('v' + r.data.remote_version);
                         $('#update-info').removeClass('d-none');

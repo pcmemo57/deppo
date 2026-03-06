@@ -44,9 +44,19 @@ exec($command, $output, $return_var);
 $output_str = implode("\n", $output);
 
 if ($return_var === 0) {
+    // 2. Veritabanı migrasyonlarını çalıştır
+    require_once __DIR__ . '/db_migrate.php';
+    $migrationResult = runMigrations();
+
+    $msg = 'Güncelleme başarıyla tamamlandı.';
+    if ($migrationResult['data']['performed'] > 0) {
+        $msg .= ' ' . $migrationResult['message'];
+    }
+
     // Başarılı güncelleme sonrası mesaj
-    jsonResponse(true, 'Güncelleme başarıyla tamamlandı.', [
-        'output' => $output_str
+    jsonResponse(true, $msg, [
+        'output' => $output_str,
+        'migration' => $migrationResult
     ]);
 } else {
     // Hata durumunda detaylı bilgi ver
