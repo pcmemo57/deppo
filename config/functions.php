@@ -380,7 +380,7 @@ function getCurrencySymbol($currency = null)
         case 'EUR':
             return '€';
         case 'TL':
-            return '₺';
+            return 'TL';
         default:
             return $currency;
     }
