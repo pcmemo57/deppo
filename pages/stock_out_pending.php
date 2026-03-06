@@ -301,7 +301,6 @@ $warehouses = Database::fetchAll("
                         <tr>
                             <th width="100">Sip. #</th>
                             <th>Müşteri / Muhatap</th>
-                            <th>Depo</th>
                             <th class="num-align">Kalem Sayısı</th>
                             <th class="num-align">Toplam Tutar</th>
                             <th>İşlemi Yapan</th>
@@ -503,7 +502,6 @@ $warehouses = Database::fetchAll("
                 html += '<tr class="order-row" onclick="toggleDetail(\'' + d.batch_id + '\', this)">' +
                     '<td><span class="badge bg-primary px-2">' + d.order_no + '</span></td>' +
                     '<td><div class="fw-bold text-primary">' + esc(d.customer_name || '—') + '</div></td>' +
-                    '<td><i class="fas fa-warehouse me-1 opacity-50"></i> ' + esc(d.warehouse_name || '— Atanmadı') + '</td>' +
                     '<td class="num-align"><span class="badge bg-light border text-dark ms-2 badge-item-count">' + formatQty(d.item_count) + ' Ürün</span></td>' +
                     '<td class="num-align"><strong>' + formatTurkish((parseFloat(d.total_eur) || 0).toFixed(2)) + '</strong> <small>' + baseCurrency + '</small></td>' +
                     '<td><small class="text-muted">' + esc(d.created_by_name || '—') + '</small></td>' +
@@ -513,7 +511,7 @@ $warehouses = Database::fetchAll("
                     '</td>' +
                     '</tr>' +
                     '<tr class="detail-row" id="detail-' + d.batch_id + '">' +
-                    '<td colspan="8">' +
+                    '<td colspan="7">' +
                     '<div class="detail-container">' +
                     '<div class="mb-3"><strong><i class="fas fa-info-circle me-1 text-warning"></i> İşlem Notu:</strong> <span class="text-muted">' + esc(d.note || '—') + '</span></div>' +
                     '<div id="cont-' + d.batch_id + '"><div class="text-center p-2"><i class="fas fa-spinner fa-spin"></i></div></div>' +
@@ -521,7 +519,7 @@ $warehouses = Database::fetchAll("
                     '</td>' +
                     '</tr>';
             });
-            $('#tableBody').html(html || '<tr><td colspan="8" class="text-center text-muted p-4">Henüz gruplandırılmış kayıt bulunmuyor.</td></tr>');
+            $('#tableBody').html(html || '<tr><td colspan="7" class="text-center text-muted p-4">Henüz gruplandırılmış kayıt bulunmuyor.</td></tr>');
             $('#totalCount').text('Toplam: ' + formatQty(r.data.total) + ' sipariş');
             renderPag(r.data.total);
         }, 'json');
@@ -575,8 +573,7 @@ $warehouses = Database::fetchAll("
                 '<label class="text-muted small mb-0 mt-2">Müşteri</label><div class="fw-bold">' + esc(d.customer_name || '—') + '</div>' +
                 '</div>' +
                 '<div class="col-md-6 text-md-end">' +
-                '<label class="text-muted small mb-0">Depo</label><div class="fw-bold">' + esc(d.warehouse_name || '— Atanmadı') + '</div>' +
-                '<label class="text-muted small mb-0 mt-2">Tarih</label><div class="fw-bold">' + d.created_at + '</div>' +
+                '<label class="text-muted small mb-0">Tarih</label><div class="fw-bold">' + d.created_at + '</div>' +
                 '</div>' +
                 '</div>';
 
