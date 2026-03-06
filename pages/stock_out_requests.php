@@ -238,10 +238,9 @@ $warehouses = Database::fetchAll("
                     <thead class="bg-light text-muted small text-uppercase">
                         <tr>
                             <th>Ürün</th>
-                            <th>Alan / Müşteri</th>
+                            <th>Müşteri</th>
                             <th class="num-align">Miktar</th>
                             <th class="num-align">Toplam (<?= getCurrencySymbol() ?>)</th>
-                            <th style="width:100px">İşlemi Yapan</th>
                             <th style="width:100px">Durum</th>
                             <th style="width:100px" class="num-align">Tarih</th>
                             <th style="width:80px" class="text-center pe-3">Detay</th>
@@ -420,11 +419,7 @@ $warehouses = Database::fetchAll("
             if (!r.success || !r.data.data) return;
             var html = '';
             $.each(r.data.data, function (i, d) {
-                var muhatap = [];
-                if (d.requester_name) muhatap.push('<i class="fas fa-user me-1 opacity-50"></i> ' + esc(d.requester_name + ' ' + d.requester_surname));
-                if (d.customer) muhatap.push('<i class="fas fa-building me-1 opacity-50"></i> ' + esc(d.customer));
-
-                var muhatapHtml = muhatap.length ? muhatap.join('<br>') : '—';
+                var muhatapHtml = d.customer ? '<i class="fas fa-building me-1 opacity-50"></i> ' + esc(d.customer) : '—';
 
                 var stClass = 'badge-pending', stText = 'Beklemede';
                 if (d.status == 1) { stClass = 'badge-approved'; stText = 'Onaylandı'; }
@@ -435,7 +430,6 @@ $warehouses = Database::fetchAll("
                     '<td><small>' + muhatapHtml + '</small></td>' +
                     '<td class="num-align">' + formatQty(d.quantity) + ' <small class="text-muted">' + esc(d.unit) + '</small></td>' +
                     '<td class="num-align"><strong>' + formatTurkish((parseFloat(d.total_price) || 0).toFixed(2)) + '</strong> <small>' + '<?= get_setting('base_currency', 'EUR') ?>' + '</small></td>' +
-                    '<td><small>' + esc(d.created_by_name || '—') + '</small></td>' +
                     '<td><span class="badge-status ' + stClass + '">' + stText + '</span></td>' +
                     '<td class="num-align"><small>' + d.created_at + '</small></td>' +
                     '<td class="text-center pe-3"><button class="btn btn-xs btn-outline-primary" onclick="viewRow(' + d.id + ')"><i class="fas fa-eye"></i></button></td>' +
