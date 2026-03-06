@@ -483,11 +483,15 @@ $warehouses = Database::fetchAll("
         $('#editBatchId').val('');
         $('#formStockOut')[0].reset();
 
+        // Reset Select2 fields
         $('#customerSelect').val(null).trigger('change');
-        $('#productAdd, #qtyInput, #btnAddLine, [name="note"], #btnSubmitOut').prop('disabled', true).trigger('change');
+        $('#productAdd').val(null).trigger('change');
+
+        // Explicitly disable dependent fields
+        $('#productAdd, #qtyInput, #btnAddLine, [name="note"], #btnSubmitOut').prop('disabled', true);
 
         $('#addModal .modal-title').html('<i class="fas fa-sign-out-alt me-2"></i> Ürün Talep Ekranı');
-        $('#btnSubmitText').text('Ürün Talebini Kaydet');
+        $('#btnSubmitOut').html('<span id="btnSubmitText">Ürün Talebini Kaydet</span>');
         $('#addModal').modal('show');
     }
 
@@ -744,7 +748,8 @@ $warehouses = Database::fetchAll("
             };
 
             $.post(apiUrl, data, function (r) {
-                btn.prop('disabled', false).html($('#btnSubmitText').text());
+                var btnText = isEdit ? 'Güncellemeleri Kaydet' : 'Ürün Talebini Kaydet';
+                btn.prop('disabled', false).html('<span id="btnSubmitText">' + btnText + '</span>');
                 if (r.success) {
                     showSuccess(r.message);
                     $('#addModal').modal('hide');

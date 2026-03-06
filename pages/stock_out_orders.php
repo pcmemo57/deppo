@@ -265,6 +265,19 @@ $warehouses = Database::fetchAll("
     .card-footer .float-end {
         float: none !important;
     }
+
+    /* Filtre ve Arama Kutusu Birleşimi (Keskin Kenarlar) */
+    .card-header .card-tools .input-group>.form-select:not(:last-child),
+    .card-header .card-tools .input-group>.form-control:not(:last-child) {
+        border-top-right-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+    }
+
+    .card-header .card-tools .input-group>.input-group-text:not(:first-child) {
+        border-top-left-radius: 0 !important;
+        border-bottom-left-radius: 0 !important;
+        border-left: 0 !important;
+    }
 </style>
 
 <div class="row stock-out-row">
@@ -279,14 +292,14 @@ $warehouses = Database::fetchAll("
                         <option value="50">50</option>
                         <option value="100">100</option>
                     </select>
-                    <div class="input-group input-group-sm me-2" style="width: 140px;">
-                        <span class="input-group-text"><i class="fas fa-filter"></i></span>
-                        <select id="statusFilter" class="form-select">
+                    <div class="input-group input-group-sm me-2 flex-nowrap" style="width: 150px;">
+                        <select id="statusFilter" class="form-select form-select-sm">
                             <option value="">— Tüm Durumlar —</option>
                             <option value="0">Beklemede</option>
                             <option value="1" selected>Onaylandı</option>
                             <option value="2">Reddedildi</option>
                         </select>
+                        <span class="input-group-text"><i class="fas fa-filter"></i></span>
                     </div>
                     <div class="input-group input-group-sm me-2" style="width: 200px;">
                         <input type="text" id="searchBox" class="form-control" placeholder="Müşteri veya depo ara...">
@@ -516,6 +529,8 @@ $warehouses = Database::fetchAll("
                     '<td class="text-center pe-3 text-nowrap">' +
                     '<a href="pages/stock_out_print.php?batch_id=' + d.batch_id + '" target="_blank" class="btn btn-xs btn-outline-secondary me-1" onclick="event.stopPropagation();" title="Yazdır"><i class="fas fa-print"></i></a>' +
                     '<button class="btn btn-xs btn-outline-warning me-1" onclick="event.stopPropagation(); editBatch(\'' + d.batch_id + '\')" title="Düzenle"><i class="fas fa-edit"></i></button>' +
+                    '<button class="btn btn-xs btn-outline-info me-1" onclick="event.stopPropagation(); editCustomerDetails(\'' + d.customer_id + '\')" title="Müşteriyi Düzenle"><i class="fas fa-user-edit"></i></button>' +
+                    '<button class="btn btn-xs btn-outline-primary me-1" onclick="event.stopPropagation(); printOrderAddress(\'' + d.batch_id + '\')" title="Adres Yazdır"><i class="fas fa-address-card"></i></button>' +
                     '<button class="btn btn-xs btn-outline-info" onclick="event.stopPropagation(); viewBatch(\'' + d.batch_id + '\')" title="İncele"><i class="fas fa-eye"></i></button>' +
                     '</td>' +
                     '</tr>' +
@@ -908,4 +923,234 @@ $warehouses = Database::fetchAll("
         $('#perPage').on('change', function () { curPerPage = parseInt($(this).val()); curPage = 1; load(); });
         $('#statusFilter').on('change', function () { curPage = 1; load(); });
     });
+
+    function printOrderAddress(batchId) {
+        $.get(apiUrl, { action: 'get_batch', batch_id: batchId }, function (r) {
+            if (!r.success) { showError(r.message); return; }
+
+            // Re-use logic from stock_out_pending to get print data
+            // Since we are on orders list, the items are already approved
+            var d = r.data; // r.data contains batch details, not r.data.items[0] for customer info
+            var printData = {
+                sender: d.sender_info || '—', // API should return this via get_batch if we updated it, or we can fetch it
+                customer_name: d.customer_name || '—',
+                customer_address: d.customer_address || '—',
+                customer_phone: d.customer_phone || '—'
+            };
+
+            // If API doesn't provide sender in get_batch, we can use a small trick or local fetch
+            // But for consistency let's ensure it's there. 
+            // Currently let's use the modal
+            $('#printAddressModal').modal('show');
+            $('#btnPrintLabel').off('click').on('click', function () {
+                printAddressLabel(printData);
+            });
+            $('#btnEditCustomerInPrint').off('click').on('click', function () {
+                $('#printAddressModal').modal('hide');
+                editCustomerDetails(d.customer_id);
+            });
+        }, 'json');
+    }
+
+    function printAddressLabel(data) {
+        var printWindow = window.open('', '_blank');
+        var html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Adres Etiketi - ${data.customer_name}</title>
+            <style>
+                @page { size: A4; margin: 0; }
+                body { 
+                    font-family: 'Arial', sans-serif; 
+                    margin: 0; 
+                    padding: 80px;
+                    display: flex;
+                    flex-direction: column;
+                    height: 100vh;
+                    box-sizing: border-box;
+                    color: #000;
+                    letter-spacing: -0.5px;
+                    text-align: center;
+                }
+                .section { margin-bottom: 20px; }
+                .label { font-size: 26px; font-weight: bold; border-bottom: 5px solid #000; display: inline-block; margin-bottom: 10px; letter-spacing: 2px; }
+                
+                .sender-box { border-bottom: 6px double #000; padding-bottom: 20px; }
+                .sender-content { font-size: 30px; line-height: 1.3; font-weight: bold; }
+                
+                .receiver-box { flex-grow: 1; padding-top: 20px; }
+                .customer-address { font-size: 42px; font-weight: 700; line-height: 1.2; text-transform: uppercase; }
+                .customer-phone { font-size: 38px; font-weight: bold; margin-top: 20px; }
+                
+                .warning-box { 
+                    text-align: center; 
+                    border: 20px solid #ff0000; 
+                    padding: 50px; 
+                    color: #ff0000;
+                    margin-top: auto;
+                    border-radius: 25px;
+                }
+                .warning-text { 
+                    font-size: 80px; 
+                    font-weight: 950; 
+                    line-height: 1;
+                    text-transform: uppercase;
+                }
+                .warning-sub {
+                    font-size: 50px;
+                    font-weight: 800;
+                    margin-top: 25px;
+                    text-transform: uppercase;
+                }
+            </style>
+        </head>
+        <body onload="window.print(); setTimeout(function(){ window.close(); }, 500);">
+            <div class="section sender-box">
+                <div class="label">GÖNDERİCİ:</div>
+                <div class="sender-content" style="white-space: pre-wrap;">${data.sender || '—'}</div>
+            </div>
+            
+            <div class="section receiver-box">
+                <div class="label">ALICI:</div>
+                <div class="customer-address" style="white-space: pre-wrap;">${data.customer_address}</div>
+                <div class="customer-phone">
+                    <strong>TEL:</strong> ${data.customer_phone}
+                </div>
+            </div>
+            
+            <div class="warning-box">
+                <div class="warning-text">DİKKATLİ TAŞIYINIZ</div>
+                <div class="warning-sub">ÜZERİNE AĞIR YÜK KOYMAYINIZ</div>
+            </div>
+        </body>
+        </html>
+        `;
+
+        printWindow.document.write(html);
+        printWindow.document.close();
+    }
+
+    function editCustomerDetails(id) {
+        if(!id || id == 'null') return showError('Müşteri ID bulunamadı.');
+        $.get('<?= BASE_URL ?>/api/customers.php', { action: 'get', id: id }, function (r) {
+            if (!r.success) return showError(r.message);
+            var u = r.data;
+            $('#custEditAction').val('edit'); $('#custEditId').val(u.id);
+            $('#custEditForm [name="name"]').val(u.name); $('#custEditForm [name="contact"]').val(u.contact);
+            $('#custEditForm [name="email"]').val(u.email); $('#custEditForm [name="phone"]').val(u.phone);
+            $('#custEditForm [name="address"]').val(u.address);
+            setCustomerStatus(u.is_active);
+            $('#custEditModal').modal('show');
+        }, 'json');
+    }
+
+    function setCustomerStatus(val) {
+        $('#cust_is_active_input').val(val);
+        $('.cust-status-btn-item').removeClass('active-state inactive-state');
+        if (val == 1) {
+            $('#cust_set_active').addClass('active-state');
+        } else {
+            $('#cust_set_inactive').addClass('inactive-state');
+        }
+    }
+
+    function saveCustomerDetails() {
+        var btn = $('#btnSaveCustomer');
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Kaydediliyor...');
+        $.post('<?= BASE_URL ?>/api/customers.php', $('#custEditForm').serialize(), function (r) {
+            btn.prop('disabled', false).html('<i class="fas fa-save me-1"></i> Kaydet');
+            if (r.success) {
+                showSuccess(r.message);
+                $('#custEditModal').modal('hide');
+                load(); // Reload table
+            } else showError(r.message);
+        }, 'json');
+    }
 </script>
+
+<!-- Print Address Modal -->
+<div class="modal fade" id="printAddressModal" tabindex="-1" aria-labelledby="printAddressModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="printAddressModalLabel">Adres Etiketi Yazdır</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Adres etiketini yazdırmak istediğinizden emin misiniz?</p>
+                <p class="text-muted">Bu işlem, alıcı adres bilgilerini içeren bir etiket oluşturacaktır.</p>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-info fw-bold" id="btnEditCustomerInPrint">
+                    <i class="fas fa-edit me-1"></i> Bilgileri Düzenle
+                </button>
+                <div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-primary fw-bold" id="btnPrintLabel">
+                        <i class="fas fa-print me-1"></i> Yazdır
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customer Edit Modal -->
+<div class="modal fade" id="custEditModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header bg-info text-white py-3">
+                <h5 class="modal-title fw-bold"><i class="fas fa-user-edit me-2"></i> Müşteri Düzenle</h5>
+                <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <form id="custEditForm">
+                    <input type="hidden" name="action" id="custEditAction" value="edit">
+                    <input type="hidden" name="id" id="custEditId" value="">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-uppercase">Firma Adı <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control form-control-lg border-0 shadow-sm" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-uppercase">Yetkili Kişi</label>
+                            <input type="text" name="contact" class="form-control form-control-lg border-0 shadow-sm">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-uppercase">E-posta</label>
+                            <input type="email" name="email" class="form-control form-control-lg border-0 shadow-sm">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-uppercase">Telefon</label>
+                            <input type="text" name="phone" class="form-control form-control-lg border-0 shadow-sm">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold small text-uppercase">Adres</label>
+                            <textarea name="address" class="form-control form-control-lg border-0 shadow-sm" rows="3"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-uppercase d-block mb-2">Durum</label>
+                            <input type="hidden" name="is_active" id="cust_is_active_input" value="1">
+                            <div class="status-btn-group w-100">
+                                <button type="button" class="status-btn-item cust-status-btn-item w-50" id="cust_set_active" onclick="setCustomerStatus(1)">
+                                    <i class="fas fa-check-circle me-1"></i> AKTİF
+                                </button>
+                                <button type="button" class="status-btn-item cust-status-btn-item w-50" id="cust_set_inactive" onclick="setCustomerStatus(0)">
+                                    <i class="fas fa-times-circle me-1"></i> PASİF
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 p-4 bg-light">
+                <button type="button" class="btn btn-modal-cancel bg-white border" data-bs-dismiss="modal">Kapat</button>
+                <button type="button" class="btn btn-info btn-lg px-4 fw-bold text-white shadow-sm" id="btnSaveCustomer" onclick="saveCustomerDetails()">
+                    <i class="fas fa-save me-1"></i> Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

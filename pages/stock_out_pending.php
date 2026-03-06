@@ -273,6 +273,102 @@ $warehouses = Database::fetchAll("
     .card-footer .float-end {
         float: none !important;
     }
+
+    /* ───────────────────────────────────────────
+     MOBİL KART GÖRÜNÜMÜ
+  ─────────────────────────────────────────── */
+    @media (max-width: 767.98px) {
+        .orders-table-container {
+            display: none;
+        }
+
+        .mobile-card {
+            background: #fff;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(26, 86, 219, 0.1);
+            border: 1px solid #1a56db;
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+
+        .mobile-card:active {
+            transform: scale(0.98);
+        }
+
+        .mobile-card-header {
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mobile-card-body {
+            padding: 15px;
+        }
+
+        .mobile-card-footer {
+            padding: 10px 15px;
+            border-top: 1px dashed #eee;
+            background: #fff;
+        }
+
+        .mobile-label {
+            font-size: 0.75rem;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .mobile-value {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .mobile-detail-row {
+            padding: 10px;
+            background: #fafafa;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+
+        .card-header .card-tools {
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        /* Modal Footer Buton Düzeni (Mobil) */
+        .modal .modal-footer {
+            flex-direction: column-reverse !important;
+            gap: 10px;
+            padding: 20px;
+        }
+
+        .modal .modal-footer .btn,
+        .modal .modal-footer [id*="Actions"],
+        .modal .modal-footer [id*="Actions"] .btn {
+            width: 100% !important;
+            margin: 0 !important;
+        }
+
+        .modal .modal-footer [id*="Actions"] {
+            display: flex !important;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Ana Onay Butonu Yüksekliği (%50 Artış) */
+        #btnSubmitOut,
+        #btnApprove {
+            padding-top: 15px !important;
+            padding-bottom: 15px !important;
+            font-size: 1.1rem !important;
+        }
+    }
 </style>
 
 <div class="row stock-out-row">
@@ -295,25 +391,31 @@ $warehouses = Database::fetchAll("
                         <i class="fas fa-list-ul me-1"></i> Biten İşlemler</a>
                 </div>
             </div>
-            <div class="card-body p-0 table-responsive">
-                <table class="table table-hover m-0 table-valign-middle orders-table" id="ordersTable">
-                    <thead class="bg-light text-muted small text-uppercase">
-                        <tr>
-                            <th width="100">Sip. #</th>
-                            <th>Müşteri / Muhatap</th>
-                            <th class="num-align">Kalem Sayısı</th>
-                            <th class="num-align">Toplam Tutar</th>
-                            <th>İşlemi Yapan</th>
-                            <th class="num-align">Tarih</th>
-                            <th style="width:80px" class="text-center pe-3">İşlemler</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                        <td colspan="8" class="text-center p-4"><i class="fas fa-spinner fa-spin"></i> Yükleniyor...
-                        </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="card-body p-0">
+                <div class="table-responsive orders-table-container">
+                    <table class="table table-hover m-0 table-valign-middle orders-table" id="ordersTable">
+                        <thead class="bg-light text-muted small text-uppercase">
+                            <tr>
+                                <th width="100">Sip. #</th>
+                                <th>Müşteri / Muhatap</th>
+                                <th class="num-align">Kalem Sayısı</th>
+                                <th class="num-align">Toplam Tutar</th>
+                                <th>İşlemi Yapan</th>
+                                <th class="num-align">Tarih</th>
+                                <th style="width:80px" class="text-center pe-3">İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr>
+                                <td colspan="7" class="text-center p-4"><i class="fas fa-spinner fa-spin"></i>
+                                    Yükleniyor...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="mobileCards" class="d-md-none p-3 bg-light">
+                    <!-- Mobil kartlar buraya gelecek -->
+                </div>
             </div>
             <div class="card-footer clearfix">
                 <div class="float-start">
@@ -444,8 +546,9 @@ $warehouses = Database::fetchAll("
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">Vazgeç</button>
-                <button type="button" class="btn-modal-save" id="btnSubmitOut" disabled>
+                <button type="button" class="btn btn-secondary btn-lg btn-modal-cancel"
+                    data-bs-dismiss="modal">Vazgeç</button>
+                <button type="button" class="btn btn-success btn-lg btn-modal-save" id="btnSubmitOut" disabled>
                     <i class="fas fa-save me-1"></i> <span id="btnSubmitText">Çıkışı Kaydet</span>
                 </button>
             </div>
@@ -468,15 +571,42 @@ $warehouses = Database::fetchAll("
             </div>
             <div class="modal-footer d-flex justify-content-between"
                 style="background: #f8fafd; border-top: 1px solid #e4e9f0;">
-                <div id="approvalActions" style="display:none;">
-                    <button type="button" class="btn btn-success px-4 fw-bold" id="btnApprove">
+                <div id="approvalActions" style="display:none;" class="gap-2">
+                    <button type="button" class="btn btn-success btn-lg px-4 fw-bold" id="btnApprove">
                         <i class="fas fa-check me-1"></i> Onayla
                     </button>
-                    <button type="button" class="btn btn-danger px-4 fw-bold" id="btnReject">
+                    <button type="button" class="btn btn-danger btn-lg px-4 fw-bold" id="btnReject">
                         <i class="fas fa-times me-1"></i> Reddet
                     </button>
                 </div>
-                <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Kapat</button>
+                <button type="button" class="btn btn-secondary btn-lg px-4 fw-bold"
+                    data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Approve Success Modal -->
+<div class="modal fade" id="approveSuccessModal" data-bs-backdrop="static" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 15px; overflow: hidden;">
+            <div class="modal-header bg-success text-white py-3">
+                <h5 class="modal-title fw-bold"><i class="fas fa-check-circle me-2 text-white"></i> İşlem Başarılı</h5>
+            </div>
+            <div class="modal-body text-center p-5">
+                <div class="mb-4">
+                    <i class="fas fa-check-circle text-success fa-5x animate__animated animate__bounceIn"></i>
+                </div>
+                <h3 class="fw-bold text-dark">Sipariş Onaylandı!</h3>
+                <p class="text-muted fs-5">Sipariş başarıyla onaylandı ve stok hareketleri tamamlandı. Şimdi kargo adres
+                    etiketi yazdırabilirsiniz.</p>
+            </div>
+            <div class="modal-footer d-flex flex-column gap-2 p-4 bg-light">
+                <button type="button" class="btn btn-success btn-lg w-100 py-3 fw-bold shadow-sm" id="btnPrintLabel">
+                    <i class="fas fa-print me-2"></i> ADRES ETİKETİ YAZDIR
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-lg w-100 py-3"
+                    data-bs-dismiss="modal">Kapat</button>
             </div>
         </div>
     </div>
@@ -497,8 +627,10 @@ $warehouses = Database::fetchAll("
         $.get(apiUrl, { action: 'list_grouped', page: curPage, per_page: curPerPage, search: curSearch, status: 0 }, function (r) {
             if (!r.success) { showError(r.message); return; }
             var html = '';
+            var mobileHtml = '';
             var baseCurrency = '<?= get_setting('base_currency', 'EUR') ?>';
             $.each(r.data.data, function (i, d) {
+                // Desktop Table Row
                 html += '<tr class="order-row" onclick="toggleDetail(\'' + d.batch_id + '\', this)">' +
                     '<td><span class="badge bg-primary px-2">' + d.order_no + '</span></td>' +
                     '<td><div class="fw-bold text-primary">' + esc(d.customer_name || '—') + '</div></td>' +
@@ -518,8 +650,32 @@ $warehouses = Database::fetchAll("
                     '</div>' +
                     '</td>' +
                     '</tr>';
+
+                // Mobile Card
+                mobileHtml += '<div class="mobile-card shadow-sm">' +
+                    '<div class="mobile-card-header">' +
+                    '<span class="badge bg-primary px-2">#' + d.order_no + '</span>' +
+                    '<span class="text-muted small"><i class="far fa-calendar-alt me-1"></i> ' + d.created_at_fmt + '</span>' +
+                    '</div>' +
+                    '<div class="mobile-card-body" onclick="toggleDetail(\'' + d.batch_id + '\', this)">' +
+                    '<div class="mobile-label">Müşteri / Muhatap</div>' +
+                    '<div class="mobile-value text-primary fs-5">' + esc(d.customer_name || '—') + '</div>' +
+                    '<div class="row">' +
+                    '<div class="col-6"><div class="mobile-label">Kalem</div><div class="mobile-value">' + formatQty(d.item_count) + ' Ürün</div></div>' +
+                    '<div class="col-6"><div class="mobile-label">Toplam</div><div class="mobile-value">' + formatTurkish((parseFloat(d.total_eur) || 0).toFixed(2)) + ' ' + baseCurrency + '</div></div>' +
+                    '</div>' +
+                    '<div class="mobile-label">İşlemi Yapan</div>' +
+                    '<div class="mobile-value small">' + esc(d.created_by_name || '—') + '</div>' +
+                    (d.note ? '<div class="mobile-detail-row text-muted"><i class="fas fa-sticky-note me-1"></i> ' + esc(d.note) + '</div>' : '') +
+                    '<div id="mobile-cont-' + d.batch_id + '" class="mt-2" style="display:none"></div>' +
+                    '</div>' +
+                    '<div class="mobile-card-footer text-center">' +
+                    '<button class="btn btn-success btn-lg w-100 fw-bold" onclick="editBatch(\'' + d.batch_id + '\')"><i class="fas fa-check-circle me-1"></i> Siparişi Onayla ve Kapat</button>' +
+                    '</div>' +
+                    '</div>';
             });
             $('#tableBody').html(html || '<tr><td colspan="7" class="text-center text-muted p-4">Henüz gruplandırılmış kayıt bulunmuyor.</td></tr>');
+            $('#mobileCards').html(mobileHtml || '<div class="text-center text-muted p-4">Henüz gruplandırılmış kayıt bulunmuyor.</div>');
             $('#totalCount').text('Toplam: ' + formatQty(r.data.total) + ' sipariş');
             renderPag(r.data.total);
         }, 'json');
@@ -606,7 +762,20 @@ $warehouses = Database::fetchAll("
                     }
                     if (!confirm('Onaylamak istediğinize emin misiniz?')) return;
                     $.post(apiUrl, { action: 'approve', batch_id: batchId }, function (res) {
-                        if (res.success) { showSuccess(res.message); $('#viewModal').modal('hide'); load(); }
+                        if (res.success) {
+                            $('#viewModal').modal('hide');
+                            load();
+
+                            // Show success modal with print data
+                            if (res.data && res.data.print_data) {
+                                $('#approveSuccessModal').modal('show');
+                                $('#btnPrintLabel').off('click').on('click', function () {
+                                    printAddressLabel(res.data.print_data);
+                                });
+                            } else {
+                                showSuccess(res.message);
+                            }
+                        }
                         else showError(res.message);
                     }, 'json');
                 });
@@ -728,28 +897,46 @@ $warehouses = Database::fetchAll("
 
     function toggleDetail(batchId, el) {
         var row = $(el);
-        var detailRow = $('#detail-' + batchId);
+        var isMobile = row.hasClass('mobile-card-body');
+        var detailRow = isMobile ? $('#mobile-cont-' + batchId) : $('#detail-' + batchId);
 
-        if (detailRow.is(':visible')) {
-            detailRow.hide().removeClass('show-detail');
-            row.removeClass('row-expanded');
+        if (isMobile) {
+            if (detailRow.is(':visible')) {
+                detailRow.slideUp();
+            } else {
+                detailRow.slideDown();
+                loadBatchItems(batchId);
+            }
         } else {
-            row.addClass('row-expanded');
-            detailRow.show().addClass('show-detail');
-            loadBatchItems(batchId);
+            if (detailRow.is(':visible')) {
+                detailRow.hide().removeClass('show-detail');
+                row.removeClass('row-expanded');
+            } else {
+                row.addClass('row-expanded');
+                detailRow.show().addClass('show-detail');
+                loadBatchItems(batchId);
+            }
         }
     }
 
     function loadBatchItems(batchId) {
         var cont = $('#cont-' + batchId);
-        if (cont.data('loaded')) return;
+        var mobileCont = $('#mobile-cont-' + batchId);
+        if (cont.data('loaded') || mobileCont.data('loaded')) return;
 
         var baseCurrency = '<?= get_setting('base_currency', 'EUR') ?>';
         $.get(apiUrl, { action: 'get_batch', batch_id: batchId }, function (r) {
-            if (!r.success) { cont.html('<div class="text-danger">' + r.message + '</div>'); return; }
+            if (!r.success) {
+                var err = '<div class="text-danger">' + r.message + '</div>';
+                cont.html(err);
+                mobileCont.html(err);
+                return;
+            }
 
             var html = '<table class="table table-sm table-bordered m-0 bg-white shadow-sm">' +
                 '<thead class="bg-light"><tr><th>Ürün Adı</th><th class="num-align" style="width:120px">Miktar</th><th class="num-align" style="width:150px">Birim Fiyat</th><th class="num-align" style="width:150px">Toplam</th></tr></thead><tbody>';
+
+            var mobileInnerHtml = '<div class="table-responsive"><table class="table table-sm table-borderless small mb-0"><tbody>';
 
             $.each(r.data.items, function (i, d) {
                 html += '<tr>' +
@@ -758,6 +945,11 @@ $warehouses = Database::fetchAll("
                     '<td class="num-align">' + formatTurkish((parseFloat(d.unit_price) || 0).toFixed(4)) + ' <small>' + baseCurrency + '</small></td>' +
                     '<td class="num-align"><strong>' + formatTurkish((parseFloat(d.total_price) || 0).toFixed(2)) + '</strong> <small>' + baseCurrency + '</small></td>' +
                     '</tr>';
+
+                mobileInnerHtml += '<tr class="border-bottom">' +
+                    '<td>' + esc(d.product_name) + '<br><small class="text-muted">' + formatQty(d.quantity) + ' ' + esc(d.unit) + ' x ' + formatTurkish((parseFloat(d.unit_price) || 0).toFixed(2)) + '</small></td>' +
+                    '<td class="text-end fw-bold align-middle">' + formatTurkish((parseFloat(d.total_price) || 0).toFixed(2)) + '</td>' +
+                    '</tr>';
             });
 
             html += '</tbody>' +
@@ -765,7 +957,11 @@ $warehouses = Database::fetchAll("
                 '<tr><td colspan="3" class="num-align">TOPLAM:</td><td class="num-align">' + formatTurkish((parseFloat(r.data.data_total_eur || 0)).toFixed(2)) + ' ' + baseCurrency + '</td></tr>' +
                 '<tr class=""><td colspan="3" class="num-align text-primary">TL TOPLAM:</td><td class="num-align text-primary">' + (parseFloat(r.data.data_total_eur || 0) * eurExchangeRate).toFixed(2).replace(/\./g, ',') + ' TL</td></tr>' +
                 '</tfoot></table>';
+
+            mobileInnerHtml += '</tbody></table></div>';
+
             cont.html(html).data('loaded', true);
+            mobileCont.html(mobileInnerHtml).data('loaded', true);
         }, 'json');
     }
 
@@ -958,10 +1154,19 @@ $warehouses = Database::fetchAll("
             $.post(apiUrl, data, function (r) {
                 btn.prop('disabled', false).html('<i class="fas fa-save me-1"></i> ' + $('#btnSubmitText').text());
                 if (r.success) {
-                    showSuccess(r.message);
                     $('#addModal').modal('hide');
                     if (typeof updatePendingBadges === 'function') updatePendingBadges();
                     curPage = 1; load();
+
+                    // If it was automatically approved (Admins/Users), show the print modal
+                    if (r.data && r.data.print_data) {
+                        $('#approveSuccessModal').modal('show');
+                        $('#btnPrintLabel').off('click').on('click', function () {
+                            printAddressLabel(r.data.print_data);
+                        });
+                    } else {
+                        showSuccess(r.message);
+                    }
                 } else showError(r.message);
             }, 'json');
         });
@@ -983,4 +1188,83 @@ $warehouses = Database::fetchAll("
             }, 800);
         }
     });
+
+    function printAddressLabel(data) {
+        var printWindow = window.open('', '_blank');
+        var html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Adres Etiketi - ${data.customer_name}</title>
+            <style>
+                @page { size: A4; margin: 0; }
+                body { 
+                    font-family: 'Arial', sans-serif; 
+                    margin: 0; 
+                    padding: 80px;
+                    display: flex;
+                    flex-direction: column;
+                    height: 100vh;
+                    box-sizing: border-box;
+                    color: #000;
+                    letter-spacing: -0.5px;
+                    text-align: center;
+                }
+                .section { margin-bottom: 20px; }
+                .label { font-size: 26px; font-weight: bold; border-bottom: 5px solid #000; display: inline-block; margin-bottom: 10px; letter-spacing: 2px; }
+                
+                .sender-box { border-bottom: 6px double #000; padding-bottom: 20px; }
+                .sender-content { font-size: 30px; line-height: 1.3; font-weight: bold; }
+                
+                .receiver-box { flex-grow: 1; padding-top: 20px; }
+                .customer-address { font-size: 42px; font-weight: 700; line-height: 1.2; text-transform: uppercase; }
+                .customer-phone { font-size: 38px; font-weight: bold; margin-top: 20px; }
+                
+                .warning-box { 
+                    text-align: center; 
+                    border: 20px solid #ff0000; 
+                    padding: 50px; 
+                    color: #ff0000;
+                    margin-top: auto;
+                    border-radius: 25px;
+                }
+                .warning-text { 
+                    font-size: 80px; 
+                    font-weight: 950; 
+                    line-height: 1;
+                    text-transform: uppercase;
+                }
+                .warning-sub {
+                    font-size: 50px;
+                    font-weight: 800;
+                    margin-top: 25px;
+                    text-transform: uppercase;
+                }
+            </style>
+        </head>
+        <body onload="window.print(); setTimeout(function(){ window.close(); }, 500);">
+            <div class="section sender-box">
+                <div class="label">GÖNDERİCİ:</div>
+                <div class="sender-content" style="white-space: pre-wrap;">${data.sender || '—'}</div>
+            </div>
+            
+            <div class="section receiver-box">
+                <div class="label">ALICI:</div>
+                <div class="customer-address" style="white-space: pre-wrap;">${data.customer_address}</div>
+                <div class="customer-phone">
+                    <strong>TEL:</strong> ${data.customer_phone}
+                </div>
+            </div>
+            
+            <div class="warning-box">
+                <div class="warning-text">DİKKATLİ TAŞIYINIZ</div>
+                <div class="warning-sub">ÜZERİNE AĞIR YÜK KOYMAYINIZ</div>
+            </div>
+        </body>
+        </html>
+        `;
+        
+        printWindow.document.write(html);
+        printWindow.document.close();
+    }
 </script>

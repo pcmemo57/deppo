@@ -508,6 +508,16 @@ $googleFontList = [
                                         </div>
                                     </div>
                                     <div class="mb-3">
+                                        <label class="form-label">Kargo Gönderici Bilgisi</label>
+                                        <div class="input-icon-wrap">
+                                            <i class="fas fa-truck field-icon"></i>
+                                            <textarea name="kargo_gonderici" class="form-control" rows="3"
+                                                placeholder="Adres etiketinde görünecek gönderici bilgisi..."><?= e(get_setting('kargo_gonderici', '')) ?></textarea>
+                                        </div>
+                                        <small class="text-muted">Adres etiketi yazdırılırken en üstte "GÖNDERİCİ"
+                                            olarak bu bilgi yazılır.</small>
+                                    </div>
+                                    <div class="mb-3">
                                         <div class="form-check form-switch p-0" style="padding-left: 2.5em !important;">
                                             <input type="hidden" name="allow_passive_with_stock" value="0">
                                             <input class="form-check-input" type="checkbox"

@@ -214,7 +214,20 @@ switch ($action) {
             }
         }
 
-        jsonResponse(true, 'Çıkış kaydedildi.');
+        // Get info for printing if approved
+        $printData = null;
+        if (hasRole(ROLE_ADMIN, ROLE_USER)) {
+            $customer = Database::fetchOne("SELECT name, address, phone, email FROM tbl_dp_customers WHERE id = ?", [$customerId]);
+            $printData = [
+                'sender' => get_setting('kargo_gonderici', ''),
+                'customer_name' => $customer['name'] ?? '—',
+                'customer_address' => $customer['address'] ?? '—',
+                'customer_phone' => $customer['phone'] ?? '—',
+                'customer_email' => $customer['email'] ?? '—'
+            ];
+        }
+
+        jsonResponse(true, 'Çıkış kaydedildi.', ['print_data' => $printData]);
 
     case 'save_batch':
         $batchId = sanitize($_POST['batch_id'] ?? '');
@@ -285,7 +298,21 @@ switch ($action) {
                 );
             }
             Database::commit();
-            jsonResponse(true, 'Sipariş başarıyla güncellendi.');
+
+            // Get info for printing if approved
+            $printData = null;
+            if (hasRole(ROLE_ADMIN, ROLE_USER)) {
+                $customer = Database::fetchOne("SELECT name, address, phone, email FROM tbl_dp_customers WHERE id = ?", [$customerId]);
+                $printData = [
+                    'sender' => get_setting('kargo_gonderici', ''),
+                    'customer_name' => $customer['name'] ?? '—',
+                    'customer_address' => $customer['address'] ?? '—',
+                    'customer_phone' => $customer['phone'] ?? '—',
+                    'customer_email' => $customer['email'] ?? '—'
+                ];
+            }
+
+            jsonResponse(true, 'Sipariş başarıyla güncellendi.', ['print_data' => $printData]);
         } catch (Exception $e) {
             Database::rollBack();
             jsonResponse(false, 'Güncelleme sırasında bir hata oluştu: ' . $e->getMessage());
@@ -339,7 +366,25 @@ switch ($action) {
         if (!$batchId)
             jsonResponse(false, 'Batch ID eksik.');
         Database::execute("UPDATE tbl_dp_stock_out SET status=1 WHERE batch_id=?", [$batchId]);
-        jsonResponse(true, 'Kayıt onaylandı.');
+
+        // Get info for printing
+        $info = Database::fetchOne(
+            "SELECT c.name as customer_name, c.address, c.phone, c.email
+             FROM tbl_dp_stock_out so
+             LEFT JOIN tbl_dp_customers c ON c.id = so.customer_id
+             WHERE so.batch_id = ? LIMIT 1",
+            [$batchId]
+        );
+
+        jsonResponse(true, 'Kayıt onaylandı.', [
+            'print_data' => [
+                'sender' => get_setting('kargo_gonderici', ''),
+                'customer_name' => $info['customer_name'] ?? '—',
+                'customer_address' => $info['address'] ?? '—',
+                'customer_phone' => $info['phone'] ?? '—',
+                'customer_email' => $info['email'] ?? '—'
+            ]
+        ]);
 
     case 'reject':
         requireRole(ROLE_ADMIN, ROLE_USER);
@@ -501,7 +546,7 @@ switch ($action) {
         )['c'] ?? 0;
 
         $rows = Database::fetchAll(
-            "SELECT so.batch_id, so.order_no, c.name AS customer_name, w.name AS warehouse_name,
+            "SELECT so.batch_id, so.order_no, MAX(so.customer_id) AS customer_id, c.name AS customer_name, w.name AS warehouse_name,
                     COUNT(so.id) AS item_count, SUM(so.total_price) AS total_eur,
                     MAX(so.created_at) AS created_at, so.note, MAX(so.created_by_name) AS created_by_name
              FROM tbl_dp_stock_out so
@@ -543,7 +588,8 @@ switch ($action) {
 
         $items = Database::fetchAll(
             "SELECT so.*, p.name AS product_name, p.unit, w.name AS warehouse_name,
-                    c.name AS customer_name, r.name AS requester_name, r.surname AS requester_surname
+                    c.name AS customer_name, c.address AS customer_address, c.phone AS customer_phone,
+                    r.name AS requester_name, r.surname AS requester_surname
              FROM tbl_dp_stock_out so
              JOIN tbl_dp_products p ON p.id=so.product_id
              LEFT JOIN tbl_dp_warehouses w ON w.id=so.warehouse_id
@@ -555,12 +601,21 @@ switch ($action) {
         $totalBase = 0;
         foreach ($items as &$item) {
             $item['total_price_orig'] = $item['total_price'];
-            $item['unit_price_orig'] = $item['unit_price']; // Added this line
+            $item['unit_price_orig'] = $item['unit_price'];
             $item['total_price'] = toBaseCurrencyDisplay($item['total_price'], $item['currency'] ?: 'EUR');
             $item['unit_price'] = toBaseCurrencyDisplay($item['unit_price'], $item['currency'] ?: 'EUR');
             $totalBase += (float) $item['total_price'];
         }
-        jsonResponse(true, '', ['items' => $items, 'data_total_eur' => $totalBase]);
+        $first = $items[0] ?? null;
+        jsonResponse(true, '', [
+            'items' => $items,
+            'data_total_eur' => $totalBase,
+            'sender_info' => get_setting('kargo_gonderici', ''),
+            'customer_id' => $first['customer_id'] ?? null,
+            'customer_name' => $first['customer_name'] ?? '—',
+            'customer_address' => $first['customer_address'] ?? '—',
+            'customer_phone' => $first['customer_phone'] ?? '—'
+        ]);
 
     case 'export_excel':
         $search = sanitize($_GET['search'] ?? '');
