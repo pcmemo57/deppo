@@ -466,6 +466,8 @@ $googleFontList = [
                                                         <option value="EUR" <?= get_setting('base_currency', 'EUR') === 'EUR' ? 'selected' : '' ?>>EUR (Euro)</option>
                                                         <option value="USD" <?= get_setting('base_currency', 'EUR') === 'USD' ? 'selected' : '' ?>>USD (Amerikan Doları)
                                                         </option>
+                                                        <option value="TRY" <?= get_setting('base_currency', 'EUR') === 'TRY' ? 'selected' : '' ?>>TRY (Türk Lirası)
+                                                        </option>
                                                     </select>
                                                 </div>
                                                 <small class="text-muted">Tüm hesaplamalar ve görüntülenecek ana birim
