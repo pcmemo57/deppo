@@ -101,13 +101,20 @@ switch ($action) {
 
     // Aktif depo listesi (dropdown için)
     case 'active_list':
+        $where = "w.hidden=0 AND w.is_active=1";
+        $params = [];
+        $q = sanitize($_GET['search'] ?? $_GET['q'] ?? '');
+        if ($q) {
+            $where .= " AND w.name LIKE ?";
+            $params = ["%$q%"];
+        }
         $rows = Database::fetchAll("
             SELECT w.id, w.name, 
             (SELECT COUNT(*) FROM inventory_sessions WHERE warehouse_id = w.id AND status = 'open') > 0 as is_inventory_open 
             FROM `$table` w 
-            WHERE w.hidden=0 AND w.is_active=1 
+            WHERE $where
             ORDER BY w.name
-        ");
+        ", $params);
         jsonResponse(true, '', $rows);
 
     default:

@@ -137,6 +137,31 @@ $footerText = get_setting('footer_text', '© 2026 Depo Yönetim Sistemi');
         this.setSelectionRange(cursor + (newLen - oldLen), cursor + (newLen - oldLen));
     });
 
+    /**
+     * Telefon Maskeleme (999) 999 99 99
+     * İlk karakter 0 olamaz.
+     */
+    $(document).on('input', '.phone-format', function (e) {
+        var val = $(this).val().replace(/\D/g, '');
+        if (val.startsWith('0')) val = val.substring(1);
+        val = val.substring(0, 10); // Max 10 hane
+
+        var formatted = '';
+        if (val.length > 0) {
+            formatted = '(' + val.substring(0, 3);
+            if (val.length > 3) {
+                formatted += ') ' + val.substring(3, 6);
+                if (val.length > 6) {
+                    formatted += ' ' + val.substring(6, 8);
+                    if (val.length > 8) {
+                        formatted += ' ' + val.substring(8, 10);
+                    }
+                }
+            }
+        }
+        $(this).val(formatted);
+    });
+
     $(document).on('blur', '.price-format', function () {
         var val = $(this).val();
         if (val) $(this).val(formatTurkish(val, 2));

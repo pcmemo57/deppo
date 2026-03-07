@@ -13,6 +13,56 @@ $warehouses = Database::fetchAll("
 ?>
 
 <style>
+  /* Select2 z-index fix for overlapping modals */
+  .select2-container--open {
+    z-index: 1080 !important;
+  }
+
+  /* Modal z-index fixes for nested modals */
+  #quickProductModal,
+  #quickSupplierModal {
+    z-index: 2000 !important;
+  }
+
+
+  #q_cropModal {
+    z-index: 2100 !important;
+  }
+
+  /* Ürün Durum Butonları */
+  .status-btn-group {
+    display: flex;
+    gap: 5px;
+  }
+
+  .status-btn-item {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid #dee2e6;
+    background: #fff;
+    font-size: 12px;
+    font-weight: bold;
+    color: #6c757d;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .status-btn-item.active-state {
+    background: #28a745;
+    color: #fff;
+    border-color: #28a745;
+  }
+
+  .status-btn-item.inactive-state {
+    background: #dc3545;
+    color: #fff;
+    border-color: #dc3545;
+  }
+
   /* ───────────────────────────────────────────
      KART HEADER — araç çubuğu hizalama
   ─────────────────────────────────────────── */
@@ -546,17 +596,21 @@ $warehouses = Database::fetchAll("
                 <select name="warehouse_id" id="warehouseSelect" class="form-select" required>
                   <option value="">— Depo Seçin —</option>
                   <?php foreach ($warehouses as $w): ?>
-                    <option value="<?= e($w['id']) ?>" 
-                      <?= count($warehouses) === 1 && !$w['is_inventory_open'] ? 'selected' : '' ?>
-                      <?= $w['is_inventory_open'] ? 'disabled style="color:red"' : '' ?>>
-                      <?= e($w['name']) ?><?= $w['is_inventory_open'] ? ' (SAYIM DEVAM EDİYOR)' : '' ?>
+                    <option value="<?= e($w['id']) ?>" <?= count($warehouses) === 1 && !$w['is_inventory_open'] ? 'selected' : '' ?>   <?= $w['is_inventory_open'] ? 'disabled style="color:red"' : '' ?>>
+                      <?= e($w['name']) ?>   <?= $w['is_inventory_open'] ? ' (SAYIM DEVAM EDİYOR)' : '' ?>
                     </option>
                   <?php endforeach; ?>
                 </select>
               </div>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Ürün <span class="req">*</span></label>
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label mb-0">Ürün <span class="req">*</span></label>
+                <a href="javascript:void(0)" onclick="openQuickProductModal()"
+                  class="text-primary small fw-bold text-decoration-none">
+                  <i class="fas fa-plus-circle me-1"></i>Yeni Ürün
+                </a>
+              </div>
               <div class="input-icon-wrap">
                 <i class="fas fa-box field-icon"></i>
                 <select name="product_id" id="productSelect" class="form-select" required disabled>
@@ -580,7 +634,13 @@ $warehouses = Database::fetchAll("
               </div>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Tedarikçi</label>
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label mb-0">Tedarikçi</label>
+                <a href="javascript:void(0)" onclick="openQuickSupplierModal()"
+                  class="text-primary small fw-bold text-decoration-none">
+                  <i class="fas fa-plus-circle me-1"></i>Yeni Tedarikçi
+                </a>
+              </div>
               <div class="input-icon-wrap">
                 <i class="fas fa-truck field-icon"></i>
                 <select name="supplier_id" id="supplierSelect" class="form-select" disabled>
@@ -686,14 +746,20 @@ $warehouses = Database::fetchAll("
                   <option value="">— Depo Seçin —</option>
                   <?php foreach ($warehouses as $w): ?>
                     <option value="<?= e($w['id']) ?>" <?= $w['is_inventory_open'] ? 'disabled' : '' ?>>
-                      <?= e($w['name']) ?><?= $w['is_inventory_open'] ? ' (SAYIM DEVAM EDİYOR)' : '' ?>
+                      <?= e($w['name']) ?>   <?= $w['is_inventory_open'] ? ' (SAYIM DEVAM EDİYOR)' : '' ?>
                     </option>
                   <?php endforeach; ?>
                 </select>
               </div>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Ürün <span class="req">*</span></label>
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label mb-0">Ürün <span class="req">*</span></label>
+                <a href="javascript:void(0)" onclick="openQuickProductModal()"
+                  class="text-primary small fw-bold text-decoration-none">
+                  <i class="fas fa-plus-circle me-1"></i>Yeni Ürün
+                </a>
+              </div>
               <div class="input-icon-wrap">
                 <i class="fas fa-box field-icon"></i>
                 <select name="product_id" id="editProduct" class="form-select" required>
@@ -717,7 +783,13 @@ $warehouses = Database::fetchAll("
               </div>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Tedarikçi</label>
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label mb-0">Tedarikçi</label>
+                <a href="javascript:void(0)" onclick="openQuickSupplierModal()"
+                  class="text-primary small fw-bold text-decoration-none">
+                  <i class="fas fa-plus-circle me-1"></i>Yeni Tedarikçi
+                </a>
+              </div>
               <div class="input-icon-wrap">
                 <i class="fas fa-truck field-icon"></i>
                 <select name="supplier_id" id="editSupplier" class="form-select">
@@ -785,6 +857,165 @@ $warehouses = Database::fetchAll("
   </div>
 </div>
 
+
+<!-- Quick Product Add Modal -->
+<div class="modal fade" id="quickProductModal" tabindex="-1" style="z-index: 2000;">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+      <div class="modal-header bg-success text-white py-3">
+        <h5 class="modal-title fw-bold"><i class="fas fa-plus-circle me-2"></i> Yeni Ürün Ekle</h5>
+        <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i
+            class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body p-4 bg-light">
+        <form id="quickProductForm" enctype="multipart/form-data">
+          <input type="hidden" name="action" value="add">
+          <div class="row">
+            <div class="col-md-4 text-center">
+              <div class="mb-2">
+                <img id="q_previewImg" src="<?= BASE_URL ?>/assets/no-image.png" alt="Ürün Resmi"
+                  style="width:150px;height:150px;object-fit:cover;border-radius:10px;border:2px solid #dee2e6;">
+              </div>
+              <label class="form-label fw-bold small text-uppercase">Ürün Resmi</label>
+              <input type="file" name="image" id="q_imageInput" class="form-control" accept="image/*">
+              <small class="text-muted">Maks. 5MB — jpg, png, webp</small>
+            </div>
+            <div class="col-md-8">
+              <div class="row g-3">
+                <div class="col-md-12">
+                  <label class="form-label fw-bold small text-uppercase">Ürün Adı <span
+                      class="text-danger">*</span></label>
+                  <input type="text" name="name" class="form-control form-control-lg border-0 shadow-sm" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold small text-uppercase">Birim</label>
+                  <select name="unit" id="q_unit" class="form-select form-select-lg border-0 shadow-sm">
+                    <option value="Adet">Adet</option>
+                    <option value="Kg">Kg</option>
+                    <option value="Litre">Litre</option>
+                    <option value="Metre">Metre</option>
+                    <option value="Kutu">Kutu</option>
+                    <option value="Paket">Paket</option>
+                    <option value="Ton">Ton</option>
+                    <option value="Set">Set</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold small text-uppercase">Ürün Kodu</label>
+                  <input type="text" name="code" class="form-control form-control-lg border-0 shadow-sm"
+                    placeholder="SKU-001">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold small text-uppercase">Alarm Seviyesi (Stok Az) <i
+                      class="fas fa-bell text-warning ms-1"></i></label>
+                  <input type="number" name="stock_alarm" class="form-control form-control-lg border-0 shadow-sm"
+                    value="0" min="0">
+                </div>
+                <div class="col-md-6 text-start">
+                  <label class="form-label fw-bold small text-uppercase d-block mb-1">Durum</label>
+                  <input type="hidden" name="is_active" id="q_is_active_input" value="1">
+                  <div class="status-btn-group">
+                    <button type="button" class="status-btn-item" id="q_set_active" onclick="setQuickProductStatus(1)">
+                      <i class="fas fa-check-circle me-1"></i> AKTİF
+                    </button>
+                    <button type="button" class="status-btn-item" id="q_set_inactive"
+                      onclick="setQuickProductStatus(0)">
+                      <i class="fas fa-times-circle me-1"></i> PASİF
+                    </button>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <label class="form-label fw-bold small text-uppercase">Açıklama</label>
+                  <textarea name="description" class="form-control form-control-lg border-0 shadow-sm"
+                    rows="3"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer border-0 p-4 bg-light">
+        <button type="button" class="btn-modal-cancel bg-white border" data-bs-dismiss="modal">Vazgeç</button>
+        <button type="button" class="btn btn-success btn-lg px-4 fw-bold text-white shadow-sm" id="btnSaveQuickProduct">
+          <i class="fas fa-save me-1"></i> Ürünü Kaydet
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Image Crop Modal -->
+<div class="modal fade" id="q_cropModal" data-bs-backdrop="static" tabindex="-1" style="z-index: 2010;">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title"><i class="fas fa-crop-alt me-2"></i>Görseli Düzenle</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="img-container" style="max-height: 500px;">
+          <img id="q_cropImage" src="" style="max-width: 100%;">
+        </div>
+      </div>
+      <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+        <button type="button" class="btn btn-primary" id="btnDoQuickProductCrop">
+          <i class="fas fa-check me-1"></i>Kırp ve Uygula
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Supplier Add Modal -->
+<div class="modal fade" id="quickSupplierModal" tabindex="-1" style="z-index: 2000;">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+      <div class="modal-header bg-primary text-white py-3">
+        <h5 class="modal-title fw-bold"><i class="fas fa-plus-circle me-2"></i> Yeni Tedarikçi Ekle</h5>
+        <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i
+            class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body p-4 bg-light">
+        <form id="quickSupplierForm">
+          <input type="hidden" name="action" value="add">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-uppercase">Firma Adı <span
+                  class="text-danger">*</span></label>
+              <input type="text" name="name" class="form-control form-control-lg border-0 shadow-sm" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-uppercase">Yetkili Kişi</label>
+              <input type="text" name="contact" class="form-control form-control-lg border-0 shadow-sm">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-uppercase">E-posta</label>
+              <input type="email" name="email" class="form-control form-control-lg border-0 shadow-sm">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-uppercase">Telefon</label>
+              <input type="text" name="phone" class="form-control form-control-lg border-0 shadow-sm phone-format"
+                placeholder="(5xx) xxx xx xx" maxlength="15">
+            </div>
+            <div class="col-md-12">
+              <label class="form-label fw-bold small text-uppercase">Adres</label>
+              <textarea name="address" class="form-control form-control-lg border-0 shadow-sm" rows="3"></textarea>
+            </div>
+            <input type="hidden" name="is_active" value="1">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer border-0 p-4 bg-light">
+        <button type="button" class="btn-modal-cancel bg-white border" data-bs-dismiss="modal">Vazgeç</button>
+        <button type="button" class="btn btn-primary btn-lg px-4 fw-bold text-white shadow-sm"
+          id="btnSaveQuickSupplier">
+          <i class="fas fa-save me-1"></i> Tedarikçiyi Kaydet
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════════════════════════════════════════
      JAVASCRIPT
@@ -884,7 +1115,7 @@ $warehouses = Database::fetchAll("
     var val = $(this).val();
     var selects = $('#productSelect, #supplierSelect, #currency');
     var others = $('#quantity, #unitPrice, #note');
-    
+
     if (val) {
       selects.prop('disabled', false).trigger('change');
       others.prop('disabled', false);
@@ -1092,5 +1323,165 @@ $warehouses = Database::fetchAll("
   $(document).ready(function () {
     initSelect2();
     load();
+    setupQuickSupplierEvents();
+    setupQuickProductEvents();
   });
+
+  // --- Hızlı Tedarikçi Ekleme Fonksiyonları ---
+  function openQuickSupplierModal() {
+    $('#quickSupplierForm')[0].reset();
+    $('#quickSupplierModal').modal('show');
+  }
+
+  function setupQuickSupplierEvents() {
+    $('#btnSaveQuickSupplier').on('click', function () {
+      var form = $('#quickSupplierForm');
+      if (!form[0].checkValidity()) {
+        form[0].reportValidity();
+        return;
+      }
+
+      var btn = $(this);
+      var originalHtml = btn.html();
+      btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Kaydediliyor...');
+
+      $.post('<?= BASE_URL ?>/api/suppliers.php', form.serialize(), function (r) {
+        btn.prop('disabled', false).html(originalHtml);
+        if (r.success) {
+          showSuccess(r.message);
+          $('#quickSupplierModal').modal('hide');
+
+          // Yeni tedarikçiyi her iki Select2'ye ekle ve seç
+          if (r.data && r.data.id) {
+            var newOption = new Option(r.data.name, r.data.id, true, true);
+            $('#supplierSelect').append(newOption).trigger('change');
+
+            // Düzenleme modalındaki Select2 için de ekle
+            var newOptionEdit = new Option(r.data.name, r.data.id, false, false);
+            $('#editSupplier').append(newOptionEdit).trigger('change');
+          }
+        } else {
+          showError(r.message);
+        }
+      }, 'json').fail(function () {
+        btn.prop('disabled', false).html(originalHtml);
+        showError('Bir hata oluştu.');
+      });
+    });
+  }
+
+  // --- Hızlı Ürün Ekleme Fonksiyonları ---
+  function openQuickProductModal() {
+    $('#quickProductForm')[0].reset();
+    $('#q_previewImg').attr('src', '<?= BASE_URL ?>/assets/no-image.png');
+    setQuickProductStatus(1);
+    q_croppedBlob = null;
+    $('#quickProductModal').modal('show');
+  }
+
+  function setQuickProductStatus(val) {
+    $('#q_is_active_input').val(val);
+    $('.status-btn-item').removeClass('active-state inactive-state');
+    if (val == 1) {
+      $('#q_set_active').addClass('active-state');
+    } else {
+      $('#q_set_inactive').addClass('inactive-state');
+    }
+  }
+
+  var q_cropper;
+  var q_croppedBlob = null;
+
+  $('#q_imageInput').on('change', function () {
+    var file = this.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      $('#q_cropImage').attr('src', e.target.result);
+      $('#q_cropModal').modal('show');
+    };
+    reader.readAsDataURL(file);
+  });
+
+  $('#q_cropModal').on('shown.bs.modal', function () {
+    q_cropper = new Cropper(document.getElementById('q_cropImage'), {
+      aspectRatio: 1,
+      viewMode: 2,
+      autoCropArea: 1,
+    });
+  }).on('hidden.bs.modal', function () {
+    if (q_cropper) {
+      q_cropper.destroy();
+      q_cropper = null;
+    }
+    if (!q_croppedBlob) {
+      $('#q_imageInput').val('');
+    }
+  });
+
+  $('#btnDoQuickProductCrop').on('click', function () {
+    if (!q_cropper) return;
+    var canvas = q_cropper.getCroppedCanvas({ width: 800, height: 800 });
+    canvas.toBlob(function (blob) {
+      q_croppedBlob = blob;
+      var url = URL.createObjectURL(blob);
+      $('#q_previewImg').attr('src', url);
+      $('#q_cropModal').modal('hide');
+    }, 'image/jpeg', 0.9);
+  });
+
+  function setupQuickProductEvents() {
+    $('#btnSaveQuickProduct').on('click', function () {
+      var form = $('#quickProductForm');
+      if (!form[0].checkValidity()) {
+        form[0].reportValidity();
+        return;
+      }
+
+      var btn = $(this);
+      var originalHtml = btn.html();
+      btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Kaydediliyor...');
+
+      var formData = new FormData(form[0]);
+      if (q_croppedBlob) {
+        formData.set('image', q_croppedBlob, 'product.jpg');
+      }
+
+      $.ajax({
+        url: '<?= BASE_URL ?>/api/products.php',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (r) {
+          btn.prop('disabled', false).html(originalHtml);
+          if (r.success) {
+            showSuccess(r.message);
+            $('#quickProductModal').modal('hide');
+            q_croppedBlob = null;
+
+            // Yeni ürünü Select2'ye ekle ve seç
+            if (r.data && r.data.id) {
+              var text = r.data.name + (r.data.code ? ' [' + r.data.code + ']' : '');
+              var newOption = new Option(text, r.data.id, true, true);
+              $(newOption).data('unit', r.data.unit);
+              $('#productSelect').append(newOption).trigger('change');
+
+              var newOptionEdit = new Option(text, r.data.id, false, false);
+              $('#editProduct').append(newOptionEdit).trigger('change.select2');
+
+              $('#unitLabel').text(r.data.unit || 'Adet');
+            }
+          } else {
+            showError(r.message);
+          }
+        },
+        error: function () {
+          btn.prop('disabled', false).html(originalHtml);
+          showError('Bir hata oluştu.');
+        },
+        dataType: 'json'
+      });
+    });
+  }
 </script>

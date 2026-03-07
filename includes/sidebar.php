@@ -121,14 +121,14 @@ $warehouseCount = Database::fetchOne("SELECT COUNT(*) as c FROM tbl_dp_warehouse
                                 <a href="<?= BASE_URL ?>/index.php?page=stock_out_orders"
                                     class="nav-link <?= $currentPage === 'stock_out_orders' ? 'active' : '' ?>">
                                     <i class="far fa-circle nav-icon"></i>
-                                    <p>Depodan Çıkış Listesi</p>
+                                    <p>Depodan Çıkış</p>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a href="<?= BASE_URL ?>/index.php?page=stock_in_list"
                                     class="nav-link <?= $currentPage === 'stock_in_list' ? 'active' : '' ?>">
                                     <i class="far fa-circle nav-icon"></i>
-                                    <p>Giriş Listesi</p>
+                                    <p>Depoya Giriş</p>
                                 </a>
                             </li>
                             <?php if ($warehouseCount > 1): ?>

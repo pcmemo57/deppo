@@ -52,8 +52,8 @@ switch ($action) {
                 jsonResponse(false, 'Bu e-posta adresi zaten bir müşteri tarafından kullanılıyor.');
         }
 
-        Database::insert("INSERT INTO `$table` (name,contact,email,phone,address,is_active) VALUES (?,?,?,?,?,?)", [$name, sanitize($_POST['contact'] ?? ''), $email, sanitize($_POST['phone'] ?? ''), sanitize($_POST['address'] ?? ''), (int) ($_POST['is_active'] ?? 1)]);
-        jsonResponse(true, 'Müşteri eklendi.');
+        $id = Database::insert("INSERT INTO `$table` (name,contact,email,phone,address,is_active) VALUES (?,?,?,?,?,?)", [$name, sanitize($_POST['contact'] ?? ''), $email, sanitize($_POST['phone'] ?? ''), sanitize($_POST['address'] ?? ''), (int) ($_POST['is_active'] ?? 1)]);
+        jsonResponse(true, 'Müşteri eklendi.', ['id' => $id, 'name' => $name]);
     case 'edit':
         requireRole(ROLE_ADMIN, ROLE_USER);
         $id = (int) ($_POST['id'] ?? 0);
@@ -85,7 +85,14 @@ switch ($action) {
         Database::execute("DELETE FROM `$table` WHERE id=?", [$id]);
         jsonResponse(true, 'Müşteri silindi.');
     case 'active_list':
-        $rows = Database::fetchAll("SELECT id,name FROM `$table` WHERE hidden=0 AND is_active=1 ORDER BY name");
+        $where = "hidden=0 AND is_active=1";
+        $params = [];
+        $q = sanitize($_GET['search'] ?? $_GET['q'] ?? '');
+        if ($q) {
+            $where .= " AND name LIKE ?";
+            $params = ["%$q%"];
+        }
+        $rows = Database::fetchAll("SELECT id, name FROM `$table` WHERE $where ORDER BY name ASC", $params);
         jsonResponse(true, '', $rows);
 
     case 'check_email':

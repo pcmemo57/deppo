@@ -48,6 +48,7 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                             <th>Ad</th>
                             <th>Soyad</th>
                             <th>E-posta</th>
+                            <th>Telefon</th>
                             <th>Görev</th>
                             <th style="width:100px">Durum</th>
                             <th style="width:120px" class="text-center pe-3">İşlem</th>
@@ -107,6 +108,12 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
+                                <label class="form-label">Telefon</label>
+                                <input type="text" name="phone" class="form-control phone-format" placeholder="(5xx) xxx xx xx" maxlength="15">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
                                 <label class="form-label">Şifre <span class="text-danger" id="pwd_req">*</span></label>
                                 <input type="password" name="password" class="form-control" placeholder="••••••••">
                                 <small class="text-muted" id="pwd_hint" style="display:none">Değiştirmek istemiyorsanız
@@ -151,7 +158,7 @@ requireRole(ROLE_ADMIN, ROLE_USER);
             var html = '';
             $.each(r.data.data, function (i, u) {
                 html += '<tr><td>' + esc(u.name) + '</td><td>' + esc(u.surname) + '</td>';
-                html += '<td>' + esc(u.email || '—') + '</td><td>' + esc(u.title || '—') + '</td>';
+                html += '<td>' + esc(u.email || '—') + '</td><td>' + esc(u.phone || '—') + '</td><td>' + esc(u.title || '—') + '</td>';
                 html += '<td>' +
                     (u.is_active == 1
                         ? '<span class="status-badge active" onclick="toggleRow(' + u.id + ',1)"><i class="fas fa-check"></i> AKTİF</span>'
@@ -163,7 +170,7 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                 html += '<button class="btn btn-xs btn-danger" onclick="deleteRow(' + u.id + ')"><i class="fas fa-trash"></i></button>';
                 html += '</td></tr>';
             });
-            $('#tableBody').html(html || '<tr><td colspan="6" class="text-center text-muted p-3">Kayıt bulunamadı</td></tr>');
+            $('#tableBody').html(html || '<tr><td colspan="7" class="text-center text-muted p-3">Kayıt bulunamadı</td></tr>');
             $('#totalCount').text('Toplam: ' + formatQty(r.data.total) + ' kayıt');
             renderPag(r.data.total);
         }, 'json');
@@ -188,7 +195,8 @@ requireRole(ROLE_ADMIN, ROLE_USER);
             var u = r.data;
             $('#formAction').val('edit'); $('#formId').val(u.id);
             $('[name="name"]').val(u.name); $('[name="surname"]').val(u.surname);
-            $('[name="email"]').val(u.email); $('[name="title"]').val(u.title);
+            $('[name="email"]').val(u.email); $('[name="phone"]').val(u.phone);
+            $('[name="title"]').val(u.title);
             setStatus(u.is_active);
             $('#modalTitle').text('Talep Eden Düzenle');
             $('#pwd_req').hide(); $('#pwd_hint').show();

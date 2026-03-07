@@ -43,8 +43,8 @@ switch ($action) {
         $name = sanitize($_POST['name'] ?? '');
         if (!$name)
             jsonResponse(false, 'Tedarikçi adı zorunludur.');
-        Database::insert("INSERT INTO `$table` (name,contact,email,phone,address,is_active) VALUES (?,?,?,?,?,?)", [$name, sanitize($_POST['contact'] ?? ''), sanitize($_POST['email'] ?? ''), sanitize($_POST['phone'] ?? ''), sanitize($_POST['address'] ?? ''), (int) ($_POST['is_active'] ?? 1)]);
-        jsonResponse(true, 'Tedarikçi eklendi.');
+        $id = Database::insert("INSERT INTO `$table` (name,contact,email,phone,address,is_active) VALUES (?,?,?,?,?,?)", [$name, sanitize($_POST['contact'] ?? ''), sanitize($_POST['email'] ?? ''), sanitize($_POST['phone'] ?? ''), sanitize($_POST['address'] ?? ''), (int) ($_POST['is_active'] ?? 1)]);
+        jsonResponse(true, 'Tedarikçi eklendi.', ['id' => $id, 'name' => $name]);
     case 'edit':
         $id = (int) ($_POST['id'] ?? 0);
         $name = sanitize($_POST['name'] ?? '');
@@ -66,7 +66,14 @@ switch ($action) {
         Database::execute("DELETE FROM `$table` WHERE id=?", [$id]);
         jsonResponse(true, 'Tedarikçi silindi.');
     case 'active_list':
-        $rows = Database::fetchAll("SELECT id,name FROM `$table` WHERE hidden=0 AND is_active=1 ORDER BY name");
+        $where = "hidden=0 AND is_active=1";
+        $params = [];
+        $q = sanitize($_GET['search'] ?? $_GET['q'] ?? '');
+        if ($q) {
+            $where .= " AND name LIKE ?";
+            $params = ["%$q%"];
+        }
+        $rows = Database::fetchAll("SELECT id, name FROM `$table` WHERE $where ORDER BY name ASC", $params);
         jsonResponse(true, '', $rows);
     default:
         jsonResponse(false, 'Geçersiz işlem.');

@@ -377,7 +377,13 @@ $warehouses = Database::fetchAll("
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Talep Eden <span class="text-danger">*</span></label>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label mb-0">Talep Eden <span class="text-danger">*</span></label>
+                                <a href="javascript:void(0)" onclick="openQuickRequesterModal()"
+                                    class="small text-primary text-decoration-none">
+                                    <i class="fas fa-plus-circle me-1"></i>Yeni Talep Eden
+                                </a>
+                            </div>
                             <div class="input-icon-wrap">
                                 <i class="fas fa-user field-icon"></i>
                                 <select name="requester_id" id="requesterSelect" class="form-select" required
@@ -385,7 +391,13 @@ $warehouses = Database::fetchAll("
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Müşteri <span class="text-danger">*</span></label>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label mb-0">Müşteri <span class="text-danger">*</span></label>
+                                <a href="javascript:void(0)" onclick="openQuickCustomerModal()"
+                                    class="small text-primary text-decoration-none">
+                                    <i class="fas fa-plus-circle me-1"></i>Yeni Müşteri
+                                </a>
+                            </div>
                             <div class="input-icon-wrap">
                                 <i class="fas fa-handshake field-icon"></i>
                                 <select name="customer_id" id="customerSelect" class="form-select" required
@@ -764,6 +776,8 @@ $warehouses = Database::fetchAll("
 
     $(document).ready(function () {
         load();
+        setupQuickAddEvents();
+        setupQuickAddEventsPart2();
         // Select2 Styles & Logic
         $('#warehouseSelect').select2({
             theme: 'bootstrap-5', placeholder: '— Depo Seçin —', width: '100%', dropdownParent: $('#addModal'),
@@ -1032,7 +1046,7 @@ $warehouses = Database::fetchAll("
     }
 
     function editCustomerDetails(id) {
-        if(!id || id == 'null') return showError('Müşteri ID bulunamadı.');
+        if (!id || id == 'null') return showError('Müşteri ID bulunamadı.');
         $.get('<?= BASE_URL ?>/api/customers.php', { action: 'get', id: id }, function (r) {
             if (!r.success) return showError(r.message);
             var u = r.data;
@@ -1067,6 +1081,82 @@ $warehouses = Database::fetchAll("
             } else showError(r.message);
         }, 'json');
     }
+
+    // --- Hızlı Talep Eden Ekleme Fonksiyonları ---
+    function openQuickRequesterModal() {
+        $('#quickRequesterForm')[0].reset();
+        $('#quickRequesterModal').modal('show');
+    }
+
+    // --- Hızlı Ekleme Buton Olay Dinleyicileri ---
+    function setupQuickAddEvents() {
+        $('#btnSaveQuickRequester').on('click', function () {
+            var form = $('#quickRequesterForm');
+            if (!form[0].checkValidity()) {
+                form[0].reportValidity();
+                return;
+            }
+
+            var btn = $(this);
+            var originalHtml = btn.html();
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Kaydediliyor...');
+
+            $.post('<?= BASE_URL ?>/api/requesters.php', form.serialize(), function (r) {
+                btn.prop('disabled', false).html(originalHtml);
+                if (r.success) {
+                    showSuccess(r.message);
+                    $('#quickRequesterModal').modal('hide');
+
+                    // Yeni personeli Select2 dropdown'ına ekle ve seç
+                    if (r.data && r.data.id) {
+                        var newOption = new Option(r.data.name, r.data.id, true, true);
+                        $('#requesterSelect').append(newOption).trigger('change');
+                    }
+                } else {
+                    showError(r.message);
+                }
+            }, 'json').fail(function () {
+                btn.prop('disabled', false).html(originalHtml);
+                showError('Bir hata oluştu.');
+            });
+        });
+
+    }
+
+    // --- Hızlı Müşteri Ekleme Fonksiyonları ---
+    function openQuickCustomerModal() {
+        if ($('#quickCustomerForm').length > 0) {
+            $('#quickCustomerForm')[0].reset();
+        }
+        $('#quickCustomerModal').modal('show');
+    }
+
+    // --- Hızlı Ekleme Buton Olay Dinleyicileri devamı ---
+    function setupQuickAddEventsPart2() { // Aslında setupQuickAddEvents içinde olmalı, ama parça parça düzeltiyoruz.
+
+    $('#btnSaveQuickCustomer').off('click').on('click', function () {
+        var form = $('#quickCustomerForm');
+        if (form.length === 0) return;
+        if (!form[0].checkValidity()) { form[0].reportValidity(); return; }
+        var btn = $(this);
+        var originalHtml = btn.html();
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Kaydediliyor...');
+        $.post('<?= BASE_URL ?>/api/customers.php', form.serialize(), function (r) {
+            btn.prop('disabled', false).html(originalHtml);
+            if (r.success) {
+                showSuccess(r.message);
+                $('#quickCustomerModal').modal('hide');
+                if (r.data && r.data.id) {
+                    var newOption = new Option(r.data.name, r.data.id, true, true);
+                    $('#customerSelect').append(newOption).trigger('change');
+                }
+            } else showError(r.message);
+        }, 'json').fail(function () {
+            btn.prop('disabled', false).html(originalHtml);
+            showError('Bir hata oluştu.');
+        });
+        });
+    }
 </script>
 
 <!-- Print Address Modal -->
@@ -1097,22 +1187,85 @@ $warehouses = Database::fetchAll("
     </div>
 </div>
 
-<!-- Customer Edit Modal -->
-<div class="modal fade" id="custEditModal" tabindex="-1">
+<!-- Quick Requester Add Modal (Hızlı Talep Eden Ekleme) -->
+<div class="modal fade" id="quickRequesterModal" tabindex="-1" style="z-index: 1060;">
     <div class="modal-dialog modal-lg">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
-            <div class="modal-header bg-info text-white py-3">
-                <h5 class="modal-title fw-bold"><i class="fas fa-user-edit me-2"></i> Müşteri Düzenle</h5>
-                <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i class="fas fa-times"></i></button>
+            <div class="modal-header bg-primary text-white py-3">
+                <h5 class="modal-title fw-bold"><i class="fas fa-plus-circle me-2"></i> Yeni Talep Eden Ekle</h5>
+                <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i
+                        class="fas fa-times"></i></button>
             </div>
             <div class="modal-body p-4 bg-light">
-                <form id="custEditForm">
-                    <input type="hidden" name="action" id="custEditAction" value="edit">
-                    <input type="hidden" name="id" id="custEditId" value="">
+                <form id="quickRequesterForm">
+                    <input type="hidden" name="action" value="add">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-bold small text-uppercase">Firma Adı <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control form-control-lg border-0 shadow-sm" required>
+                            <label class="form-label fw-bold small text-uppercase">Ad <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control form-control-lg border-0 shadow-sm"
+                                required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-uppercase">Soyad <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" name="surname" class="form-control form-control-lg border-0 shadow-sm"
+                                required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-uppercase">E-posta</label>
+                            <input type="email" name="email" class="form-control form-control-lg border-0 shadow-sm">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-uppercase">Telefon</label>
+                            <input type="text" name="phone"
+                                class="form-control form-control-lg border-0 shadow-sm phone-format"
+                                placeholder="(5xx) xxx xx xx" maxlength="15">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-uppercase">Ünvan</label>
+                            <input type="text" name="title" class="form-control form-control-lg border-0 shadow-sm">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-uppercase">Şifre <span
+                                    class="text-danger">*</span></label>
+                            <input type="password" name="password"
+                                class="form-control form-control-lg border-0 shadow-sm" required value="123456">
+                            <small class="text-muted">Varsayılan: 123456</small>
+                        </div>
+                        <input type="hidden" name="is_active" value="1">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 p-4 bg-light">
+                <button type="button" class="btn-modal-cancel bg-white border" data-bs-dismiss="modal">Vazgeç</button>
+                <button type="button" class="btn btn-primary btn-lg px-4 fw-bold text-white shadow-sm"
+                    id="btnSaveQuickRequester">
+                    <i class="fas fa-save me-1"></i> Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Customer Add Modal (Hızlı Müşteri Ekleme) -->
+<div class="modal fade" id="quickCustomerModal" tabindex="-1" style="z-index: 1060;">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header bg-warning text-dark py-3">
+                <h5 class="modal-title fw-bold"><i class="fas fa-plus-circle me-2"></i> Yeni Müşteri Ekle</h5>
+                <button type="button" class="btn btn-link text-dark p-0 border-0" data-bs-dismiss="modal"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <form id="quickCustomerForm">
+                    <input type="hidden" name="action" value="add">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-uppercase">Firma Adı <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control form-control-lg border-0 shadow-sm"
+                                required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-uppercase">Yetkili Kişi</label>
@@ -1124,20 +1277,78 @@ $warehouses = Database::fetchAll("
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-uppercase">Telefon</label>
-                            <input type="text" name="phone" class="form-control form-control-lg border-0 shadow-sm">
+                            <input type="text" name="phone"
+                                class="form-control form-control-lg border-0 shadow-sm phone-format"
+                                placeholder="(5xx) xxx xx xx" maxlength="15">
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-bold small text-uppercase">Adres</label>
-                            <textarea name="address" class="form-control form-control-lg border-0 shadow-sm" rows="3"></textarea>
+                            <textarea name="address" class="form-control form-control-lg border-0 shadow-sm"
+                                rows="3"></textarea>
+                        </div>
+                        <input type="hidden" name="is_active" value="1">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 p-4 bg-light">
+                <button type="button" class="btn-modal-cancel bg-white border" data-bs-dismiss="modal">Vazgeç</button>
+                <button type="button" class="btn btn-warning btn-lg px-4 fw-bold text-dark shadow-sm"
+                    id="btnSaveQuickCustomer">
+                    <i class="fas fa-save me-1"></i> Müşteriyi Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="custEditModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header bg-info text-white py-3">
+                <h5 class="modal-title fw-bold"><i class="fas fa-user-edit me-2"></i> Müşteri Düzenle</h5>
+                <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <form id="custEditForm">
+                    <input type="hidden" name="action" id="custEditAction" value="edit">
+                    <input type="hidden" name="id" id="custEditId" value="">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-uppercase">Firma Adı <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control form-control-lg border-0 shadow-sm"
+                                required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-uppercase">Yetkili Kişi</label>
+                            <input type="text" name="contact" class="form-control form-control-lg border-0 shadow-sm">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-uppercase">E-posta</label>
+                            <input type="email" name="email" class="form-control form-control-lg border-0 shadow-sm">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-uppercase">Telefon</label>
+                            <input type="text" name="phone"
+                                class="form-control form-control-lg border-0 shadow-sm phone-format"
+                                placeholder="(5xx) xxx xx xx" maxlength="15">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold small text-uppercase">Adres</label>
+                            <textarea name="address" class="form-control form-control-lg border-0 shadow-sm"
+                                rows="3"></textarea>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-uppercase d-block mb-2">Durum</label>
                             <input type="hidden" name="is_active" id="cust_is_active_input" value="1">
                             <div class="status-btn-group w-100">
-                                <button type="button" class="status-btn-item cust-status-btn-item w-50" id="cust_set_active" onclick="setCustomerStatus(1)">
+                                <button type="button" class="status-btn-item cust-status-btn-item w-50"
+                                    id="cust_set_active" onclick="setCustomerStatus(1)">
                                     <i class="fas fa-check-circle me-1"></i> AKTİF
                                 </button>
-                                <button type="button" class="status-btn-item cust-status-btn-item w-50" id="cust_set_inactive" onclick="setCustomerStatus(0)">
+                                <button type="button" class="status-btn-item cust-status-btn-item w-50"
+                                    id="cust_set_inactive" onclick="setCustomerStatus(0)">
                                     <i class="fas fa-times-circle me-1"></i> PASİF
                                 </button>
                             </div>
@@ -1146,8 +1357,10 @@ $warehouses = Database::fetchAll("
                 </form>
             </div>
             <div class="modal-footer border-0 p-4 bg-light">
-                <button type="button" class="btn btn-modal-cancel bg-white border" data-bs-dismiss="modal">Kapat</button>
-                <button type="button" class="btn btn-info btn-lg px-4 fw-bold text-white shadow-sm" id="btnSaveCustomer" onclick="saveCustomerDetails()">
+                <button type="button" class="btn btn-modal-cancel bg-white border"
+                    data-bs-dismiss="modal">Kapat</button>
+                <button type="button" class="btn btn-info btn-lg px-4 fw-bold text-white shadow-sm" id="btnSaveCustomer"
+                    onclick="saveCustomerDetails()">
                     <i class="fas fa-save me-1"></i> Kaydet
                 </button>
             </div>

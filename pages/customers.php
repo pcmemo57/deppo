@@ -95,7 +95,7 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3"><label class="form-label">Telefon</label><input type="text" name="phone"
-                                    class="form-control"></div>
+                                    class="form-control phone-format" placeholder="(5xx) xxx xx xx" maxlength="15"></div>
                         </div>
                         <div class="col-md-12">
                             <div class="mb-3"><label class="form-label">Adres</label><textarea name="address"

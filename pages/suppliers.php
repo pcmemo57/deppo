@@ -298,7 +298,7 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                             <label class="form-label">Telefon</label>
                             <div class="input-icon-wrap">
                                 <i class="fas fa-phone field-icon"></i>
-                                <input type="text" name="phone" class="form-control" placeholder="05xx xxx xx xx">
+                                <input type="text" name="phone" class="form-control phone-format" placeholder="(5xx) xxx xx xx" maxlength="15">
                             </div>
                         </div>
                         <div class="col-12">

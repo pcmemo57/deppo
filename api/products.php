@@ -66,7 +66,7 @@ switch ($action) {
                 jsonResponse(false, 'Resim yüklenemedi. Desteklenen format: jpg, png, webp. Maks: 5MB');
         }
 
-        Database::insert(
+        $id = Database::insert(
             "INSERT INTO `$table` (name,code,unit,description,image,stock_alarm,is_active) VALUES (?,?,?,?,?,?,?)",
             [
                 $name,
@@ -78,7 +78,12 @@ switch ($action) {
                 (int) ($_POST['is_active'] ?? 1)
             ]
         );
-        jsonResponse(true, 'Ürün eklendi.');
+        jsonResponse(true, 'Ürün eklendi.', [
+            'id' => $id,
+            'name' => $name,
+            'code' => sanitize($_POST['code'] ?? ''),
+            'unit' => sanitize($_POST['unit'] ?? 'Adet')
+        ]);
 
     case 'edit':
         requireRole(ROLE_ADMIN, ROLE_USER);

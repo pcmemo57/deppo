@@ -45,6 +45,7 @@ switch ($action) {
         $name = sanitize($_POST['name'] ?? '');
         $surname = sanitize($_POST['surname'] ?? '');
         $email = sanitize($_POST['email'] ?? '');
+        $phone = sanitize($_POST['phone'] ?? '');
         $password = $_POST['password'] ?? '';
         $title = sanitize($_POST['title'] ?? '');
         $active = (int) ($_POST['is_active'] ?? 1);
@@ -60,17 +61,18 @@ switch ($action) {
 
         $hashed = hashPassword($password);
 
-        Database::insert(
-            "INSERT INTO `$table` (name, surname, email, password, title, is_active) VALUES (?,?,?,?,?,?)",
-            [$name, $surname, $email, $hashed, $title, $active]
+        $id = Database::insert(
+            "INSERT INTO `$table` (name, surname, email, phone, password, title, is_active) VALUES (?,?,?,?,?,?,?)",
+            [$name, $surname, $email, $phone, $hashed, $title, $active]
         );
-        jsonResponse(true, 'Talep eden eklendi.');
+        jsonResponse(true, 'Talep eden eklendi.', ['id' => $id, 'name' => "$name $surname"]);
 
     case 'edit':
         $id = (int) ($_POST['id'] ?? 0);
         $name = sanitize($_POST['name'] ?? '');
         $surname = sanitize($_POST['surname'] ?? '');
         $email = sanitize($_POST['email'] ?? '');
+        $phone = sanitize($_POST['phone'] ?? '');
         $password = $_POST['password'] ?? '';
         $title = sanitize($_POST['title'] ?? '');
         $active = (int) ($_POST['is_active'] ?? 1);
@@ -84,12 +86,12 @@ switch ($action) {
                 jsonResponse(false, 'Bu e-posta adresi başka bir talep eden tarafından kullanılıyor.');
         }
 
-        $sql = "UPDATE `$table` SET name=?, surname=?, email=?, title=?, is_active=? WHERE id=?";
-        $params = [$name, $surname, $email, $title, $active, $id];
+        $sql = "UPDATE `$table` SET name=?, surname=?, email=?, phone=?, title=?, is_active=? WHERE id=?";
+        $params = [$name, $surname, $email, $phone, $title, $active, $id];
 
         if (!empty($password)) {
-            $sql = "UPDATE `$table` SET name=?, surname=?, email=?, title=?, is_active=?, password=? WHERE id=?";
-            $params = [$name, $surname, $email, $title, $active, hashPassword($password), $id];
+            $sql = "UPDATE `$table` SET name=?, surname=?, email=?, phone=?, title=?, is_active=?, password=? WHERE id=?";
+            $params = [$name, $surname, $email, $phone, $title, $active, hashPassword($password), $id];
         }
 
         Database::execute($sql, $params);
@@ -111,7 +113,14 @@ switch ($action) {
         jsonResponse(true, 'Kayıt silindi.');
 
     case 'active_list':
-        $rows = Database::fetchAll("SELECT id, name, surname FROM `$table` WHERE hidden=0 AND is_active=1 ORDER BY name ASC");
+        $where = "hidden=0 AND is_active=1";
+        $params = [];
+        $q = sanitize($_GET['search'] ?? $_GET['q'] ?? '');
+        if ($q) {
+            $where .= " AND (name LIKE ? OR surname LIKE ?)";
+            $params = ["%$q%", "%$q%"];
+        }
+        $rows = Database::fetchAll("SELECT id, name, surname FROM `$table` WHERE $where ORDER BY name ASC", $params);
         jsonResponse(true, '', $rows);
 
     case 'check_email':
