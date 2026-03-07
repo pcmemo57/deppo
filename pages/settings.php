@@ -785,22 +785,38 @@ $googleFontList = [
     // Form gönderimi (genel fonksiyon)
     function submitSettingsForm(formId) {
         var form = $('#' + formId);
-        var data = form.serializeArray();
+        var formData = new FormData(form[0]);
         // color hex'leri ana alana yaz
         form.find('input[name$="_hex"]').each(function () {
             var n = $(this).attr('name').replace('_hex', '');
-            data = data.filter(function (d) { return d.name !== n; });
-            data.push({ name: n, value: $(this).val() });
+            formData.set(n, $(this).val());
         });
 
-        $.post('<?= BASE_URL ?>/api/settings.php', $.param(data), function (r) {
-            if (r.success) {
-                showSuccess(r.message || 'Kaydedildi!');
-                var activeTab = $('.nav-segmented .nav-link.active').attr('href').replace('#tab-', '');
-                setTimeout(() => location.href = '<?= BASE_URL ?>/index.php?page=settings&tab=' + activeTab, 1200);
+        var btn = form.find('button[type="submit"]');
+        var originalBtnText = btn.html();
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Kaydediliyor...');
+
+        $.ajax({
+            url: '<?= BASE_URL ?>/api/settings.php',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function (r) {
+                btn.prop('disabled', false).html(originalBtnText);
+                if (r.success) {
+                    showSuccess(r.message || 'Kaydedildi!');
+                    var activeTab = $('.nav-segmented .nav-link.active').attr('href').replace('#tab-', '');
+                    setTimeout(() => location.href = '<?= BASE_URL ?>/index.php?page=settings&tab=' + activeTab, 1200);
+                }
+                else showError(r.message || 'Bir hata oluştu.');
+            },
+            error: function () {
+                btn.prop('disabled', false).html(originalBtnText);
+                showError('Bağlantı hatası.');
             }
-            else showError(r.message || 'Bir hata oluştu.');
-        }, 'json').fail(function () { showError('Bağlantı hatası.'); });
+        });
     }
 
     $('#formMail').on('submit', function (e) { e.preventDefault(); submitSettingsForm('formMail'); });

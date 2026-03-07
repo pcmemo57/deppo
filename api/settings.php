@@ -43,6 +43,28 @@ switch ($action) {
                 set_setting($key, sanitize($_POST[$key]));
             }
         }
+
+        // Genel Form ("Kaydet" butonu) üzerinden logo yüklemesi
+        if (isset($_FILES['system_logo_file']) && $_FILES['system_logo_file']['error'] === UPLOAD_ERR_OK) {
+            $file = $_FILES['system_logo_file'];
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (in_array($file['type'], $allowedTypes)) {
+                $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+                $filename = 'logo_' . time() . '.' . $ext;
+                $uploadDir = __DIR__ . '/../uploads/system/';
+                if (!is_dir($uploadDir))
+                    mkdir($uploadDir, 0777, true);
+
+                $oldLogo = get_setting('system_logo');
+                if ($oldLogo && file_exists(__DIR__ . '/../' . $oldLogo))
+                    @unlink(__DIR__ . '/../' . $oldLogo);
+
+                if (move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
+                    set_setting('system_logo', 'uploads/system/' . $filename);
+                }
+            }
+        }
+
         jsonResponse(true, 'Görünüm ayarları kaydedildi.');
 
     case 'save_currency':
