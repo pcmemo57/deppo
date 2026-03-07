@@ -1104,8 +1104,11 @@ $warehouses = Database::fetchAll("
   }
 
   /* ─── Ürün seçilince birimi güncelle ve miktara odaklan ─── */
-  $('#productSelect').on('select2:select', function (e) {
-    $('#unitLabel').text(e.params.data.unit || 'Adet');
+  $('#productSelect').on('select2:select change', function (e) {
+    var unit = $(this).find(':selected').data('unit') || 'Adet';
+    $('#unitLabel').text(unit);
+
+    $('#quantity').prop('disabled', false); // Miktarı aktif et
     $(this).select2('close');
     setTimeout(() => { $('#quantity').focus().select(); }, 50);
   });
@@ -1466,6 +1469,8 @@ $warehouses = Database::fetchAll("
               var newOption = new Option(text, r.data.id, true, true);
               $(newOption).data('unit', r.data.unit);
               $('#productSelect').append(newOption).trigger('change');
+
+              $('#quantity').prop('disabled', false); // Yeni ürün eklendikten sonra miktarı garantili aktif et
 
               var newOptionEdit = new Option(text, r.data.id, false, false);
               $('#editProduct').append(newOptionEdit).trigger('change.select2');
