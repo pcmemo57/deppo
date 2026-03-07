@@ -30,34 +30,96 @@ if ($task === 'clear_data' || $task === 'clear_selective_data') {
     error_log("CRITICAL: Admin ID " . $adminId . " triggered $task task at " . date('Y-m-d H:i:s'));
 }
 
-$scriptPath = __DIR__ . "/../cron/$task.php";
-if (!file_exists($scriptPath)) {
-    jsonResponse(false, 'Görev dosyası bulunamadı.');
+/**
+ * 1. DÖVİZ GÜNCELLEME (update_currency)
+ */
+if ($task === 'update_currency') {
+    // TCMB XML
+    $xml = @simplexml_load_file('https://www.tcmb.gov.tr/kurlar/today.xml');
+    if (!$xml)
+        $xml = @simplexml_load_file('https://www.tcmb.gov.tr/kurlar/' . date('Ym') . '/' . date('dmy') . '.xml');
+
+    if (!$xml)
+        jsonResponse(false, 'TCMB bağlantısı sağlanamadı.');
+
+    $usd = null;
+    $eur = null;
+    foreach ($xml->Currency as $cur) {
+        $code = (string) $cur->attributes()->CurrencyCode;
+        if ($code === 'USD')
+            $usd = (float) $cur->ForexSelling;
+        if ($code === 'EUR')
+            $eur = (float) $cur->ForexSelling;
+    }
+    if (!$usd || !$eur)
+        jsonResponse(false, 'Kur verisi alınamadı.');
+
+    set_setting('usd_rate', (string) $usd);
+    set_setting('eur_rate', (string) $eur);
+    set_setting('currency_updated', date('Y-m-d H:i:s'));
+
+    jsonResponse(true, 'Kurlar başarıyla güncellendi.');
 }
 
-// Prepare arguments if any
-$args = '';
-if ($task === 'clear_selective_data') {
-    $categories = $_POST['categories'] ?? '[]';
-    $args = escapeshellarg($categories);
+/**
+ * 2. EMANET HATIRLATMA (entrusted_reminder)
+ */
+if ($task === 'entrusted_reminder') {
+    jsonResponse(false, 'Emanet hatırlatma için doğrudan cron kullanılması önerilir.');
 }
 
-// PHP komutunu çalıştır
-$command = "php " . escapeshellarg($scriptPath) . " $args 2>&1";
-$output = [];
-$return_var = 0;
+/**
+ * 3. SEÇMELİ VERİ SİLME (clear_selective_data)
+ */
+if ($task === 'clear_selective_data' || $task === 'clear_data') {
+    $category_map = [
+        'stock_in' => ['tbl_dp_stock_in'],
+        'stock_out' => ['tbl_dp_stock_out'],
+        'entrusted' => ['tbl_dp_entrusted', 'tbl_dp_entrusted_actions'],
+        'transfers' => ['tbl_dp_transfers', 'tbl_dp_transfer_items'],
+        'products' => ['tbl_dp_products'],
+        'customers' => ['tbl_dp_customers'],
+        'suppliers' => ['tbl_dp_suppliers'],
+        'requesters' => ['tbl_dp_requesters'],
+        'warehouses' => ['tbl_dp_warehouses']
+    ];
 
-exec($command, $output, $return_var);
+    $selected_categories = [];
+    if ($task === 'clear_data') {
+        $selected_categories = array_keys($category_map);
+    } else {
+        $categories_raw = $_POST['categories'] ?? '[]';
+        $selected_categories = json_decode($categories_raw, true);
+    }
 
-$output_str = implode("\n", $output);
+    if (empty($selected_categories) || !is_array($selected_categories)) {
+        jsonResponse(false, 'Hata: Silinmek üzere hiçbir kategori seçilmedi.');
+    }
 
-if ($return_var === 0) {
-    jsonResponse(true, 'Görev başarıyla tamamlandı.', [
-        'output' => $output_str
-    ]);
-} else {
-    jsonResponse(false, 'Görev çalıştırılırken bir hata oluştu.', [
-        'output' => $output_str,
-        'return_code' => $return_var
-    ]);
+    try {
+        $db = Database::getInstance();
+        $db->exec("SET FOREIGN_KEY_CHECKS = 0");
+
+        $cleared_tables = [];
+        foreach ($selected_categories as $cat) {
+            if (isset($category_map[$cat])) {
+                foreach ($category_map[$cat] as $table) {
+                    $db->exec("TRUNCATE TABLE `$table`");
+                    $cleared_tables[] = $table;
+                }
+            }
+        }
+
+        $db->exec("SET FOREIGN_KEY_CHECKS = 1");
+
+        $clearedCount = count(array_unique($cleared_tables));
+        jsonResponse(true, "Başarılı! Toplam $clearedCount tablo temizlendi.", [
+            'cleared_tables' => array_unique($cleared_tables)
+        ]);
+
+    } catch (Exception $e) {
+        jsonResponse(false, 'Veritabanı silme hatası: ' . $e->getMessage());
+    }
 }
+
+jsonResponse(false, 'Bilinmeyen bir görev.');
