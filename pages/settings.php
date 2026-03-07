@@ -576,10 +576,49 @@ $googleFontList = [
                     <!-- ═══════════ VERİ YÖNETİMİ ═══════════ -->
                     <div class="tab-pane fade <?= $activeTab === 'data-mgmt' ? 'show active' : '' ?>"
                         id="tab-data-mgmt">
+                        <div class="card card-outline card-primary mb-4">
+                            <div class="card-header">
+                                <h6 class="m-0 text-primary fw-bold"><i class="fas fa-file-excel me-1"></i>
+                                    Toplu Veri İçe Aktar (Excel)</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row align-items-center mb-3">
+                                    <div class="col-md-5">
+                                        <label class="form-label">Aktarılacak Tablo Türü</label>
+                                        <select id="importType" class="form-select select2-simple">
+                                            <option value="products">Ürünler</option>
+                                            <option value="customers">Müşteriler</option>
+                                            <option value="suppliers">Tedarikçiler</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-7 text-md-end mt-3 mt-md-0 pt-md-4">
+                                        <button type="button" class="btn btn-outline-success"
+                                            onclick="downloadImportTemplate()">
+                                            <i class="fas fa-download me-1"></i> Örnek Şablonu İndir
+                                        </button>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <label class="form-label">Excel Dosyası (.xlsx)</label>
+                                        <input class="form-control" type="file" id="importFile" accept=".xlsx, .xls">
+                                        <div class="small text-muted mt-1">Önce yukarıdan şablonu indirin, doldurup
+                                            buraya yükleyin.</div>
+                                    </div>
+                                    <div class="col-md-4 text-md-end mt-3 mt-md-0 pt-md-4">
+                                        <button type="button" class="btn btn-primary w-100" id="btnImportData">
+                                            <i class="fas fa-upload me-1"></i> İçe Aktar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="card card-outline card-danger">
                             <div class="card-header">
                                 <h6 class="m-0 text-danger text-bold"><i class="fas fa-exclamation-triangle me-1"></i>
-                                    Kritik Bölge</h6>
+                                    Sistem Verilerini Sıfırla (Kritik Bölge)</h6>
                             </div>
                             <div class="card-body">
                                 <div class="alert alert-warning border-left-warning shadow-sm">
@@ -1037,5 +1076,125 @@ $googleFontList = [
     // Tab açıldığında yedekleri yükle
     $('a[href="#tab-backup"]').on('shown.bs.tab', function (e) {
         loadBackups();
+    });
+
+    // ═══════════ EXCEL İÇE AKTAR (IMPORT) İŞLEMLERİ ═══════════
+    function downloadImportTemplate() {
+        var type = $('#importType').val();
+        var wb = XLSX.utils.book_new();
+        var data = [];
+        var sheetName = "";
+        var fileName = "";
+
+        if (type === 'products') {
+            sheetName = "Urunler";
+            fileName = "Ornek_Urun_Sablonu.xlsx";
+            data = [
+                ["Ürün Adı", "Ürün Kodu", "Birim (Adet vb.)", "Açıklama", "Alarm Seviyesi"],
+                ["Örnek Koli Bandı", "BND-001", "Adet", "Şeffaf koli bandı", 50]
+            ];
+        } else if (type === 'customers') {
+            sheetName = "Musteriler";
+            fileName = "Ornek_Musteri_Sablonu.xlsx";
+            data = [
+                ["Ad / Ünvan", "Yetkili Kişi", "E-posta", "Telefon", "Adres"],
+                ["Örnek Yazılım A.Ş.", "Mehmet Yılmaz", "info@ornek.com", "05554443322", "Örnek Mah. Test Sk. No:1"]
+            ];
+        } else if (type === 'suppliers') {
+            sheetName = "Tedarikciler";
+            fileName = "Ornek_Tedarikci_Sablonu.xlsx";
+            data = [
+                ["Ad / Ünvan", "Yetkili Kişi", "E-posta", "Telefon", "Adres"],
+                ["Örnek Kargo Ltd.", "Ayşe Demir", "support@kargo.com", "02123334455", "Kargo Sokak No:2"]
+            ];
+        }
+
+        var ws = XLSX.utils.aoa_to_sheet(data);
+        // Sütun genişlikleri
+        ws['!cols'] = [{ wch: 30 }, { wch: 20 }, { wch: 20 }, { wch: 30 }, { wch: 50 }];
+
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+        XLSX.writeFile(wb, fileName);
+    }
+
+    $('#btnImportData').on('click', function () {
+        var fileInput = document.getElementById('importFile');
+        if (!fileInput.files || fileInput.files.length === 0) {
+            showError("Lütfen önce bir Excel (.xlsx) dosyası seçin.");
+            return;
+        }
+
+        var btn = $(this);
+        var originalBtnText = btn.html();
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Dosya Okunuyor...');
+
+        var file = fileInput.files[0];
+        var reader = new FileReader();
+
+        reader.onload = function (e) {
+            try {
+                var data = new Uint8Array(e.target.result);
+                var workbook = XLSX.read(data, { type: 'array' });
+
+                // İlk sayfayı al
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // JSON formatına çevir (İlk satır başlık kabul edilir)
+                var jsonRows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+                if (jsonRows.length === 0) {
+                    showError("Dosya içi boş görünüyor. Örnek şablona göre doldurun.");
+                    btn.prop('disabled', false).html(originalBtnText);
+                    return;
+                }
+
+                // API'ye gönder
+                btn.html('<i class="fas fa-spinner fa-spin me-1"></i> Sunucuya Kaydediliyor...');
+                var type = $('#importType').val();
+
+                $.post('<?= BASE_URL ?>/api/import.php', {
+                    type: type,
+                    data: JSON.stringify(jsonRows)
+                }, function (r) {
+                    btn.prop('disabled', false).html(originalBtnText);
+
+                    if (r.success) {
+                        var msg = r.message;
+                        if (r.data && r.data.errors && r.data.errors.length > 0) {
+                            msg += "\n\nHatalar:\n" + r.data.errors.slice(0, 10).join("\n");
+                            if (r.data.errors.length > 10) msg += "\n... ve " + (r.data.errors.length - 10) + " hata daha.";
+                            showInfo(msg);
+                            setTimeout(() => { location.reload(); }, 3000);
+                        } else {
+                            showSuccess(msg);
+                            setTimeout(() => { location.reload(); }, 1500);
+                        }
+                    } else {
+                        // Tamamen başarısız
+                        var errorMsg = r.message;
+                        if (r.data && r.data.errors && r.data.errors.length > 0) {
+                            errorMsg += "\n\nHata Detayları:\n" + r.data.errors.slice(0, 10).join("\n");
+                            if (r.data.errors.length > 10) errorMsg += "\n... ve " + (r.data.errors.length - 10) + " hata daha.";
+                        }
+                        showError(errorMsg);
+                    }
+                }, 'json').fail(function () {
+                    btn.prop('disabled', false).html(originalBtnText);
+                    showError("Sunucu bağlantı hatası oluştu.");
+                });
+
+            } catch (ex) {
+                btn.prop('disabled', false).html(originalBtnText);
+                showError("Excel dosyası okunurken hata: " + ex.message);
+            }
+        };
+
+        reader.onerror = function () {
+            btn.prop('disabled', false).html(originalBtnText);
+            showError("Dosya okunurken donanımsal hata oluştu.");
+        };
+
+        reader.readAsArrayBuffer(file);
     });
 </script>
