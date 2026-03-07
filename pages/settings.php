@@ -4,10 +4,10 @@
  */
 requireRole(ROLE_ADMIN);
 
-$activeTab = $_GET['tab'] ?? 'mail';
-$tabs = ['mail', 'appearance', 'pdf', 'currency', 'general', 'data-mgmt', 'backup'];
+$activeTab = $_GET['tab'] ?? 'general';
+$tabs = ['general', 'appearance', 'currency', 'data-mgmt', 'pdf', 'backup', 'mail'];
 if (!in_array($activeTab, $tabs)) {
-    $activeTab = 'mail';
+    $activeTab = 'general';
 }
 
 $googleFontList = [
@@ -117,9 +117,9 @@ $googleFontList = [
             <div class="settings-tabs-wrapper">
                 <ul class="nav nav-tabs nav-segmented" id="settingsTabs" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link <?= $activeTab === 'mail' ? 'active' : '' ?>" data-bs-toggle="tab"
-                            href="#tab-mail">
-                            <i class="fas fa-envelope"></i>Mail Ayarları
+                        <a class="nav-link <?= $activeTab === 'general' ? 'active' : '' ?>" data-bs-toggle="tab"
+                            href="#tab-general">
+                            <i class="fas fa-cog"></i>Genel
                         </a>
                     </li>
                     <li class="nav-item">
@@ -135,15 +135,9 @@ $googleFontList = [
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?= $activeTab === 'general' ? 'active' : '' ?>" data-bs-toggle="tab"
-                            href="#tab-general">
-                            <i class="fas fa-cog"></i>Genel
-                        </a>
-                    </li>
-                    <li class="nav-item">
                         <a class="nav-link tab-danger <?= $activeTab === 'data-mgmt' ? 'active' : '' ?>"
                             data-bs-toggle="tab" href="#tab-data-mgmt">
-                            <i class="fas fa-trash-alt text-danger"></i>Veri Yönetimi
+                            <i class="fas fa-database text-danger"></i>Veri Yönetimi
                         </a>
                     </li>
                     <li class="nav-item">
@@ -155,7 +149,13 @@ $googleFontList = [
                     <li class="nav-item">
                         <a class="nav-link tab-backup <?= $activeTab === 'backup' ? 'active' : '' ?>"
                             data-bs-toggle="tab" href="#tab-backup">
-                            <i class="fas fa-database text-success"></i>Yedekleme
+                            <i class="fas fa-hdd text-success"></i>Yedekleme
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= $activeTab === 'mail' ? 'active' : '' ?>" data-bs-toggle="tab"
+                            href="#tab-mail">
+                            <i class="fas fa-envelope"></i>Mail Ayarları
                         </a>
                     </li>
                 </ul>
