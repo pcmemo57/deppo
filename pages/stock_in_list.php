@@ -1144,6 +1144,7 @@ $warehouses = Database::fetchAll("
   /* ─── Tedarikçi seçilince birim fiyata odaklan ─── */
   $('#supplierSelect').on('select2:select', function () {
     $(this).select2('close');
+    $('#unitPrice, #currency').prop('disabled', false); // Alanları aktif et
     setTimeout(() => { $('#unitPrice').focus().select(); }, 50);
   });
 
@@ -1358,10 +1359,26 @@ $warehouses = Database::fetchAll("
           if (r.data && r.data.id) {
             var newOption = new Option(r.data.name, r.data.id, true, true);
             $('#supplierSelect').append(newOption).trigger('change');
+            $('#supplierSelect').trigger({
+              type: 'select2:select',
+              params: {
+                data: { id: r.data.id, text: r.data.name }
+              }
+            });
 
             // Düzenleme modalındaki Select2 için de ekle
             var newOptionEdit = new Option(r.data.name, r.data.id, false, false);
             $('#editSupplier').append(newOptionEdit).trigger('change');
+            $('#editSupplier').trigger({
+              type: 'select2:select',
+              params: {
+                data: { id: r.data.id, text: r.data.name }
+              }
+            });
+
+            // Fiyat alanlarını garantili aktif et ve odağı taşı
+            $('#unitPrice, #currency').prop('disabled', false);
+            setTimeout(() => { $('#unitPrice').focus().select(); }, 100);
           }
         } else {
           showError(r.message);
