@@ -4,7 +4,7 @@
  */
 
 define('APP_NAME', 'Depo Yönetim Sistemi');
-define('APP_VERSION', '1.2.11');
+define('APP_VERSION', '1.2.12');
 define('ROOT_PATH', dirname(__DIR__));
 define('BASE_URL', '/deppo');
 define('UPLOAD_PATH', ROOT_PATH . '/images/UrunResim/');

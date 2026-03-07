@@ -1100,6 +1100,10 @@ $warehouses = Database::fetchAll("
     /* Modal açıldığında depoya odaklan */
     $('#addStockModal').on('shown.bs.modal', function () {
       $('#warehouseSelect').select2('open');
+      // Eğer depo otomatik seçili ise (tek depo), diğer alanları aktif etmek için tetikle
+      if ($('#warehouseSelect').val()) {
+        $('#warehouseSelect').trigger('change');
+      }
     });
   }
 
@@ -1182,6 +1186,10 @@ $warehouses = Database::fetchAll("
   /* ─── Yeni Giriş Kaydet ─── */
   $('#formStockIn').on('submit', function (e) {
     e.preventDefault();
+    if (!this.checkValidity()) {
+      this.reportValidity();
+      return;
+    }
     $.post(apiUrl, $(this).serialize() + '&action=add', function (r) {
       if (r.success) {
         showSuccess('Stok girişi kaydedildi!');
