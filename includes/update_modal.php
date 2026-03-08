@@ -18,15 +18,15 @@ if (currentUser()['role'] !== ROLE_ADMIN)
                     <i class="fas fa-cloud-download-alt text-primary" style="font-size: 4rem;"></i>
                 </div>
 
-                <div class="alert alert-success border-0 shadow-sm" style="background: #eef2ff;">
-                    <h5 class="mb-1 text-primary">Yeni Bir Sürüm Mevcut!</h5>
-                    <p class="mb-0">Bulunan Sürüm: <strong id="auto-remote-version"></strong></p>
+                <div class="alert border-0 shadow-sm" style="background: #eef2ff; color: #312e81;">
+                    <h5 class="mb-1 font-weight-bold">Yeni Bir Sürüm Mevcut!</h5>
+                    <p class="mb-0">Bulunan Sürüm: <strong id="auto-remote-version" class="text-primary"></strong></p>
                 </div>
 
                 <div class="mb-3 small text-muted">
                     <span>Mevcut Sürüm: <span class="badge bg-secondary">v<?= APP_VERSION ?></span></span>
                     <span class="ms-2">Veritabanı: <span
-                            class="badge bg-info">v<?= e(get_setting('db_version', '1.0.0')) ?></span></span>
+                            class="badge bg-primary">v<?= e(get_setting('db_version', '1.0.0')) ?></span></span>
                 </div>
 
                 <div id="auto-update-status" class="alert alert-info d-none">
