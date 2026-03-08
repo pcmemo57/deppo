@@ -128,12 +128,12 @@ switch ($action) {
                         ";
                     }
 
-                    $subject = "📦 Stok Çıkışı Bilgilendirmesi: " . $batchId;
-                    $warehouseRow = $warehouseId ? "<p style='margin: 0; font-size: 14px;'><strong>Depo:</strong> $warehouseName</p>" : "";
+                    $subject = "📦 Stok Çıkışı Bilgilendirmesi: " . e($batchId);
+                    $warehouseRow = $warehouseId ? "<p style='margin: 0; font-size: 14px;'><strong>Depo:</strong> " . e($warehouseName) . "</p>" : "";
 
                     $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
                     $host = $_SERVER['HTTP_HOST'];
-                    $directUrl = $protocol . '://' . $host . BASE_URL . '/?page=stock_out_pending&batch_id=' . $batchId;
+                    $directUrl = $protocol . '://' . $host . BASE_URL . '/?page=stock_out_pending&batch_id=' . urlencode($batchId);
 
                     $commonHeader = "
                         <div style='background-color: #343a40; color: #ffffff; padding: 20px; text-align: center;'>
@@ -144,9 +144,9 @@ switch ($action) {
                     $commonDetails = "
                         <div style='margin: 20px 0; padding: 15px; background-color: #f8fafc; border-left: 4px solid #3b82f6;'>
                             $warehouseRow
-                            <p style='margin: 5px 0 0 0; font-size: 14px;'><strong>Müşteri:</strong> $customerName</p>
-                            <p style='margin: 5px 0 0 0; font-size: 14px;'><strong>Sipariş No:</strong> $orderNo</p>
-                            <p style='margin: 5px 0 0 0; font-size: 14px;'><strong>Not:</strong> " . ($note ?: '—') . "</p>
+                            <p style='margin: 5px 0 0 0; font-size: 14px;'><strong>Müşteri:</strong> " . e($customerName) . "</p>
+                            <p style='margin: 5px 0 0 0; font-size: 14px;'><strong>Sipariş No:</strong> " . e($orderNo) . "</p>
+                            <p style='margin: 5px 0 0 0; font-size: 14px;'><strong>Not:</strong> " . ($note ? e($note) : '—') . "</p>
                         </div>
                         <table style='width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px;'>
                             <thead>

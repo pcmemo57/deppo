@@ -17,10 +17,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $action = sanitize($_POST['action'] ?? $_GET['action'] ?? '');
 $table = 'tbl_dp_suppliers';
-$page = max(1, (int) ($_GET['page'] ?? 1));
-$perPage = min(100, max(5, (int) ($_GET['per_page'] ?? 10)));
+$page = (int) max(1, (int) ($_GET['page'] ?? 1));
+$perPage = (int) min(100, max(5, (int) ($_GET['per_page'] ?? 10)));
 $search = sanitize($_GET['search'] ?? '');
-$offset = ($page - 1) * $perPage;
+$offset = (int) (($page - 1) * $perPage);
 
 switch ($action) {
     case 'list':

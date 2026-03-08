@@ -42,15 +42,25 @@ $entrustedList = Database::fetchAll(
       ORDER BY e.created_at DESC"
 );
 
-// Stok Alarmı (Kritik Seviye Altındakiler)
+// Stok Alarmı (Kritik Seviye Altındakiler) - JOIN ile optimize edildi
 $lowStockProducts = Database::fetchAll("
     SELECT p.id, p.name, p.code, p.unit, p.image, p.stock_alarm, p.procurement_status, p.procurement_note,
-           (SELECT COALESCE(SUM(quantity), 0) FROM tbl_dp_stock_in WHERE product_id = p.id AND is_active = 1) -
-           (SELECT COALESCE(SUM(quantity), 0) FROM tbl_dp_stock_out WHERE product_id = p.id) AS current_stock
+           (COALESCE(si.total_in, 0) - COALESCE(so.total_out, 0)) AS current_stock
     FROM tbl_dp_products p
+    INNER JOIN (
+        SELECT product_id, SUM(quantity) as total_in 
+        FROM tbl_dp_stock_in 
+        WHERE is_active = 1 
+        GROUP BY product_id
+    ) si ON si.product_id = p.id
+    LEFT JOIN (
+        SELECT product_id, SUM(quantity) as total_out 
+        FROM tbl_dp_stock_out 
+        WHERE status = 1
+        GROUP BY product_id
+    ) so ON so.product_id = p.id
     WHERE p.hidden = 0 AND p.is_active = 1 AND p.stock_alarm > 0
-      AND EXISTS (SELECT 1 FROM tbl_dp_stock_in si WHERE si.product_id = p.id)
-    HAVING current_stock < p.stock_alarm
+    HAVING current_stock < stock_alarm
     ORDER BY current_stock ASC
 ");
 

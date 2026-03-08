@@ -10,6 +10,7 @@ require_once __DIR__ . '/database.php';
 ini_set('session.cookie_httponly', 1);
 ini_set('session.use_strict_mode', 1);
 ini_set('session.cookie_samesite', 'Strict');
+ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 1 : 0);
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -26,7 +27,7 @@ function isLoggedIn(): bool
 /**
  * Rol kontrolü
  */
-function hasRole(string...$roles): bool
+function hasRole(string ...$roles): bool
 {
     return in_array($_SESSION['dp_role'] ?? '', $roles, true);
 }
@@ -45,7 +46,7 @@ function requireLogin(): void
 /**
  * Belirli rol gerektiren sayfa
  */
-function requireRole(string...$roles): void
+function requireRole(string ...$roles): void
 {
     requireLogin();
     if (!hasRole(...$roles)) {
