@@ -1,12 +1,21 @@
 <?php
 // Hata ayıklama: Herhangi bir çıktının JSON'ı bozmasını engelle
 ob_start();
-error_reporting(0);
+error_reporting(E_ALL);
 ini_set('display_errors', 0);
 
 // Zaman aşımını engelle - Windows/XAMPP yavaş olabilir
 set_time_limit(600);
 ignore_user_abort(true);
+
+function update_log($msg)
+{
+    $log_file = dirname(__DIR__) . '/update_debug.log';
+    $date = date('Y-m-d H:i:s');
+    @file_put_contents($log_file, "[$date] $msg\n", FILE_APPEND);
+}
+
+update_log("--- GÜNCELLEME İŞLEMİ BAŞLATILDI ---");
 
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/session.php';
@@ -39,6 +48,9 @@ if ($force) {
 } else {
     $command = 'git pull origin main 2>&1';
 }
+
+// Git'in terminalden input beklemesini engelle
+putenv('GIT_TERMINAL_PROMPT=0');
 
 $output = [];
 $return_var = 0;
