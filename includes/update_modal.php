@@ -22,10 +22,11 @@ if (currentUser()['role'] !== ROLE_ADMIN)
                     <h5 class="mb-1 text-primary">Yeni Bir Sürüm Mevcut!</h5>
                     <p class="mb-0">Bulunan Sürüm: <strong id="auto-remote-version"></strong></p>
                 </div>
-                
+
                 <div class="mb-3 small text-muted">
                     <span>Mevcut Sürüm: <span class="badge bg-secondary">v<?= APP_VERSION ?></span></span>
-                    <span class="ms-2">Veritabanı: <span class="badge bg-info">v<?= e(get_setting('db_version', '1.0.0')) ?></span></span>
+                    <span class="ms-2">Veritabanı: <span
+                            class="badge bg-info">v<?= e(get_setting('db_version', '1.0.0')) ?></span></span>
                 </div>
 
                 <div id="auto-update-status" class="alert alert-info d-none">
@@ -35,6 +36,9 @@ if (currentUser()['role'] !== ROLE_ADMIN)
                 <div id="auto-update-log-container" class="mt-3 d-none">
                     <pre id="auto-update-log" class="p-2 bg-dark text-light small text-start"
                         style="max-height: 150px; overflow-y: auto; border-radius: 5px;"></pre>
+                    <button id="btnAutoForceUpdate" class="btn btn-danger btn-sm w-100 mt-2 d-none">
+                        <i class="fas fa-exclamation-triangle me-1"></i> Çakışmaları Gider ve Zorla Güncelle
+                    </button>
                 </div>
 
                 <div class="form-check mt-3 text-start">

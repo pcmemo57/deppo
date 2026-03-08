@@ -267,12 +267,38 @@ $footerText = get_setting('footer_text', '© 2026 Depo Yönetim Sistemi');
                         setTimeout(() => location.reload(), 3000);
                     } else {
                         btn.prop('disabled', false).html('<i class="fas fa-download me-1"></i> Tekrar Dene');
+
+                        // Çakışma hatası varsa Zorla Güncelle butonu göster
+                        if (r.message.includes('değişiklikler güncellemeye engel oluyor')) {
+                            $('#btnAutoForceUpdate').removeClass('d-none');
+                        }
                         showError(r.message);
                     }
                 }, 'json').fail(function () {
                     $('#auto-update-status').addClass('d-none');
                     btn.prop('disabled', false).html('<i class="fas fa-download me-1"></i> Tekrar Dene');
                     showError('Güncelleme sırasında hata oluştu.');
+                });
+            });
+
+            $('#btnAutoForceUpdate').on('click', function () {
+                confirmAction('Yerel bilgisayardaki tüm dosya değişikliklerini SİLECEK ve buluttaki haliyle eşitleyecektir. Emin misiniz?', function () {
+                    const btn = $('#btnAutoForceUpdate');
+                    btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>...');
+                    $('#auto-update-status').removeClass('d-none');
+
+                    $.get('<?= BASE_URL ?>/api/perform_update.php?force=1', function (r) {
+                        $('#auto-update-status').addClass('d-none');
+                        $('#auto-update-log').text(r.data.output);
+
+                        if (r.success) {
+                            showSuccess('Sistem başarıyla sıfırlandı ve güncellendi!');
+                            setTimeout(() => location.reload(), 3000);
+                        } else {
+                            btn.prop('disabled', false).html('<i class="fas fa-exclamation-triangle me-1"></i> Tekrar Dene');
+                            showError(r.message);
+                        }
+                    }, 'json');
                 });
             });
         });
