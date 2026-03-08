@@ -226,89 +226,90 @@ $footerText = get_setting('footer_text', '© 2026 Depo Yönetim Sistemi');
     setInterval(updatePendingBadges, 60000); // 1 dakikada bir güncelle
 
     // --- Günlük Otomatik Güncelleme Kontrolü ---
-    <?php 
-    if (currentUser()['role'] === ROLE_ADMIN): 
+    <?php
+    if (currentUser()['role'] === ROLE_ADMIN):
         $lastCheck = get_setting('last_update_check');
         $today = date('Y-m-d');
         if ($lastCheck !== $today):
-    ?>
-        $(function () {
-            const ignoredVersion = localStorage.getItem('ignored_version');
+            ?>
+            $(function () {
+                const ignoredVersion = localStorage.getItem('ignored_version');
 
-            $.get('<?= BASE_URL ?>/api/check_update.php', function (r) {
-                if (r.success && r.data.update_available) {
-                    // Eğer bu sürüm daha önce göz ardı edilmediyse göster
-                    if (ignoredVersion !== r.data.remote_version) {
-                        $('#auto-remote-version').text(r.data.remote_version);
-                        $('#modalAutoUpdate').modal('show');
+                $.get('<?= BASE_URL ?>/api/check_update.php', function (r) {
+                    if (r.success && r.data.update_available) {
+                        // Eğer bu sürüm daha önce göz ardı edilmediyse göster
+                        if (ignoredVersion !== r.data.remote_version) {
+                            $('#auto-remote-version').text(r.data.remote_version);
+                            $('#modalAutoUpdate').modal('show');
 
-                        // "Daha Sonra" butonuna basıldığında veya modal kapandığında
-                        $('#modalAutoUpdate').on('hidden.bs.modal', function () {
-                            if ($('#checkIgnoreUpdate').is(':checked')) {
-                                localStorage.setItem('ignored_version', r.data.remote_version);
-                            }
-                        });
-                    }
-                }
-            }, 'json');
-
-            $('#btnAutoPerformUpdate').on('click', function () {
-                const btn = $(this);
-                btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>...');
-                $('#auto-update-status').removeClass('d-none');
-
-                $.get('<?= BASE_URL ?>/api/perform_update.php', function (r) {
-                    $('#auto-update-status').addClass('d-none');
-                    $('#auto-update-log').text(r.data.output);
-                    $('#auto-update-log-container').removeClass('d-none');
-
-                    if (r.success) {
-                        showSuccess('Güncelleme başarıyla tamamlandı!');
-                        setTimeout(() => location.reload(), 3000);
-                    } else {
-                        btn.prop('disabled', false).html('<i class="fas fa-download me-1"></i> Tekrar Dene');
-
-                        // Çakışma hatası varsa Zorla Güncelle butonu göster
-                        if (r.message.includes('değişiklikler güncellemeye engel oluyor')) {
-                            $('#btnAutoForceUpdate').removeClass('d-none');
+                            // "Daha Sonra" butonuna basıldığında veya modal kapandığında
+                            $('#modalAutoUpdate').on('hidden.bs.modal', function () {
+                                if ($('#checkIgnoreUpdate').is(':checked')) {
+                                    localStorage.setItem('ignored_version', r.data.remote_version);
+                                }
+                            });
                         }
-                        showError(r.message);
                     }
-                }).fail(function (xhr, status, error) {
-                    $('#auto-update-status').addClass('d-none');
-                    btn.prop('disabled', false).html('<i class="fas fa-download me-1"></i> Tekrar Dene');
-                    console.error("Güncelleme Hatası:", status, error, xhr.responseText);
-                    showError('Güncelleme sırasında bir ağ veya sunucu hatası oluştu. (Hata: ' + status + ')');
-                });
-            });
+                }, 'json');
 
-            $('#btnAutoForceUpdate').on('click', function () {
-                confirmAction('Yerel bilgisayardaki tüm dosya değişikliklerini SİLECEK ve buluttaki haliyle eşitleyecektir. Emin misiniz?', function () {
-                    const btn = $('#btnAutoForceUpdate');
+                $('#btnAutoPerformUpdate').on('click', function () {
+                    const btn = $(this);
                     btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>...');
                     $('#auto-update-status').removeClass('d-none');
 
-                    $.get('<?= BASE_URL ?>/api/perform_update.php?force=1', function (r) {
+                    $.get('<?= BASE_URL ?>/api/perform_update.php', function (r) {
                         $('#auto-update-status').addClass('d-none');
-                        $('#auto-update-log').text(r.data ? r.data.output : 'Çıktı alınamadı.');
+                        $('#auto-update-log').text(r.data.output);
                         $('#auto-update-log-container').removeClass('d-none');
 
                         if (r.success) {
-                            showSuccess('Sistem başarıyla sıfırlandı ve güncellendi!');
+                            showSuccess('Güncelleme başarıyla tamamlandı!');
                             setTimeout(() => location.reload(), 3000);
                         } else {
-                            btn.prop('disabled', false).html('<i class="fas fa-exclamation-triangle me-1"></i> Tekrar Dene');
+                            btn.prop('disabled', false).html('<i class="fas fa-download me-1"></i> Tekrar Dene');
+
+                            // Çakışma hatası varsa Zorla Güncelle butonu göster
+                            if (r.message.includes('değişiklikler güncellemeye engel oluyor')) {
+                                $('#btnAutoForceUpdate').removeClass('d-none');
+                            }
                             showError(r.message);
                         }
-                    }, 'json').fail(function() {
+                    }).fail(function (xhr, status, error) {
                         $('#auto-update-status').addClass('d-none');
-                        btn.prop('disabled', false).html('<i class="fas fa-exclamation-triangle me-1"></i> Tekrar Dene');
-                        showError('Zorla güncelleme sırasında bir ağ veya sunucu hatası oluştu.');
+                        btn.prop('disabled', false).html('<i class="fas fa-download me-1"></i> Tekrar Dene');
+                        console.error("Güncelleme Hatası:", status, error, xhr.responseText);
+                        showError('Güncelleme sırasında bir ağ veya sunucu hatası oluştu. (Hata: ' + status + ')');
+                    });
+                });
+
+                $('#btnAutoForceUpdate').on('click', function () {
+                    confirmAction('Yerel bilgisayardaki tüm dosya değişikliklerini SİLECEK ve buluttaki haliyle eşitleyecektir. Emin misiniz?', function () {
+                        const btn = $('#btnAutoForceUpdate');
+                        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>...');
+                        $('#auto-update-status').removeClass('d-none');
+
+                        $.get('<?= BASE_URL ?>/api/perform_update.php?force=1', function (r) {
+                            $('#auto-update-status').addClass('d-none');
+                            $('#auto-update-log').text(r.data ? r.data.output : 'Çıktı alınamadı.');
+                            $('#auto-update-log-container').removeClass('d-none');
+
+                            if (r.success) {
+                                showSuccess('Sistem başarıyla sıfırlandı ve güncellendi!');
+                                setTimeout(() => location.reload(), 3000);
+                            } else {
+                                btn.prop('disabled', false).html('<i class="fas fa-exclamation-triangle me-1"></i> Tekrar Dene');
+                                showError(r.message);
+                            }
+                        }, 'json').fail(function (xhr, status, error) {
+                            $('#auto-update-status').addClass('d-none');
+                            btn.prop('disabled', false).html('<i class="fas fa-exclamation-triangle me-1"></i> Tekrar Dene');
+                            console.error("Zorla Güncelleme Hatası:", status, error, xhr.responseText);
+                            showError('Zorla güncelleme sırasında bir ağ veya sunucu hatası oluştu. (Hata: ' + status + ')');
+                        });
                     });
                 });
             });
-        });
-    <?php endif; endif; ?>
+        <?php endif; endif; ?>
 </script>
 
 <?php
