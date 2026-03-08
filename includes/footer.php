@@ -289,7 +289,8 @@ $footerText = get_setting('footer_text', '© 2026 Depo Yönetim Sistemi');
 
                     $.get('<?= BASE_URL ?>/api/perform_update.php?force=1', function (r) {
                         $('#auto-update-status').addClass('d-none');
-                        $('#auto-update-log').text(r.data.output);
+                        $('#auto-update-log').text(r.data ? r.data.output : 'Çıktı alınamadı.');
+                        $('#auto-update-log-container').removeClass('d-none');
 
                         if (r.success) {
                             showSuccess('Sistem başarıyla sıfırlandı ve güncellendi!');
@@ -298,7 +299,11 @@ $footerText = get_setting('footer_text', '© 2026 Depo Yönetim Sistemi');
                             btn.prop('disabled', false).html('<i class="fas fa-exclamation-triangle me-1"></i> Tekrar Dene');
                             showError(r.message);
                         }
-                    }, 'json');
+                    }, 'json').fail(function() {
+                        $('#auto-update-status').addClass('d-none');
+                        btn.prop('disabled', false).html('<i class="fas fa-exclamation-triangle me-1"></i> Tekrar Dene');
+                        showError('Zorla güncelleme sırasında bir ağ veya sunucu hatası oluştu.');
+                    });
                 });
             });
         });

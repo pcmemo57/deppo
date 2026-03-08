@@ -4,6 +4,10 @@ ob_start();
 error_reporting(0);
 ini_set('display_errors', 0);
 
+// Zaman aşımını engelle - Windows/XAMPP yavaş olabilir
+set_time_limit(600);
+ignore_user_abort(true);
+
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../config/functions.php';
