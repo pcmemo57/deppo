@@ -14,10 +14,15 @@ if (currentUser()['role'] !== ROLE_ADMIN) {
 
 function runMigrations()
 {
+    if (function_exists('update_log'))
+        update_log("runMigrations() başladı.");
+
     $currentDbVersion = get_setting('db_version', '1.0.0');
     $migrationsDir = ROOT_PATH . '/database/migrations';
 
     if (!is_dir($migrationsDir)) {
+        if (function_exists('update_log'))
+            update_log("Migrasyon dizini yok: $migrationsDir");
         return ['success' => true, 'message' => 'Migrasyon dizini bulunamadı.', 'data' => ['performed' => 0]];
     }
 
@@ -34,6 +39,8 @@ function runMigrations()
     }
 
     if (empty($migrationFiles)) {
+        if (function_exists('update_log'))
+            update_log("Uygulanacak migrasyon dosyası yok.");
         return ['success' => true, 'message' => 'Veritabanı zaten güncel.', 'data' => ['performed' => 0]];
     }
 
@@ -43,20 +50,30 @@ function runMigrations()
     $performedCount = 0;
     $appliedVersions = [];
 
+    if (function_exists('update_log'))
+        update_log(count($migrationFiles) . " adet migrasyon dosyası bulundu.");
+
     foreach ($migrationFiles as $version => $file) {
         $sql = file_get_contents($migrationsDir . '/' . $file);
-        if ($sql === false)
+        if ($sql === false) {
+            if (function_exists('update_log'))
+                update_log("Dosya okunamadı: $file");
             continue;
+        }
 
         try {
-            // Not: MySQL'de DDL komutları (CREATE, ALTER vb.) 
-            // otomatik commit tetiklediği için transaction burada güvenilir değildir.
+            if (function_exists('update_log'))
+                update_log("Migrasyon çalıştırılıyor: $file");
             Database::executeSql($sql);
             set_setting('db_version', $version);
+            if (function_exists('update_log'))
+                update_log("Migrasyon başarılı: $version");
 
             $performedCount++;
             $appliedVersions[] = $version;
         } catch (Exception $e) {
+            if (function_exists('update_log'))
+                update_log("MİGRASYON HATASI ($file): " . $e->getMessage());
             return [
                 'success' => false,
                 'message' => "Migrasyon hatası ($file): " . $e->getMessage(),
@@ -64,6 +81,9 @@ function runMigrations()
             ];
         }
     }
+
+    if (function_exists('update_log'))
+        update_log("runMigrations() tamamlandı. Uygulanan: $performedCount");
 
     return [
         'success' => true,
