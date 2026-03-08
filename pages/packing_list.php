@@ -46,7 +46,7 @@ $customers = Database::fetchAll("SELECT id, name FROM tbl_dp_customers WHERE hid
         font-weight: 600;
         font-size: 0.75rem;
         padding: 4px 12px;
-        border-radius: 6px;
+        border-radius: var(--radius-md);
     }
 
     .btn-soft-primary:hover {
@@ -73,7 +73,7 @@ $customers = Database::fetchAll("SELECT id, name FROM tbl_dp_customers WHERE hid
         padding: 2px 8px;
         background: #f1f5f9;
         color: #475569;
-        border-radius: 4px;
+        border-radius: var(--radius-sm);
         font-weight: 600;
     }
 
@@ -84,7 +84,7 @@ $customers = Database::fetchAll("SELECT id, name FROM tbl_dp_customers WHERE hid
         min-height: 30px !important;
         padding: 0 8px !important;
         font-size: 0.8rem !important;
-        border-radius: 4px !important;
+        border-radius: var(--radius-sm) !important;
         border: 1px solid #e2e8f0 !important;
         background-color: #fff !important;
     }
@@ -129,7 +129,7 @@ $customers = Database::fetchAll("SELECT id, name FROM tbl_dp_customers WHERE hid
     .parcel-card .form-control-sm {
         height: 30px !important;
         font-size: 0.8rem !important;
-        border-radius: 4px !important;
+        border-radius: var(--radius-sm) !important;
         border: 1px solid #e2e8f0 !important;
         padding: 0 8px !important;
         background-color: #fff !important;
@@ -196,10 +196,7 @@ $customers = Database::fetchAll("SELECT id, name FROM tbl_dp_customers WHERE hid
     </div>
 </div>
 
-<!-- Packing List Modal -->
-<div class="modal fade" id="packingListModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content border-0 shadow-lg" style="border-radius:12px; overflow:hidden;">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius-xl); overflow:hidden;">
             <div class="modal-header bg-primary text-white border-0 py-3">
                 <h5 class="modal-title fw-bold" id="packingListModalTitle">Yeni Çeki Listesi</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -269,10 +266,7 @@ $customers = Database::fetchAll("SELECT id, name FROM tbl_dp_customers WHERE hid
     </div>
 </div>
 
-<!-- Email Modal -->
-<div class="modal fade" id="emailModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content border-0 shadow-lg" style="border-radius:12px; overflow:hidden;">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius-xl); overflow:hidden;">
             <div class="modal-header bg-info text-white border-0 py-3">
                 <h5 class="modal-title fw-bold"><i class="fas fa-envelope me-3"></i>Çeki Listesi Gönder</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>

@@ -45,22 +45,22 @@ $warehouses = Database::fetchAll("
     color: #6c757d;
     cursor: pointer;
     transition: all 0.2s;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
   .status-btn-item.active-state {
-    background: #28a745;
-    color: #fff;
-    border-color: #28a745;
+    background: #dcfce7;
+    color: #166534;
+    border-color: #86efac;
   }
 
   .status-btn-item.inactive-state {
-    background: #dc3545;
-    color: #fff;
-    border-color: #dc3545;
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #fca5a5;
   }
 
   /* ───────────────────────────────────────────
@@ -121,7 +121,7 @@ $warehouses = Database::fetchAll("
     width: 26px;
     height: 26px;
     object-fit: cover;
-    border-radius: 5px;
+    border-radius: var(--radius-sm);
     margin-right: 6px;
     vertical-align: middle;
     border: 1px solid #e2e8f0;
@@ -139,7 +139,7 @@ $warehouses = Database::fetchAll("
   #editModal .modal-content,
   #viewModal .modal-content {
     border: none;
-    border-radius: 16px;
+    border-radius: var(--radius-xl);
     overflow: hidden;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
   }
@@ -226,7 +226,7 @@ $warehouses = Database::fetchAll("
     background: transparent;
     border: 1.5px solid #c9d3e0;
     color: #4a5568;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 9px 22px;
     font-size: 0.87rem;
     font-weight: 500;
@@ -243,7 +243,7 @@ $warehouses = Database::fetchAll("
     background: linear-gradient(135deg, #1a56db, #0c3daa);
     border: none;
     color: #fff;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 9px 32px;
     font-size: 0.87rem;
     font-weight: 600;
@@ -263,7 +263,7 @@ $warehouses = Database::fetchAll("
     background: linear-gradient(135deg, #0e9f6e, #057a55);
     border: none;
     color: #fff;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 9px 32px;
     font-size: 0.87rem;
     font-weight: 600;
@@ -299,7 +299,7 @@ $warehouses = Database::fetchAll("
   #viewModal .form-control:disabled,
   #viewModal .form-select:disabled {
     border: 1.5px solid #e4e9f0;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 9px 13px;
     font-size: 0.88rem;
     color: #374151;
@@ -321,7 +321,7 @@ $warehouses = Database::fetchAll("
     background: #e8edf5;
     border: 1.5px solid #e4e9f0;
     border-left: none;
-    border-radius: 0 8px 8px 0;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
     padding: 0 14px;
     font-size: 0.8rem;
     font-weight: 600;
@@ -334,7 +334,7 @@ $warehouses = Database::fetchAll("
   }
 
   #viewModal .qty-group .form-control:disabled {
-    border-radius: 8px 0 0 8px;
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
   }
 
   #viewModal textarea.form-control:disabled {
