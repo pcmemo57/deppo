@@ -34,6 +34,9 @@ if (preg_match("/define\('APP_VERSION',\s*'([^']+)'\)/", $remote_config, $matche
 
     $update_available = version_compare($remote_version, APP_VERSION, '>');
 
+    // Kontrol tarihini veritabanına kaydet
+    set_setting('last_update_check', date('Y-m-d'));
+
     jsonResponse(true, 'Kontrol tamamlandı.', [
         'current_version' => APP_VERSION,
         'current_db_version' => get_setting('db_version', '1.0.0'),

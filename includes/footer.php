@@ -226,31 +226,31 @@ $footerText = get_setting('footer_text', '© 2026 Depo Yönetim Sistemi');
     setInterval(updatePendingBadges, 60000); // 1 dakikada bir güncelle
 
     // --- Günlük Otomatik Güncelleme Kontrolü ---
-    <?php if (currentUser()['role'] === ROLE_ADMIN): ?>
+    <?php 
+    if (currentUser()['role'] === ROLE_ADMIN): 
+        $lastCheck = get_setting('last_update_check');
+        $today = date('Y-m-d');
+        if ($lastCheck !== $today):
+    ?>
         $(function () {
-            const lastCheck = localStorage.getItem('last_update_check');
-            const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
             const ignoredVersion = localStorage.getItem('ignored_version');
 
-            if (lastCheck !== today) {
-                $.get('<?= BASE_URL ?>/api/check_update.php', function (r) {
-                    localStorage.setItem('last_update_check', today);
-                    if (r.success && r.data.update_available) {
-                        // Eğer bu sürüm daha önce göz ardı edilmediyse göster
-                        if (ignoredVersion !== r.data.remote_version) {
-                            $('#auto-remote-version').text(r.data.remote_version);
-                            $('#modalAutoUpdate').modal('show');
+            $.get('<?= BASE_URL ?>/api/check_update.php', function (r) {
+                if (r.success && r.data.update_available) {
+                    // Eğer bu sürüm daha önce göz ardı edilmediyse göster
+                    if (ignoredVersion !== r.data.remote_version) {
+                        $('#auto-remote-version').text(r.data.remote_version);
+                        $('#modalAutoUpdate').modal('show');
 
-                            // "Daha Sonra" butonuna basıldığında veya modal kapandığında
-                            $('#modalAutoUpdate').on('hidden.bs.modal', function () {
-                                if ($('#checkIgnoreUpdate').is(':checked')) {
-                                    localStorage.setItem('ignored_version', r.data.remote_version);
-                                }
-                            });
-                        }
+                        // "Daha Sonra" butonuna basıldığında veya modal kapandığında
+                        $('#modalAutoUpdate').on('hidden.bs.modal', function () {
+                            if ($('#checkIgnoreUpdate').is(':checked')) {
+                                localStorage.setItem('ignored_version', r.data.remote_version);
+                            }
+                        });
                     }
-                }, 'json');
-            }
+                }
+            }, 'json');
 
             $('#btnAutoPerformUpdate').on('click', function () {
                 const btn = $(this);
@@ -276,7 +276,7 @@ $footerText = get_setting('footer_text', '© 2026 Depo Yönetim Sistemi');
                 });
             });
         });
-    <?php endif; ?>
+    <?php endif; endif; ?>
 </script>
 
 <?php
