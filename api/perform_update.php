@@ -82,6 +82,7 @@ if ($return_var === 0) {
     }
 
     // Başarılı güncelleme sonrası mesaj
+    update_log("JSON cevabı gönderiliyor (Başarılı).");
     ob_end_clean();
     jsonResponse(true, $msg, [
         'output' => $output_str,
