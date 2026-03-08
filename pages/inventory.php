@@ -8,12 +8,11 @@ requireRole(ROLE_ADMIN, ROLE_USER);
 <div class="row">
     <div class="col-12">
         <div class="card card-primary card-outline shadow-sm">
-            <div class="card-header border-0 d-flex flex-column flex-md-row align-items-center justify-content-between">
-                <h3 class="card-title text-bold mb-3 mb-md-0 text-center text-md-start w-100 w-md-auto pt-md-1">
-                    <i class="fas fa-clipboard-check me-2 text-primary"></i>Depo Sayım Yönetimi
-                </h3>
-                <div class="card-tools w-100 w-md-auto ms-md-auto text-end">
-                    <button id="btn-new-session" class="btn btn-primary btn-sm w-100 shadow-sm"
+            <div class="card-header border-0 py-3">
+                <h3 class="card-title text-bold"><i class="fas fa-clipboard-check me-2 text-primary"></i>Depo Sayım
+                    Yönetimi</h3>
+                <div class="card-tools">
+                    <button id="btn-new-session" class="btn btn-primary btn-sm px-3 shadow-sm"
                         onclick="startNewSession()">
                         <i class="fas fa-plus me-1"></i> Yeni Sayım Başlat
                     </button>
@@ -132,7 +131,8 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                                                     value="1" min="1" step="any" inputmode="decimal">
                                             </div>
                                             <div class="col-auto">
-                                                <button class="btn btn-success btn-lg px-4 fw-bold" onclick="saveCount()">
+                                                <button class="btn btn-success btn-lg px-4 fw-bold"
+                                                    onclick="saveCount()">
                                                     <i class="fas fa-check me-2"></i>KAYDET
                                                 </button>
                                             </div>
@@ -145,7 +145,8 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                         <!-- Recent Counts -->
                         <div class="col-12">
                             <h6 class="text-muted text-uppercase small ls-wide fw-bold mb-3 mt-2">Son Sayılanlar</h6>
-                            <div class="list-group list-group-flush shadow-sm rounded border" id="recentCounts" style="max-height: 450px; overflow-y: auto;">
+                            <div class="list-group list-group-flush shadow-sm rounded border" id="recentCounts"
+                                style="max-height: 450px; overflow-y: auto;">
                                 <div class="list-group-item text-center p-4 text-muted small">Henüz veri yok.</div>
                             </div>
                         </div>
@@ -519,68 +520,87 @@ requireRole(ROLE_ADMIN, ROLE_USER);
 </script>
 
 <style>
-    /* Mobil Görünüm (768px altı) */
-    @media (max-width: 767.98px) {
-        #btn-new-session {
-            width: 100% !important;
-            padding: 18px !important;
-            font-size: 1.1rem !important;
-            font-weight: 600 !important;
-            display: block;
-        }
+    .card-header {
+        display: block !important;
     }
 
-    /* Masaüstü Görünüm (768px ve üstü) */
-    @media (min-width: 768px) {
-        #btn-new-session {
-            width: 200px !important;
-            padding: 0.25rem 0.5rem !important;
-            /* Standart btn-sm padding */
-            font-size: 0.875rem !important;
-            /* Standart btn-sm font size */
-            font-weight: 500 !important;
-            display: inline-block;
-        }
-    }
+.card-header .card-title {
+font-size: 1.5rem !important;
+font-weight: 700;
+margin: 0;
+float: left;
+}
 
-    @media (max-width: 768px) {
+.card-header .card-tools {
+float: right;
+}
 
-        .table td,
-        .table th {
-            padding: 0.5rem !important;
-            font-size: 0.85rem;
-        }
+/* Mobil Görünüm (768px altı) */
+@media (max-width: 767.98px) {
+.card-header .card-title {
+float: none;
+text-align: center;
+margin-bottom: 10px;
+}
+.card-header .card-tools {
+float: none;
+text-align: center;
+}
+#btn-new-session {
+width: 100% !important;
+padding: 12px !important;
+font-size: 1rem !important;
+}
+}
 
-        .card-title {
-            font-size: 1.1rem !important;
-        }
-    }
+/* Masaüstü Görünüm (768px ve üstü) */
+@media (min-width: 768px) {
+#btn-new-session {
+padding: 0.25rem 0.5rem !important;
+font-size: 0.875rem !important;
+font-weight: 500 !important;
+display: inline-block;
+}
+}
 
-    #interactive video {
-        width: 100% !important;
-        height: auto !important;
-        object-fit: cover !important;
-        border-radius: 8px;
-    }
+@media (max-width: 768px) {
 
-    #interactive canvas {
-        display: none !important;
-    }
+.table td,
+.table th {
+padding: 0.5rem !important;
+font-size: 0.85rem;
+}
 
-    /* html5-qrcode shading layers fix */
-    #interactive>div {
-        background: rgba(0, 0, 0, 0.5) !important;
-    }
+.card-title {
+font-size: 1.1rem !important;
+}
+}
 
-    #interactive>div>div {
-        border-color: rgba(255, 255, 255, 0.3) !important;
-    }
+#interactive video {
+width: 100% !important;
+height: auto !important;
+object-fit: cover !important;
+border-radius: 8px;
+}
 
-    .object-fit-cover {
-        object-fit: cover;
-    }
+#interactive canvas {
+display: none !important;
+}
 
-    .animate__animated {
-        animation-duration: 0.4s;
-    }
+/* html5-qrcode shading layers fix */
+#interactive>div {
+background: rgba(0, 0, 0, 0.5) !important;
+}
+
+#interactive>div>div {
+border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.object-fit-cover {
+object-fit: cover;
+}
+
+.animate__animated {
+animation-duration: 0.4s;
+}
 </style>

@@ -81,7 +81,9 @@ if ($task === 'clear_selective_data' || $task === 'clear_data') {
         'customers' => ['tbl_dp_customers'],
         'suppliers' => ['tbl_dp_suppliers'],
         'requesters' => ['tbl_dp_requesters'],
-        'warehouses' => ['tbl_dp_warehouses']
+        'warehouses' => ['tbl_dp_warehouses'],
+        'inventory' => ['inventory_sessions', 'inventory_items'],
+        'packing_lists' => ['tbl_dp_packing_lists', 'tbl_dp_packing_list_parcels', 'tbl_dp_packing_list_items']
     ];
 
     $selected_categories = [];

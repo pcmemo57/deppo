@@ -679,6 +679,17 @@ $googleFontList = [
                                                 value="products" id="checkProducts">
                                             <label class="form-check-label" for="checkProducts">Ürün Tanımları</label>
                                         </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input sel-del-check" type="checkbox"
+                                                value="inventory" id="checkInventory">
+                                            <label class="form-check-label" for="checkInventory">Depo Sayımı</label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input sel-del-check" type="checkbox"
+                                                value="packing_lists" id="checkPackingLists">
+                                            <label class="form-check-label" for="checkPackingLists">Çeki
+                                                Listeleri</label>
+                                        </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-check mb-2">
