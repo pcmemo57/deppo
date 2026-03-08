@@ -54,17 +54,26 @@ function runMigrations()
         update_log(count($migrationFiles) . " adet migrasyon dosyası bulundu.");
 
     foreach ($migrationFiles as $version => $file) {
-        $sql = file_get_contents($migrationsDir . '/' . $file);
-        if ($sql === false) {
+        $sqlContent = file_get_contents($migrationsDir . '/' . $file);
+        if ($sqlContent === false) {
             if (function_exists('update_log'))
                 update_log("Dosya okunamadı: $file");
             continue;
         }
 
+        // SQL içeriğini ; karakterine göre parçalara ayır
+        $statements = array_filter(array_map('trim', explode(';', $sqlContent)));
+
         try {
             if (function_exists('update_log'))
-                update_log("Migrasyon çalıştırılıyor: $file");
-            Database::executeSql($sql);
+                update_log("Migrasyon başlatılıyor: $file (" . count($statements) . " komut)");
+
+            foreach ($statements as $statement) {
+                if (empty($statement))
+                    continue;
+                Database::executeSql($statement);
+            }
+
             set_setting('db_version', $version);
             if (function_exists('update_log'))
                 update_log("Migrasyon başarılı: $version");
