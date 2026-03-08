@@ -224,7 +224,66 @@ $footerText = get_setting('footer_text', '© 2026 Depo Yönetim Sistemi');
     }
     updatePendingBadges();
     setInterval(updatePendingBadges, 60000); // 1 dakikada bir güncelle
+
+    // --- Günlük Otomatik Güncelleme Kontrolü ---
+    <?php if (currentUser()['role'] === ROLE_ADMIN): ?>
+        $(function () {
+            const lastCheck = localStorage.getItem('last_update_check');
+            const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+            const ignoredVersion = localStorage.getItem('ignored_version');
+
+            if (lastCheck !== today) {
+                $.get('<?= BASE_URL ?>/api/check_update.php', function (r) {
+                    localStorage.setItem('last_update_check', today);
+                    if (r.success && r.data.update_available) {
+                        // Eğer bu sürüm daha önce göz ardı edilmediyse göster
+                        if (ignoredVersion !== r.data.remote_version) {
+                            $('#auto-remote-version').text(r.data.remote_version);
+                            $('#modalAutoUpdate').modal('show');
+
+                            // "Daha Sonra" butonuna basıldığında veya modal kapandığında
+                            $('#modalAutoUpdate').on('hidden.bs.modal', function () {
+                                if ($('#checkIgnoreUpdate').is(':checked')) {
+                                    localStorage.setItem('ignored_version', r.data.remote_version);
+                                }
+                            });
+                        }
+                    }
+                }, 'json');
+            }
+
+            $('#btnAutoPerformUpdate').on('click', function () {
+                const btn = $(this);
+                btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>...');
+                $('#auto-update-status').removeClass('d-none');
+
+                $.get('<?= BASE_URL ?>/api/perform_update.php', function (r) {
+                    $('#auto-update-status').addClass('d-none');
+                    $('#auto-update-log').text(r.data.output);
+                    $('#auto-update-log-container').removeClass('d-none');
+
+                    if (r.success) {
+                        showSuccess('Güncelleme başarıyla tamamlandı!');
+                        setTimeout(() => location.reload(), 3000);
+                    } else {
+                        btn.prop('disabled', false).html('<i class="fas fa-download me-1"></i> Tekrar Dene');
+                        showError(r.message);
+                    }
+                }, 'json').fail(function () {
+                    $('#auto-update-status').addClass('d-none');
+                    btn.prop('disabled', false).html('<i class="fas fa-download me-1"></i> Tekrar Dene');
+                    showError('Güncelleme sırasında hata oluştu.');
+                });
+            });
+        });
+    <?php endif; ?>
 </script>
+
+<?php
+if (currentUser()['role'] === ROLE_ADMIN) {
+    include __DIR__ . '/update_modal.php';
+}
+?>
 
 <?php if (isset($extraScripts))
     echo $extraScripts; ?>
