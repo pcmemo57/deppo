@@ -44,6 +44,11 @@ exec($command, $output, $return_var);
 $output_str = implode("\n", $output);
 
 if ($return_var === 0) {
+    // PHP OPcache'i temizle (Eğer yüklüyse)
+    if (function_exists('opcache_reset')) {
+        opcache_reset();
+    }
+
     // 2. Veritabanı migrasyonlarını çalıştır
     require_once __DIR__ . '/db_migrate.php';
     $migrationResult = runMigrations();
