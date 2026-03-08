@@ -274,10 +274,11 @@ $footerText = get_setting('footer_text', '© 2026 Depo Yönetim Sistemi');
                         }
                         showError(r.message);
                     }
-                }, 'json').fail(function () {
+                }).fail(function (xhr, status, error) {
                     $('#auto-update-status').addClass('d-none');
                     btn.prop('disabled', false).html('<i class="fas fa-download me-1"></i> Tekrar Dene');
-                    showError('Güncelleme sırasında hata oluştu.');
+                    console.error("Güncelleme Hatası:", status, error, xhr.responseText);
+                    showError('Güncelleme sırasında bir ağ veya sunucu hatası oluştu. (Hata: ' + status + ')');
                 });
             });
 

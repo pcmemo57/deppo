@@ -46,7 +46,9 @@ $return_var = 0;
 // Proje kök dizinine git
 chdir(ROOT_PATH);
 
+update_log("Komut çalıştırılıyor: $command");
 exec($command, $output, $return_var);
+update_log("Komut bitti. Return: $return_var");
 
 $output_str = implode("\n", $output);
 
@@ -56,9 +58,11 @@ if ($return_var === 0) {
         opcache_reset();
     }
 
+    update_log("Git başarılı, migrasyona geçiliyor.");
     // 2. Veritabanı migrasyonlarını çalıştır
     require_once __DIR__ . '/db_migrate.php';
     $migrationResult = runMigrations();
+    update_log("Migrasyon sonucu: " . json_encode($migrationResult));
 
     $msg = 'Güncelleme başarıyla tamamlandı.';
     if ($migrationResult['data']['performed'] > 0) {
