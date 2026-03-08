@@ -64,7 +64,7 @@ $warehouses = Database::fetchAll("
     #addModal .modal-content,
     #viewModal .modal-content {
         border: none;
-        border-radius: 16px;
+        border-radius: var(--radius-xl);
         overflow: hidden;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
     }
@@ -128,7 +128,7 @@ $warehouses = Database::fetchAll("
         background: transparent;
         border: 1.5px solid #c9d3e0;
         color: #4a5568;
-        border-radius: 8px;
+        border-radius: var(--radius-md);
         padding: 9px 22px;
         font-size: 0.87rem;
         font-weight: 500;
@@ -145,7 +145,7 @@ $warehouses = Database::fetchAll("
         background: linear-gradient(135deg, #1a56db, #0c3daa);
         border: none;
         color: #fff;
-        border-radius: 8px;
+        border-radius: var(--radius-md);
         padding: 9px 32px;
         font-size: 0.87rem;
         font-weight: 600;
@@ -177,7 +177,7 @@ $warehouses = Database::fetchAll("
     .badge-pending { background-color: #fce7f3; color: #9d174d; border: 1px solid #f9a8d4; }
     .badge-approved { background-color: #dcfce7; color: #166534; border: 1px solid #86efac; }
     .badge-rejected { background-color: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-    .badge-status { padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; }
+    .badge-status { padding: 4px 8px; border-radius: var(--radius-md); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; }
 </style>
 
 <div class="row stock-out-row">

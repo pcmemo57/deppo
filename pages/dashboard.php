@@ -309,7 +309,7 @@ $procurementStatuses = [
     #actionModal .modal-content,
     #historyModal .modal-content {
         border: none;
-        border-radius: 16px;
+        border-radius: var(--radius-xl);
         overflow: hidden;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
     }
@@ -380,7 +380,7 @@ $procurementStatuses = [
         background: transparent;
         border: 1.5px solid #c9d3e0;
         color: #4a5568;
-        border-radius: 8px;
+        border-radius: var(--radius-md);
         padding: 9px 22px;
         font-size: 0.87rem;
         font-weight: 500;
@@ -390,7 +390,7 @@ $procurementStatuses = [
         background: linear-gradient(135deg, #1a56db, #0c3daa);
         border: none;
         color: #fff;
-        border-radius: 8px;
+        border-radius: var(--radius-md);
         padding: 9px 32px;
         font-size: 0.87rem;
         font-weight: 600;
