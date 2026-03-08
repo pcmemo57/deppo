@@ -196,6 +196,9 @@ $customers = Database::fetchAll("SELECT id, name FROM tbl_dp_customers WHERE hid
     </div>
 </div>
 
+<!-- Packing List Modal -->
+<div class="modal fade" id="packingListModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius-xl); overflow:hidden;">
             <div class="modal-header bg-primary text-white border-0 py-3">
                 <h5 class="modal-title fw-bold" id="packingListModalTitle">Yeni Çeki Listesi</h5>
@@ -266,6 +269,9 @@ $customers = Database::fetchAll("SELECT id, name FROM tbl_dp_customers WHERE hid
     </div>
 </div>
 
+<!-- Email Modal -->
+<div class="modal fade" id="emailModal" tabindex="-1">
+    <div class="modal-dialog">
         <div class="modal-content border-0 shadow-lg" style="border-radius: var(--radius-xl); overflow:hidden;">
             <div class="modal-header bg-info text-white border-0 py-3">
                 <h5 class="modal-title fw-bold"><i class="fas fa-envelope me-3"></i>Çeki Listesi Gönder</h5>
