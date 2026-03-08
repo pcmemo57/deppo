@@ -205,45 +205,45 @@ $warehouseCount = Database::fetchOne("SELECT COUNT(*) as c FROM tbl_dp_warehouse
                     </li>
 
                     <?php if ($role === ROLE_ADMIN): ?>
-                        <!-- KULLANICI YÖNETİMİ — sadece admin -->
-                        <li class="nav-item">
-                            <a href="<?= BASE_URL ?>/index.php?page=admin_users"
-                                class="nav-link <?= $currentPage === 'admin_users' ? 'active' : '' ?>">
-                                <i class="nav-icon fas fa-users"></i>
-                                <p>Kullanıcı Yönetimi</p>
+                        <li
+                            class="nav-item has-treeview <?= in_array($currentPage, ['admin_users', 'settings', 'updates', 'system_tasks']) ? 'menu-open' : '' ?>">
+                            <a href="#"
+                                class="nav-link <?= in_array($currentPage, ['admin_users', 'settings', 'updates', 'system_tasks']) ? 'active' : '' ?>">
+                                <i class="nav-icon fas fa-cogs"></i>
+                                <p>Yönetim <i class="right fas fa-angle-left"></i></p>
                             </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item">
+                                    <a href="<?= BASE_URL ?>/index.php?page=admin_users"
+                                        class="nav-link <?= $currentPage === 'admin_users' ? 'active' : '' ?>">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Kullanıcı Yönetimi</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="<?= BASE_URL ?>/index.php?page=settings"
+                                        class="nav-link <?= $currentPage === 'settings' ? 'active' : '' ?>">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Ayarlar</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="<?= BASE_URL ?>/index.php?page=updates"
+                                        class="nav-link <?= $currentPage === 'updates' ? 'active' : '' ?>">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Sistem Güncelleme</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="<?= BASE_URL ?>/index.php?page=system_tasks"
+                                        class="nav-link <?= $currentPage === 'system_tasks' ? 'active' : '' ?>">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Sistem Görevleri</p>
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                     <?php endif; ?>
-
-                    <?php if ($role === ROLE_ADMIN): ?>
-                        <!-- AYARLAR — sadece admin -->
-                        <li class="nav-item">
-                            <a href="<?= BASE_URL ?>/index.php?page=settings"
-                                class="nav-link <?= $currentPage === 'settings' ? 'active' : '' ?>">
-                                <i class="nav-icon fas fa-cogs"></i>
-                                <p>Ayarlar</p>
-                            </a>
-                        </li>
-
-                        <!-- SİSTEM GÜNCELLEME — sadece admin -->
-                        <li class="nav-item">
-                            <a href="<?= BASE_URL ?>/index.php?page=updates"
-                                class="nav-link <?= $currentPage === 'updates' ? 'active' : '' ?>">
-                                <i class="nav-icon fas fa-sync-alt"></i>
-                                <p>Sistem Güncelleme</p>
-                            </a>
-                        </li>
-
-                        <!-- SİSTEM GÖREVLERİ — sadece admin -->
-                        <li class="nav-item">
-                            <a href="<?= BASE_URL ?>/index.php?page=system_tasks"
-                                class="nav-link <?= $currentPage === 'system_tasks' ? 'active' : '' ?>">
-                                <i class="nav-icon fas fa-tasks"></i>
-                                <p>Sistem Görevleri</p>
-                            </a>
-                        </li>
-                        <?php
-                    endif; ?>
 
                     <?php
                 endif; ?>
