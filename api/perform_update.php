@@ -1,7 +1,8 @@
 <?php
-/**
- * Güncelleme uygulama API'si
- */
+// Hata ayıklama: Herhangi bir çıktının JSON'ı bozmasını engelle
+ob_start();
+error_reporting(0);
+ini_set('display_errors', 0);
 
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/session.php';
@@ -9,13 +10,15 @@ require_once __DIR__ . '/../config/functions.php';
 
 // Sadece yönetici erişebilir
 if (currentUser()['role'] !== ROLE_ADMIN) {
+    ob_end_clean();
     jsonResponse(false, 'Bu işlem için yetkiniz yok.');
 }
 
 // 0. Git yüklü mü kontrol et
 exec('git --version', $test_output, $test_return);
 if ($test_return !== 0) {
-    jsonResponse(false, 'HATA: "git" komutu bu bilgisayarda tanınmıyor. Güncelleme yapabilmek için bilgisayarınızda Git yüklü olmalı ve sistem yoluna (PATH) eklenmiş olmalıdır.', [
+    ob_end_clean();
+    jsonResponse(false, 'HATA: "git" komutu bu bilgisayarda tanınmıyor. Güncelleme yapabilmek için bilgisayarınızda Git yüklü olmalı.', [
         'output' => 'Git not found in PATH'
     ]);
 }
@@ -59,6 +62,7 @@ if ($return_var === 0) {
     }
 
     // Başarılı güncelleme sonrası mesaj
+    ob_end_clean();
     jsonResponse(true, $msg, [
         'output' => $output_str,
         'migration' => $migrationResult
@@ -74,6 +78,7 @@ if ($return_var === 0) {
         $error_msg = 'GitHub erişim yetkisi hatası. Lütfen Git ayarlarınızı kontrol edin.';
     }
 
+    ob_end_clean();
     jsonResponse(false, $error_msg, [
         'output' => $output_str,
         'return_code' => $return_var
