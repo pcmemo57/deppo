@@ -145,13 +145,18 @@ $warehouseCount = Database::fetchOne("SELECT COUNT(*) as c FROM tbl_dp_warehouse
                                     <p>Çeki Listesi (Packing)</p>
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a href="<?= BASE_URL ?>/index.php?page=bulk_stock_update"
-                                    class="nav-link <?= $currentPage === 'bulk_stock_update' ? 'active' : '' ?>">
-                                    <i class="far fa-circle nav-icon"></i>
-                                    <p>Toplu Stok Güncelleme</p>
-                                </a>
-                            </li>
+                            <?php
+                            $showBulkUpdate = ($role === ROLE_ADMIN) || ($role === ROLE_USER && get_setting('show_bulk_stock_update_to_user', '0') === '1');
+                            if ($showBulkUpdate):
+                                ?>
+                                <li class="nav-item">
+                                    <a href="<?= BASE_URL ?>/index.php?page=bulk_stock_update"
+                                        class="nav-link <?= $currentPage === 'bulk_stock_update' ? 'active' : '' ?>">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Toplu Stok Güncelleme</p>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
                         </ul>
                     </li>
 

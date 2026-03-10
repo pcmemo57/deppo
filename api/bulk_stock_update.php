@@ -4,8 +4,20 @@ require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/functions.php';
 
-// Strictly admin only
-requireRole(ROLE_ADMIN, ROLE_USER);
+// Permission check
+if (hasRole(ROLE_ADMIN)) {
+    // Admin always allowed
+} elseif (hasRole(ROLE_USER)) {
+    // User allowed only if setting is active
+    if (get_setting('show_bulk_stock_update_to_user', '0') !== '1') {
+        http_response_code(403);
+        die('<h3>Bu işlem için yetkiniz yok. (Ayar kapalı)</h3>');
+    }
+} else {
+    // Other roles not allowed
+    http_response_code(403);
+    die('<h3>Bu sayfaya erişim yetkiniz yok.</h3>');
+}
 header('Content-Type: application/json; charset=utf-8');
 
 // CSRF check

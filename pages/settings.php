@@ -529,6 +529,21 @@ $googleFontList = [
                                                 depolar pasif hale getirilemez.</div>
                                         </div>
                                     </div>
+
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch p-0" style="padding-left: 2.5em !important;">
+                                            <input type="hidden" name="show_bulk_stock_update_to_user" value="0">
+                                            <input class="form-check-input" type="checkbox"
+                                                name="show_bulk_stock_update_to_user" value="1"
+                                                id="show_bulk_stock_update"
+                                                <?= get_setting('show_bulk_stock_update_to_user', '0') === '1' ? 'checked' : '' ?> style="margin-left: -2.5em;">
+                                            <label class="form-check-label fw-bold" for="show_bulk_stock_update">Toplu
+                                                Stok Güncelleme Program Yöneticisine görünsün mü?</label>
+                                            <div class="small text-muted">Bu ayar açıldığında Program Yöneticisi (USER)
+                                                rolündeki kullanıcılar "Stok Hareketleri" menüsü altında bu özelliği
+                                                görebilir.</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <button type="submit" class="btn btn-primary"><i

@@ -89,6 +89,9 @@ switch ($action) {
         if (isset($_POST['allow_passive_with_stock'])) {
             set_setting('allow_passive_with_stock', sanitize($_POST['allow_passive_with_stock']));
         }
+        if (isset($_POST['show_bulk_stock_update_to_user'])) {
+            set_setting('show_bulk_stock_update_to_user', sanitize($_POST['show_bulk_stock_update_to_user']));
+        }
         if (isset($_POST['kargo_gonderici'])) {
             set_setting('kargo_gonderici', sanitize($_POST['kargo_gonderici']));
         }

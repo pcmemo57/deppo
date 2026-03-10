@@ -23,6 +23,10 @@ if ($role === ROLE_ADMIN) {
     if (in_array($currentPage, $adminOnly, true)) {
         $currentPage = 'dashboard';
     }
+    // Toplu Stok Güncelleme ayarı kapalıysa USER bu sayfayı göremez
+    if ($currentPage === 'bulk_stock_update' && get_setting('show_bulk_stock_update_to_user', '0') !== '1') {
+        $currentPage = 'dashboard';
+    }
 } elseif ($role === ROLE_REQUESTER) {
     // Default page for requester if no page or dashboard is requested
     if (!isset($_GET['page']) || $_GET['page'] === 'dashboard') {
