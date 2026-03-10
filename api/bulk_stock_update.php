@@ -116,7 +116,7 @@ try {
                         $warehouseId,
                         $unitPrice,
                         $currency,
-                        "Fiyat Güncellemesi (Toplu)",
+                        "Fiyat Güncellemesi (Toplu - $userName)",
                         $adminId
                     ]);
                     continue;
