@@ -159,9 +159,9 @@ $warehouseCount = Database::fetchOne("SELECT COUNT(*) as c FROM tbl_dp_warehouse
 
                     <!-- TANIMLAMALAR -->
                     <li
-                        class="nav-item has-treeview <?= in_array($currentPage, ['products', 'warehouses', 'customers', 'suppliers']) ? 'menu-open' : '' ?>">
+                        class="nav-item has-treeview <?= in_array($currentPage, ['products', 'warehouses', 'customers', 'suppliers', 'import_data']) ? 'menu-open' : '' ?>">
                         <a href="#"
-                            class="nav-link <?= in_array($currentPage, ['products', 'warehouses', 'customers', 'suppliers']) ? 'active' : '' ?>">
+                            class="nav-link <?= in_array($currentPage, ['products', 'warehouses', 'customers', 'suppliers', 'import_data']) ? 'active' : '' ?>">
                             <i class="nav-icon fas fa-database"></i>
                             <p>Tanımlamalar <i class="right fas fa-angle-left"></i></p>
                         </a>
@@ -199,6 +199,13 @@ $warehouseCount = Database::fetchOne("SELECT COUNT(*) as c FROM tbl_dp_warehouse
                                     class="nav-link <?= $currentPage === 'requesters' ? 'active' : '' ?>">
                                     <i class="far fa-circle nav-icon"></i>
                                     <p>Talep Eden Yönetimi</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="<?= BASE_URL ?>/index.php?page=import_data"
+                                    class="nav-link <?= $currentPage === 'import_data' ? 'active' : '' ?>">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Veri İçe Aktar (Excel)</p>
                                 </a>
                             </li>
                         </ul>
@@ -239,6 +246,13 @@ $warehouseCount = Database::fetchOne("SELECT COUNT(*) as c FROM tbl_dp_warehouse
                                         class="nav-link <?= $currentPage === 'system_tasks' ? 'active' : '' ?>">
                                         <i class="far fa-circle nav-icon"></i>
                                         <p>Sistem Görevleri</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="<?= BASE_URL ?>/index.php?page=import_data"
+                                        class="nav-link <?= $currentPage === 'import_data' ? 'active' : '' ?>">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Veri Yönetimi (Excel)</p>
                                     </a>
                                 </li>
                             </ul>

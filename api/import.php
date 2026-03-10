@@ -20,8 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Sadece Adminler toplu yükleme yapabilsin
-requireRole(ROLE_ADMIN);
+// Sadece Adminler ve Program Yöneticileri toplu yükleme yapabilsin
+requireRole(ROLE_ADMIN, ROLE_USER);
 
 $type = sanitize($_POST['type'] ?? '');
 $dataRaw = $_POST['data'] ?? '';

@@ -586,6 +586,7 @@ $googleFontList = [
                                     <div class="col-md-5">
                                         <label class="form-label">Aktarılacak Tablo Türü</label>
                                         <select id="importType" class="form-select select2-simple">
+                                            <option value="" disabled selected>İndirilecek Şablonu Seçin</option>
                                             <option value="products">Ürünler</option>
                                             <option value="customers">Müşteriler</option>
                                             <option value="suppliers">Tedarikçiler</option>
@@ -599,19 +600,20 @@ $googleFontList = [
                                     </div>
                                 </div>
                                 <hr>
-                                <div class="row align-items-center">
+                                <div class="row align-items-end">
                                     <div class="col-md-8">
                                         <label class="form-label">Excel Dosyası (.xlsx)</label>
                                         <input class="form-control" type="file" id="importFile" accept=".xlsx, .xls">
-                                        <div class="small text-muted mt-1">Önce yukarıdan şablonu indirin, doldurup
-                                            buraya yükleyin.</div>
                                     </div>
-                                    <div class="col-md-4 text-md-end mt-3 mt-md-0 pt-md-4">
-                                        <button type="button" class="btn btn-primary w-100" id="btnImportData">
+                                    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                                        <button type="button" class="btn btn-primary w-100" id="btnImportData"
+                                            style="height: 38px;">
                                             <i class="fas fa-upload me-1"></i> İçe Aktar
                                         </button>
                                     </div>
                                 </div>
+                                <div class="small text-muted mt-1">Önce yukarıdan şablonu indirin, doldurup buraya
+                                    yükleyin.</div>
                             </div>
                         </div>
 
@@ -1108,6 +1110,10 @@ $googleFontList = [
     // ═══════════ EXCEL İÇE AKTAR (IMPORT) İŞLEMLERİ ═══════════
     function downloadImportTemplate() {
         var type = $('#importType').val();
+        if (!type) {
+            showError("Lütfen indirilecek şablon için bir tablo türü seçin.");
+            return;
+        }
         var wb = XLSX.utils.book_new();
         var data = [];
         var sheetName = "";
@@ -1179,6 +1185,12 @@ $googleFontList = [
                 // API'ye gönder
                 btn.html('<i class="fas fa-spinner fa-spin me-1"></i> Sunucuya Kaydediliyor...');
                 var type = $('#importType').val();
+
+                if (!type) {
+                    showError("Lütfen önce bir tablo türü seçin.");
+                    btn.prop('disabled', false).html(originalBtnText);
+                    return;
+                }
 
                 $.post('<?= BASE_URL ?>/api/import.php', {
                     type: type,
