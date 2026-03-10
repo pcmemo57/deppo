@@ -5,7 +5,7 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/functions.php';
 
 // Strictly admin only
-requireRole(ROLE_ADMIN);
+requireRole(ROLE_ADMIN, ROLE_USER);
 header('Content-Type: application/json; charset=utf-8');
 
 // CSRF check

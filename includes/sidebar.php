@@ -83,23 +83,14 @@ $warehouseCount = Database::fetchOne("SELECT COUNT(*) as c FROM tbl_dp_warehouse
                             <p>Depo Sayımı</p>
                         </a>
                     </li>
-                    <?php if ($role === ROLE_ADMIN): ?>
-                        <li class="nav-item">
-                            <a href="<?= BASE_URL ?>/index.php?page=bulk_stock_update"
-                                class="nav-link <?= $currentPage === 'bulk_stock_update' ? 'active' : '' ?>">
-                                <i class="nav-icon fas fa-boxes"></i>
-                                <p>Toplu Stok Güncelleme</p>
-                            </a>
-                        </li>
-                    <?php endif; ?>
                     <!-- STOK HAREKETLERİ -->
 
 
                     <!-- STOK HAREKETLERİ -->
                     <li
-                        class="nav-item has-treeview <?= in_array($currentPage, ['stock_movements', 'stock_in', 'stock_in_list', 'stock_out', 'stock_out_orders', 'stock_out_pending', 'transfer', 'transfer_history', 'entrusted', 'packing_list']) ? 'menu-open' : '' ?>">
+                        class="nav-item has-treeview <?= in_array($currentPage, ['stock_movements', 'stock_in', 'stock_in_list', 'stock_out', 'stock_out_orders', 'stock_out_pending', 'transfer', 'transfer_history', 'entrusted', 'packing_list', 'bulk_stock_update']) ? 'menu-open' : '' ?>">
                         <a href="<?= BASE_URL ?>/index.php?page=stock_movements"
-                            class="nav-link <?= in_array($currentPage, ['stock_movements', 'stock_in', 'stock_in_list', 'stock_out', 'stock_out_orders', 'stock_out_pending', 'transfer', 'transfer_history', 'entrusted', 'packing_list']) ? 'active' : '' ?>">
+                            class="nav-link <?= in_array($currentPage, ['stock_movements', 'stock_in', 'stock_in_list', 'stock_out', 'stock_out_orders', 'stock_out_pending', 'transfer', 'transfer_history', 'entrusted', 'packing_list', 'bulk_stock_update']) ? 'active' : '' ?>">
                             <i class="nav-icon fas fa-exchange-alt"></i>
                             <p>Stok Hareketleri <i class="right fas fa-angle-left"></i>
                                 <span id="sidebar-pending-total" class="right badge badge-danger"
@@ -152,6 +143,13 @@ $warehouseCount = Database::fetchOne("SELECT COUNT(*) as c FROM tbl_dp_warehouse
                                     class="nav-link <?= $currentPage === 'packing_list' ? 'active' : '' ?>">
                                     <i class="far fa-circle nav-icon"></i>
                                     <p>Çeki Listesi (Packing)</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="<?= BASE_URL ?>/index.php?page=bulk_stock_update"
+                                    class="nav-link <?= $currentPage === 'bulk_stock_update' ? 'active' : '' ?>">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Toplu Stok Güncelleme</p>
                                 </a>
                             </li>
                         </ul>
@@ -246,13 +244,6 @@ $warehouseCount = Database::fetchOne("SELECT COUNT(*) as c FROM tbl_dp_warehouse
                                         class="nav-link <?= $currentPage === 'system_tasks' ? 'active' : '' ?>">
                                         <i class="far fa-circle nav-icon"></i>
                                         <p>Sistem Görevleri</p>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a href="<?= BASE_URL ?>/index.php?page=import_data"
-                                        class="nav-link <?= $currentPage === 'import_data' ? 'active' : '' ?>">
-                                        <i class="far fa-circle nav-icon"></i>
-                                        <p>Veri Yönetimi (Excel)</p>
                                     </a>
                                 </li>
                             </ul>

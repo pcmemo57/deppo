@@ -2,7 +2,7 @@
 /**
  * Toplu Stok Güncelleme — Sadece Admin
  */
-requireRole(ROLE_ADMIN);
+requireRole(ROLE_ADMIN, ROLE_USER);
 $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE hidden=0 AND is_active=1 ORDER BY name");
 ?>
 
@@ -26,16 +26,17 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
 
                     <div class="col-12 col-md-8 col-lg-8 text-md-end">
                         <div class="d-flex align-items-center justify-content-md-end gap-3 h-100 mt-md-4">
-                            <button class="btn btn-outline-warning btn-sm fw-bold px-4 py-2 shadow-xs" 
-                                    data-bs-toggle="modal" data-bs-target="#warehouseModal" 
-                                    style="border-radius: 10px; border-color: #e2e8f0; color: #64748b;">
+                            <button class="btn btn-outline-warning btn-sm fw-bold px-4 py-2 shadow-xs"
+                                data-bs-toggle="modal" data-bs-target="#warehouseModal"
+                                style="border-radius: 10px; border-color: #e2e8f0; color: #64748b;">
                                 <i class="fas fa-warehouse me-2 text-warning"></i>Depo Seç
                             </button>
                             <div class="input-group search-group shadow-xs" style="max-width: 280px;">
                                 <span class="input-group-text bg-white border-end-0 text-muted ps-3">
                                     <i class="fas fa-search small"></i>
                                 </span>
-                                <input type="text" id="productSearch" class="form-control border-start-0 ps-0" placeholder="Ürünlerde ara...">
+                                <input type="text" id="productSearch" class="form-control border-start-0 ps-0"
+                                    placeholder="Ürünlerde ara...">
                             </div>
                         </div>
                     </div>
