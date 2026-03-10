@@ -12,7 +12,7 @@ requireLogin();
 
 $role = currentUser()['role'];
 // ─── Erişim Kontrol Matrisi ───────────────────────────────────────────────
-$adminOnly = ['settings', 'admin_users', 'bulk_stock_update'];
+$adminOnly = ['settings', 'admin_users'];
 $requesterOk = ['stock_out_requests', 'stock_out_orders_for_requesters'];
 
 if ($role === ROLE_ADMIN) {
