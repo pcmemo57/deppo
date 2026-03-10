@@ -71,8 +71,10 @@ try {
 
             Database::beginTransaction();
 
-            $adminId = $_SESSION['dp_user_id'] ?? 1;
-            $note = "Admin Toplu Güncelleme";
+            $user = currentUser();
+            $adminId = $user['id'];
+            $userName = $user['name'] ?: 'Sistem';
+            $note = "Toplu Güncelleme ($userName)";
 
             foreach ($updates as $update) {
                 $productId = (int) ($update['product_id'] ?? 0);
