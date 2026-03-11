@@ -30,14 +30,14 @@ $warehouses = Database::fetchAll("
     }
 
     .card-header .card-title {
-        font-size: 1.75rem !important;
+        font-size: 1.5rem;
         display: flex;
         align-items: center;
     }
 
     .card-header .card-title i {
-        font-size: 1.5rem;
-        margin-right: 12px;
+        font-size: 1.25rem;
+        margin-right: 0.75rem;
     }
 
     /* Tüm header araçlarını aynı yüksekliğe sabitle */
@@ -45,8 +45,8 @@ $warehouses = Database::fetchAll("
     .card-header .card-tools .input-group-sm .form-control,
     .card-header .card-tools .input-group-sm .input-group-text,
     .card-header .card-tools .btn-sm {
-        height: 32px;
-        line-height: 1 !important;
+        height: 2rem;
+        line-height: 1;
         font-size: 0.8125rem;
         padding-top: 0;
         padding-bottom: 0;
@@ -1134,27 +1134,27 @@ $warehouses = Database::fetchAll("
     // --- Hızlı Ekleme Buton Olay Dinleyicileri devamı ---
     function setupQuickAddEventsPart2() { // Aslında setupQuickAddEvents içinde olmalı, ama parça parça düzeltiyoruz.
 
-    $('#btnSaveQuickCustomer').off('click').on('click', function () {
-        var form = $('#quickCustomerForm');
-        if (form.length === 0) return;
-        if (!form[0].checkValidity()) { form[0].reportValidity(); return; }
-        var btn = $(this);
-        var originalHtml = btn.html();
-        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Kaydediliyor...');
-        $.post('<?= BASE_URL ?>/api/customers.php', form.serialize(), function (r) {
-            btn.prop('disabled', false).html(originalHtml);
-            if (r.success) {
-                showSuccess(r.message);
-                $('#quickCustomerModal').modal('hide');
-                if (r.data && r.data.id) {
-                    var newOption = new Option(r.data.name, r.data.id, true, true);
-                    $('#customerSelect').append(newOption).trigger('change');
-                }
-            } else showError(r.message);
-        }, 'json').fail(function () {
-            btn.prop('disabled', false).html(originalHtml);
-            showError('Bir hata oluştu.');
-        });
+        $('#btnSaveQuickCustomer').off('click').on('click', function () {
+            var form = $('#quickCustomerForm');
+            if (form.length === 0) return;
+            if (!form[0].checkValidity()) { form[0].reportValidity(); return; }
+            var btn = $(this);
+            var originalHtml = btn.html();
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Kaydediliyor...');
+            $.post('<?= BASE_URL ?>/api/customers.php', form.serialize(), function (r) {
+                btn.prop('disabled', false).html(originalHtml);
+                if (r.success) {
+                    showSuccess(r.message);
+                    $('#quickCustomerModal').modal('hide');
+                    if (r.data && r.data.id) {
+                        var newOption = new Option(r.data.name, r.data.id, true, true);
+                        $('#customerSelect').append(newOption).trigger('change');
+                    }
+                } else showError(r.message);
+            }, 'json').fail(function () {
+                btn.prop('disabled', false).html(originalHtml);
+                showError('Bir hata oluştu.');
+            });
         });
     }
 </script>

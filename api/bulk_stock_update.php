@@ -57,8 +57,10 @@ try {
             $results = [];
             foreach ($products as $p) {
                 $stocks = [];
+                $alarms = [];
                 foreach ($warehouseIds as $wid) {
                     $stocks[$wid] = getProductStock($p['id'], $wid);
+                    $alarms[$wid] = (float) (Database::fetchOne("SELECT stock_alarm FROM tbl_dp_product_warehouse_alarms WHERE product_id=? AND warehouse_id=?", [$p['id'], $wid])['stock_alarm'] ?? 0);
                 }
                 $results[] = [
                     'id' => $p['id'],
@@ -68,7 +70,8 @@ try {
                     'image' => $p['image'],
                     'last_price' => (float) ($p['last_price'] ?? 0),
                     'last_currency' => $p['last_currency'] ?? 'TL',
-                    'stocks' => $stocks
+                    'stocks' => $stocks,
+                    'alarms' => $alarms
                 ];
             }
 
@@ -103,26 +106,18 @@ try {
 
                 if (abs($diff) < 0.001) {
                     // Check if price or currency changed even if qty didn't
-                    // In this case, we create a 0-quantity entry to log the new price.
-                    // We need to compare with the "last price" to avoid unnecessary logs.
-                    // But since the API is stateless here, we just trust the 'updates' sent by the UI.
-                    // The UI should only send this if it detected a change.
-
-                    // Actually, let's just insert a 0-qty entry if diff is 0 and it was sent.
-                    // The frontend only sends this if it's explicitly changed.
-                    Database::insert("INSERT INTO tbl_dp_stock_in (product_id, warehouse_id, quantity, unit_price, currency, supplier_id, note, created_by, is_active) 
-                                    VALUES (?, ?, 0, ?, ?, NULL, ?, ?, 1)", [
-                        $productId,
-                        $warehouseId,
-                        $unitPrice,
-                        $currency,
-                        "Fiyat Güncellemesi (Toplu - $userName)",
-                        $adminId
-                    ]);
-                    continue;
-                }
-
-                if ($diff > 0) {
+                    if (isset($update['unit_price']) || isset($update['currency'])) {
+                        Database::insert("INSERT INTO tbl_dp_stock_in (product_id, warehouse_id, quantity, unit_price, currency, supplier_id, note, created_by, is_active) 
+                                        VALUES (?, ?, 0, ?, ?, NULL, ?, ?, 1)", [
+                            $productId,
+                            $warehouseId,
+                            $unitPrice,
+                            $currency,
+                            "Fiyat Güncellemesi (Toplu - $userName)",
+                            $adminId
+                        ]);
+                    }
+                } else if ($diff > 0) {
                     // Stock In
                     Database::insert("INSERT INTO tbl_dp_stock_in (product_id, warehouse_id, quantity, unit_price, currency, supplier_id, note, created_by, is_active) 
                                     VALUES (?, ?, ?, ?, ?, NULL, ?, ?, 1)", [
@@ -146,6 +141,15 @@ try {
                         $note,
                         $adminId
                     ]);
+                }
+
+                // Depo bazlı alarmı güncelle
+                if (isset($update['stock_alarm'])) {
+                    $newAlarm = (float) $update['stock_alarm'];
+                    Database::execute("DELETE FROM tbl_dp_product_warehouse_alarms WHERE product_id=? AND warehouse_id=?", [$productId, $warehouseId]);
+                    if ($newAlarm > 0) {
+                        Database::execute("INSERT INTO tbl_dp_product_warehouse_alarms (product_id, warehouse_id, stock_alarm) VALUES (?, ?, ?)", [$productId, $warehouseId, $newAlarm]);
+                    }
                 }
             }
 

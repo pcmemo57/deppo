@@ -37,6 +37,9 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
                                 </span>
                                 <input type="text" id="productSearch" class="form-control border-start-0 ps-0"
                                     placeholder="Ürünlerde ara...">
+                                <button class="btn btn-link text-muted border-0 pe-3 d-none" id="btnClearSearch" type="button">
+                                    <i class="fas fa-times-circle"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -57,6 +60,9 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
                             <th style="min-width: 200px;">Ürün Bilgisi</th>
                             <th style="width: 240px;">Birim Fiyat & Para Birimi</th>
                             <!-- Dinamik depolar -->
+                        </tr>
+                        <tr id="tableSubHead">
+                            <!-- Dinamik alt başlıklar -->
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -85,6 +91,29 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
                 <button id="btnSaveAll" class="btn btn-warning btn-lg px-5 fw-bold shadow-sm rounded-pill" disabled
                     style="min-width: 250px;">
                     <i class="fas fa-save me-2"></i>DEĞİŞİKLİKLERİ KAYDET
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sticky Footer for Save Button -->
+<div id="stickyFooter" class="sticky-save-footer d-none shadow-lg">
+    <div class="container-fluid px-4 h-100">
+        <div class="row h-100 align-items-center">
+            <div class="col-8">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow-xs">
+                        <span id="pendingChangeCount">0</span> Kalem Değişiklik
+                    </div>
+                    <span class="text-white small d-none d-md-inline opacity-75">
+                        <i class="fas fa-info-circle me-1"></i> Arama yapsanız bile yaptığınız değişiklikler korunur ve kaydete bastığınızda hepsi gönderilir.
+                    </span>
+                </div>
+            </div>
+            <div class="col-4 text-end">
+                <button type="button" class="btn btn-warning btn-pill px-4 fw-bold shadow-sm" onclick="$('#btnSaveAll').trigger('click')">
+                    <i class="fas fa-save me-2"></i>KAYDET
                 </button>
             </div>
         </div>
@@ -154,7 +183,7 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
     .search-group .form-control {
         border: none !important;
         box-shadow: none !important;
-        padding: 10px 15px;
+        padding: 0.625rem 0.9375rem;
         font-size: 0.9rem;
     }
 
@@ -165,9 +194,9 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
 
     /* Select2 Adjustment for Header */
     .select2-container--bootstrap-5 .select2-selection {
-        border-radius: 10px !important;
+        border-radius: 0.625rem !important;
         border-color: #e2e8f0 !important;
-        min-height: 42px !important;
+        min-height: 2.625rem !important;
         display: flex !important;
         align-items: center !important;
     }
@@ -186,11 +215,11 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
         color: #64748b;
         background: #f8fafc;
         border-bottom: 2px solid #edf2f7;
-        padding: 16px 10px;
+        padding: 1rem 0.625rem;
     }
 
     #bulkUpdateTable tbody td {
-        padding: 12px 10px;
+        padding: 0.75rem 0.625rem;
         border-bottom: 1px solid #f1f5f9;
         font-size: 0.95rem;
     }
@@ -381,6 +410,67 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
         color: #01579b !important;
         border: 1px solid #b3e5fc !important;
     }
+
+    /* Sticky Footer Styles */
+    .sticky-save-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 70px;
+        background: rgba(30, 41, 59, 0.95);
+        backdrop-filter: blur(10px);
+        z-index: 1040;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transform: translateY(100%);
+    }
+
+    .sticky-save-footer.show {
+        transform: translateY(0);
+    }
+
+    .btn-pill {
+        border-radius: 50px;
+    }
+
+    .shadow-xs {
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Grouped Columns Separation */
+    .wh-group-border-left {
+        border-left: 2px solid #e2e8f0 !important;
+    }
+    
+    .wh-qty-col {
+        background-color: rgba(248, 250, 252, 0.5);
+    }
+    
+    .wh-alarm-col {
+        background-color: rgba(255, 255, 255, 1);
+    }
+
+    .alarm-input {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+        color: #ef4444;
+    }
+    
+    .alarm-input:focus {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+    }
+
+    .alarm-input.changed {
+        background-color: #fef2f2 !important;
+        border-color: #ef4444 !important;
+        color: #991b1b !important;
+    }
 </style>
 
 <script>
@@ -389,7 +479,98 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
         function formatPrice(val) { return typeof formatTurkish === 'function' ? formatTurkish(val, 2) : val; }
         function formatQty(val) { return typeof formatTurkish === 'function' ? formatTurkish(val, 0) : val; }
 
-        // Warehouse Color Mapping (from stock_status)
+        const STORAGE_KEY = 'deppo_bulk_update_warehouses';
+
+        // --- PERSISTENCE ---
+        function restoreSelection() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    const ids = JSON.parse(saved);
+                    if (Array.isArray(ids)) {
+                        ids.forEach(id => {
+                            $(`#wh_${id}`).prop('checked', true);
+                        });
+                        updateBadges();
+                        loadData();
+                    }
+                } catch (e) {
+                    console.error('Failed to parse saved warehouses', e);
+                }
+            }
+        }
+
+        // --- STATE MANAGEMENT ---
+        let pendingChanges = {}; // KEY: product_id, VALUE: { base_data: {price, currency}, wh_data: { wid: {qty, alarm} } }
+        let changeCount = 0;
+
+        function updateChangeCount() {
+            let count = 0;
+            Object.keys(pendingChanges).forEach(pid => {
+                const p = pendingChanges[pid];
+                if (p.price_changed || p.curr_changed) count++;
+                if (p.wh_data) {
+                    Object.keys(p.wh_data).forEach(wid => {
+                        const w = p.wh_data[wid];
+                        if (w.qty_changed || w.alarm_changed) count++;
+                    });
+                }
+            });
+            changeCount = count;
+            $('#pendingChangeCount').text(count);
+            
+            if (count > 0) {
+                $('#stickyFooter').removeClass('d-none').addClass('show');
+                $('#btnSaveAll').prop('disabled', false);
+            } else {
+                $('#stickyFooter').removeClass('show');
+                setTimeout(() => { if(changeCount === 0) $('#stickyFooter').addClass('d-none'); }, 300);
+                $('#btnSaveAll').prop('disabled', true);
+            }
+        }
+
+        function trackChange(pid, wid, type, val, oldVal) {
+            pid = parseInt(pid);
+            if (!pendingChanges[pid]) pendingChanges[pid] = { wh_data: {} };
+            
+            if (wid) {
+                wid = parseInt(wid);
+                if (!pendingChanges[pid].wh_data[wid]) pendingChanges[pid].wh_data[wid] = {};
+                
+                if (type === 'qty') {
+                    pendingChanges[pid].wh_data[wid].qty = val;
+                    pendingChanges[pid].wh_data[wid].old_qty = oldVal;
+                    pendingChanges[pid].wh_data[wid].qty_changed = Math.abs(parseFloat(val) - parseFloat(oldVal)) > 0.001;
+                } else if (type === 'alarm') {
+                    pendingChanges[pid].wh_data[wid].alarm = val;
+                    pendingChanges[pid].wh_data[wid].old_alarm = oldVal;
+                    pendingChanges[pid].wh_data[wid].alarm_changed = Math.abs(parseFloat(val || 0) - parseFloat(oldVal || 0)) > 0.001;
+                }
+            } else {
+                if (type === 'price') {
+                    pendingChanges[pid].price = val;
+                    pendingChanges[pid].old_price = oldVal;
+                    pendingChanges[pid].price_changed = Math.abs(parseFloat(val || 0) - parseFloat(oldVal || 0)) > 0.001;
+                } else if (type === 'currency') {
+                    pendingChanges[pid].currency = val;
+                    pendingChanges[pid].old_curr = oldVal;
+                    pendingChanges[pid].curr_changed = val !== oldVal;
+                }
+            }
+            
+            // Cleanup if no change for this PID/WID
+            if (wid && !pendingChanges[pid].wh_data[wid].qty_changed && !pendingChanges[pid].wh_data[wid].alarm_changed) {
+                delete pendingChanges[pid].wh_data[wid];
+            }
+            if (Object.keys(pendingChanges[pid].wh_data).length === 0 && !pendingChanges[pid].price_changed && !pendingChanges[pid].curr_changed) {
+                delete pendingChanges[pid];
+            }
+            
+            updateChangeCount();
+        }
+
+        // --- UI ---
+
         const warehouseColors = {};
         <?php
         foreach ($warehouses as $index => $w) {
@@ -417,8 +598,8 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
             var badges = '';
             $('.wh-switch:checked').each(function () {
                 var name = $(this).data('name');
-                var colorClass = getWarehouseBadgeClass(name);
-                badges += '<span class="badge ' + colorClass + ' px-3 py-2">' + name + '</span>';
+                const colorClass = getWarehouseBadgeClass(name);
+                badges += `<span class="badge ${colorClass} px-3 py-2">${name}</span>`;
             });
             if (!badges) badges = '<span class="text-muted small">Herhangi bir depo seçilmedi</span>';
             $('#selectedWarehouses').html(badges);
@@ -434,22 +615,31 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
         $('#btnDeselectAll').on('click', function () { $('.wh-switch').prop('checked', false).trigger('change'); });
 
         $('#productSearch').on('input', function () {
+            const val = $(this).val();
+            $('#btnClearSearch').toggleClass('d-none', !val);
             clearTimeout(searchTimer);
             searchTimer = setTimeout(loadData, 500);
         });
+
+        $('#btnClearSearch').on('click', function () {
+            $('#productSearch').val('').trigger('input');
+        });
+
 
         function loadData() {
             const whs = getSelectedWarehouses();
             const search = $('#productSearch').val();
 
+            // Store selection
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(whs));
+
             if (whs.length === 0) {
                 $('#tableHead').html('<th style="width: 70px;" class="ps-3 text-center">Resim</th><th>Ürün Bilgisi</th><th style="width: 240px;">Birim Fiyat & Para Birimi</th>');
                 $('#tableBody').html('<tr><td colspan="3" class="text-center p-5 text-muted"><i class="fas fa-warehouse fa-3x mb-3 d-block opacity-25"></i>Lütfen güncellenecek depoları seçin.</td></tr>');
-                $('#btnSaveAll').prop('disabled', true);
                 return;
             }
 
-            $('#tableBody').html(`<tr><td colspan="${3 + whs.length}" class="text-center p-5"><i class="fas fa-spinner fa-spin fa-2x text-warning opacity-50"></i></td></tr>`);
+            $('#tableBody').html(`<tr><td colspan="${(whs.length * 2) + 3}" class="text-center p-5"><i class="fas fa-spinner fa-spin fa-2x text-warning opacity-50"></i></td></tr>`);
 
             $.get('<?= BASE_URL ?>/api/bulk_stock_update.php', {
                 action: 'list_products',
@@ -468,22 +658,39 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
             // Headers
             let headHtml = '<th style="width: 70px;" class="ps-3 text-center">Resim</th><th>Ürün Bilgisi</th><th style="width: 240px;">Birim Fiyat & Para Birimi</th>';
             $('.wh-switch:checked').each(function () {
-                headHtml += `<th class="text-center" style="min-width: 140px;">${$(this).data('name')}</th>`;
+                const name = $(this).data('name');
+                headHtml += `<th class="text-center wh-group-border-left" colspan="2">${name}</th>`;
             });
+            
+            // Sub-Headers
+            let subHeadHtml = '<th colspan="3" class="border-0 bg-transparent"></th>';
+            whs.forEach(() => {
+                subHeadHtml += '<th class="text-center small py-1 wh-group-border-left wh-qty-col" style="width:100px; color:#64748b">Adet</th><th class="text-center small py-1 wh-alarm-col" style="width:80px; color:#ef4444">Alarm</th>';
+            });
+
             $('#tableHead').html(headHtml);
+            $('#tableSubHead').html(subHeadHtml);
 
             // Body
             if (products.length === 0) {
-                $('#tableBody').html(`<tr><td colspan="${3 + whs.length}" class="text-center p-5 text-muted">Arama kriterine uygun ürün bulunamadı.</td></tr>`);
-                $('#btnSaveAll').prop('disabled', true);
+                $('#tableBody').html(`<tr><td colspan="${(whs.length * 2) + 3}" class="text-center p-5 text-muted">Arama kriterine uygun ürün bulunamadı.</td></tr>`);
                 return;
             }
 
             let bodyHtml = '';
             products.forEach(p => {
+                const pid = parseInt(p.id);
                 const imgSrc = p.image ? '<?= BASE_URL ?>/images/UrunResim/' + p.image : '<?= BASE_URL ?>/assets/no-image.png';
+                
+                // State check
+                const pState = pendingChanges[pid] || {};
+                const currentPrice = pState.price_changed ? pState.price : p.last_price;
+                const priceClass = pState.price_changed ? 'changed' : '';
+                const currentCurr = pState.curr_changed ? pState.currency : p.last_currency;
+                const currClass = pState.curr_changed ? 'changed' : '';
+
                 bodyHtml += `
-                <tr data-id="${p.id}">
+                <tr data-id="${pid}">
                     <td class="text-center ps-3">
                         <img src="${imgSrc}" class="product-img shadow-sm border">
                     </td>
@@ -496,12 +703,12 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
                     </td>
                     <td>
                         <div class="synced-input-group shadow-xs">
-                            <input type="number" step="any" class="form-control price-input" 
-                                   data-pid="${p.id}" data-old-price="${p.last_price}" value="${p.last_price || ''}" placeholder="0.00">
-                            <select class="form-select currency-select" data-pid="${p.id}" data-old-curr="${p.last_currency || 'TL'}">
-                                <option value="TL" ${p.last_currency === 'TL' ? 'selected' : ''}>TL</option>
-                                <option value="USD" ${p.last_currency === 'USD' ? 'selected' : ''}>USD</option>
-                                <option value="EUR" ${p.last_currency === 'EUR' ? 'selected' : ''}>EUR</option>
+                            <input type="number" step="any" class="form-control price-input ${priceClass}" 
+                                   data-pid="${pid}" data-old-price="${p.last_price}" value="${currentPrice}" placeholder="0.00">
+                            <select class="form-select currency-select ${currClass}" data-pid="${pid}" data-old-curr="${p.last_currency || 'TL'}">
+                                <option value="TL" ${currentCurr === 'TL' ? 'selected' : ''}>TL</option>
+                                <option value="USD" ${currentCurr === 'USD' ? 'selected' : ''}>USD</option>
+                                <option value="EUR" ${currentCurr === 'EUR' ? 'selected' : ''}>EUR</option>
                             </select>
                         </div>
                         <div class="small text-muted mt-1 text-end" style="font-size:0.75rem">
@@ -510,115 +717,113 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
                     </td>
             `;
                 whs.forEach(wid => {
-                    const currentStock = p.stocks[wid] || 0;
+                    const originalQty = p.stocks[wid] || 0;
+                    const originalAlarm = p.alarms ? (p.alarms[wid] || 0) : 0;
+                    
+                    const wState = (pState.wh_data && pState.wh_data[wid]) ? pState.wh_data[wid] : {};
+                    const displayQty = wState.qty_changed ? wState.qty : originalQty;
+                    const qtyClass = wState.qty_changed ? 'changed' : '';
+                    const displayAlarm = wState.alarm_changed ? wState.alarm : originalAlarm;
+                    const alarmClass = wState.alarm_changed ? 'changed' : '';
+
                     bodyHtml += `
-                    <td class="text-center">
+                    <td class="text-center wh-group-border-left wh-qty-col">
                         <div class="qty-input-box mx-auto">
-                            <input type="number" step="any" class="form-control qty-input form-control-sm" 
-                                   data-pid="${p.id}" data-wid="${wid}" data-old="${currentStock}" value="${currentStock}">
-                            <span class="current-qty-badge">Mevcut: <strong>${formatQty(currentStock)}</strong></span>
+                            <input type="number" step="any" min="0" class="form-control qty-input form-control-sm ${qtyClass}" 
+                                   data-pid="${pid}" data-wid="${wid}" data-old="${originalQty}" value="${displayQty}">
+                            <span class="current-qty-badge">Mevcut: <strong>${formatQty(originalQty)}</strong></span>
                         </div>
+                    </td>
+                    <td class="text-center wh-alarm-col">
+                        <input type="number" step="any" min="0" class="form-control alarm-input form-control-sm ${alarmClass}" 
+                               data-pid="${pid}" data-wid="${wid}" data-old="${originalAlarm}" value="${displayAlarm || ''}" placeholder="0">
                     </td>
                 `;
                 });
                 bodyHtml += '</tr>';
             });
             $('#tableBody').html(bodyHtml);
-            $('#btnSaveAll').prop('disabled', false);
+            
+            // Re-bind events
+            bindInputEvents();
+        }
 
-            // Change detection
-            $('.qty-input, .price-input, .currency-select').on('input change', function () {
-                const isQty = $(this).hasClass('qty-input');
-                const isPrice = $(this).hasClass('price-input');
-                const isCurr = $(this).hasClass('currency-select');
-
-                let changed = false;
-                if (isQty) {
-                    const oldVal = parseFloat($(this).data('old'));
-                    const newVal = parseFloat($(this).val());
-                    changed = Math.abs(oldVal - newVal) > 0.001;
-                } else if (isPrice) {
-                    const oldVal = parseFloat($(this).data('old-price') || 0);
-                    const newVal = parseFloat($(this).val() || 0);
-                    changed = Math.abs(oldVal - newVal) > 0.001;
-                } else if (isCurr) {
-                    const oldVal = $(this).data('old-curr');
-                    const newVal = $(this).val();
-                    changed = oldVal !== newVal;
-                }
-
-                if (changed) {
-                    $(this).addClass('changed');
-                } else {
-                    $(this).removeClass('changed');
-                }
+        function bindInputEvents() {
+            $('.qty-input').on('input change', function () {
+                trackChange($(this).data('pid'), $(this).data('wid'), 'qty', $(this).val(), $(this).data('old'));
+                $(this).toggleClass('changed', (pendingChanges[$(this).data('pid')]?.wh_data[$(this).data('wid')]?.qty_changed));
+            });
+            $('.alarm-input').on('input change', function () {
+                trackChange($(this).data('pid'), $(this).data('wid'), 'alarm', $(this).val(), $(this).data('old'));
+                $(this).toggleClass('changed', (pendingChanges[$(this).data('pid')]?.wh_data[$(this).data('wid')]?.alarm_changed));
+            });
+            $('.price-input').on('input change', function () {
+                trackChange($(this).data('pid'), null, 'price', $(this).val(), $(this).data('old-price'));
+                $(this).toggleClass('changed', (pendingChanges[$(this).data('pid')]?.price_changed));
+            });
+            $('.currency-select').on('change', function () {
+            trackChange($(this).data('pid'), null, 'currency', $(this).val(), $(this).data('old-curr'));
+                $(this).toggleClass('changed', (pendingChanges[$(this).data('pid')]?.curr_changed));
             });
         }
 
         $('#btnSaveAll').on('click', function () {
-            const updates = [];
-
-            // 1. First process all quantity changes
-            $('.qty-input.changed').each(function () {
-                const pid = $(this).data('pid');
-                const wid = $(this).data('wid');
-                const row = $(this).closest('tr');
-                const unitPrice = row.find(`.price-input[data-pid="${pid}"]`).val();
-                const currency = row.find(`.currency-select[data-pid="${pid}"]`).val();
-
-                updates.push({
-                    product_id: pid,
-                    warehouse_id: wid,
-                    new_qty: $(this).val(),
-                    unit_price: unitPrice || 0,
-                    currency: currency || 'TL'
-                });
+            const finalUpdates = [];
+            
+            Object.keys(pendingChanges).forEach(pid => {
+                const p = pendingChanges[pid];
+                const price = p.price_changed ? p.price : p.old_price;
+                const curr = p.curr_changed ? p.currency : p.old_curr;
+                const changedWids = Object.keys(p.wh_data || {});
+                
+                if (changedWids.length > 0) {
+                    changedWids.forEach(wid => {
+                        const w = p.wh_data[wid];
+                        const up = {
+                            product_id: pid,
+                            warehouse_id: wid,
+                            new_qty: w.qty_changed ? w.qty : w.old_qty,
+                            unit_price: price,
+                            currency: curr
+                        };
+                        if (w.alarm_changed) up.stock_alarm = w.alarm;
+                        finalUpdates.push(up);
+                    });
+                } else if (p.price_changed || p.curr_changed) {
+                    const whs = getSelectedWarehouses();
+                    if (whs.length > 0) {
+                        const row = $(`tr[data-id="${pid}"]`);
+                        if (row.length > 0) {
+                            const firstWhInput = row.find('.qty-input').first();
+                            finalUpdates.push({
+                                product_id: pid,
+                                warehouse_id: firstWhInput.data('wid'),
+                                new_qty: firstWhInput.data('old'),
+                                unit_price: price,
+                                currency: curr
+                            });
+                        }
+                    }
+                }
             });
 
-            // 2. Process price-only changes for rows where NO quantity changed
-            $('.price-input.changed, .currency-select.changed').each(function () {
-                const pid = $(this).data('pid');
-                const row = $(this).closest('tr');
-
-                // If this row already has a quantity update, skip it (price is already included)
-                const hasQtyUpdate = row.find('.qty-input.changed').length > 0;
-                if (hasQtyUpdate) return;
-
-                // Check if we already added a price-only update for this product in this batch
-                const alreadyAdded = updates.some(u => u.product_id === pid);
-                if (alreadyAdded) return;
-
-                // Pick the first available warehouse ID in this row's inputs to attach the 0-qty entry
-                const firstWhInput = row.find('.qty-input').first();
-                const wid = firstWhInput.data('wid');
-                const currentQty = firstWhInput.data('old');
-                const unitPrice = row.find(`.price-input[data-pid="${pid}"]`).val();
-                const currency = row.find(`.currency-select[data-pid="${pid}"]`).val();
-
-                updates.push({
-                    product_id: pid,
-                    warehouse_id: wid,
-                    new_qty: currentQty, // Keep same qty
-                    unit_price: unitPrice || 0,
-                    currency: currency || 'TL'
-                });
-            });
-
-            if (updates.length === 0) {
+            if (finalUpdates.length === 0) {
                 showInfo('Herhangi bir değişiklik yapmadınız.');
                 return;
             }
 
-            confirmAction(`${updates.length} kalem veri güncellenecek. Onaylıyor musunuz?`, function () {
+            confirmAction(`${finalUpdates.length} kalem veri güncellenecek. Onaylıyor musunuz?`, function () {
                 $('#btnSaveAll').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>KAYDEDİLİYOR...');
 
                 $.post('<?= BASE_URL ?>/api/bulk_stock_update.php', {
                     action: 'update_stock',
-                    updates: updates,
+                    updates: finalUpdates,
                     csrf_token: $('meta[name="csrf-token"]').attr('content')
                 }, function (r) {
                     if (r.success) {
                         showSuccess(r.message);
+                        pendingChanges = {};
+                        updateChangeCount();
                         loadData();
                     } else {
                         showError(r.message);
@@ -628,5 +833,8 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
                 });
             });
         });
+
+        // Initialize persistence
+        restoreSelection();
     });
 </script>

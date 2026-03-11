@@ -37,10 +37,10 @@ $warehouses = Database::fetchAll("
 
   .status-btn-item {
     flex: 1;
-    padding: 6px 10px;
+    padding: 0.375rem 0.625rem;
     border: 1px solid #dee2e6;
     background: #fff;
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: bold;
     color: #6c757d;
     cursor: pointer;
@@ -72,12 +72,12 @@ $warehouses = Database::fetchAll("
     gap: 10px;
   }
 
-  /* Tüm header araçlarını aynı yüksekliğe sabitle */
+  /* Tüm header araçlarını aynı yüksekliğe sabitle - ARTIK GLOBALDEN GELİYOR ANCAK ÖZEL DURUM VARSA BURADA KALABİLİR */
   .card-header .card-tools .form-select-sm,
   .card-header .card-tools .input-group-sm .form-control,
   .card-header .card-tools .input-group-sm .input-group-text,
   .card-header .card-tools .btn-sm {
-    height: 32px;
+    height: 2rem;
     line-height: 1;
     font-size: 0.8125rem;
     padding-top: 0;
@@ -118,8 +118,8 @@ $warehouses = Database::fetchAll("
      GENEL TABLO & KART
   ─────────────────────────────────────────── */
   .select2-product-img {
-    width: 26px;
-    height: 26px;
+    width: 1.625rem;
+    height: 1.625rem;
     object-fit: cover;
     border-radius: var(--radius-sm);
     margin-right: 6px;
@@ -164,14 +164,14 @@ $warehouses = Database::fetchAll("
   }
 
   .card-header .card-title {
-    font-size: 1.75rem !important;
+    font-size: 1.5rem;
     display: flex;
     align-items: center;
   }
 
   .card-header .card-title i {
-    font-size: 1.5rem;
-    margin-right: 12px;
+    font-size: 1.25rem;
+    margin-right: 0.75rem;
   }
 
   /* Sayfa tepesindeki boşluk */

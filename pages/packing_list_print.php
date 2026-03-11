@@ -28,6 +28,8 @@ foreach ($parcels as &$p) {
     ", [$p['id']]);
 }
 unset($p);
+
+$fontSizeScale = get_setting('font_size_scale', '100');
 ?>
 <!DOCTYPE html>
 <html lang="tr">
@@ -42,9 +44,15 @@ unset($p);
             margin: 15mm;
         }
 
+        html {
+            font-size: calc(100% *
+                    <?= (float) $fontSizeScale / 100 ?>
+                ) !important;
+        }
+
         body {
             font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-size: 13px;
+            font-size: 0.8125rem;
             line-height: 1.4;
             color: #1a202c;
             margin: 0;
@@ -77,8 +85,8 @@ unset($p);
         }
 
         .info-header-table td {
-            padding: 8px 12px;
-            font-size: 14px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
             border: none;
         }
 
@@ -107,16 +115,16 @@ unset($p);
             background-color: #f7fafc;
             color: #2d3748;
             font-weight: 700;
-            font-size: 11px;
+            font-size: 0.6875rem;
             text-transform: uppercase;
             border: 1px solid #cbd5e0;
-            padding: 10px 8px;
+            padding: 0.625rem 0.5rem;
             text-align: left;
         }
 
         td {
             border: 1px solid #cbd5e0;
-            padding: 8px;
+            padding: 0.5rem;
             vertical-align: top;
         }
 
@@ -124,7 +132,7 @@ unset($p);
             width: 10%;
             text-align: center;
             font-weight: 700;
-            font-size: 11px;
+            font-size: 0.6875rem;
         }
 
         .col-weight {
@@ -178,23 +186,23 @@ unset($p);
 
         .item-name {
             font-weight: 700;
-            font-size: 12px;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            margin-bottom: 2px;
+            margin-bottom: 0.125rem;
             display: block;
         }
 
         .item-qty {
-            font-size: 11px;
+            font-size: 0.6875rem;
             font-weight: 500;
             color: #4a5568;
-            margin-bottom: 4px;
+            margin-bottom: 0.25rem;
         }
 
         .item-desc {
-            font-size: 11px;
+            font-size: 0.6875rem;
             color: #718096;
-            margin-top: 2px;
+            margin-top: 0.125rem;
         }
 
         .item-desc b {
@@ -206,9 +214,9 @@ unset($p);
         ─────────────────────────────────────────── */
         .list-end {
             text-align: center;
-            padding: 15px;
+            padding: 0.9375rem;
             font-weight: 700;
-            font-size: 12px;
+            font-size: 0.75rem;
             text-transform: uppercase;
             border: 1px solid #cbd5e0;
             border-top: none;
@@ -232,10 +240,10 @@ unset($p);
         }
 
         .btn {
-            padding: 10px 24px;
-            border-radius: 8px;
+            padding: 0.625rem 1.5rem;
+            border-radius: 0.5rem;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 0.875rem;
             cursor: pointer;
             border: none;
             transition: all 0.2s;
@@ -343,7 +351,7 @@ unset($p);
                                         <?php if ($item['image']): ?>
                                             <img src="<?= UPLOAD_URL . e($item['image']) ?>" class="item-img" alt="product">
                                         <?php else: ?>
-                                            <i class="fas fa-image text-muted opacity-25" style="font-size: 24px;"></i>
+                                            <i class="fas fa-image text-muted opacity-25" style="font-size: 1.5rem;"></i>
                                         <?php endif; ?>
                                     </div>
                                     <div class="item-details">

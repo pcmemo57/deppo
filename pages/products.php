@@ -7,6 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <?php
 requireRole(ROLE_ADMIN, ROLE_USER);
+$warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE hidden=0 AND is_active=1 ORDER BY name");
 ?>
 <style>
     /* Card footer flex düzeni */
@@ -33,8 +34,11 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                         <option value="50">50</option>
                         <option value="100">100</option>
                     </select>
-                    <div class="input-group input-group-sm" style="width: 220px;">
+                    <div class="input-group input-group-sm" style="width: 240px;">
                         <input type="text" id="searchBox" class="form-control" placeholder="Ara...">
+                        <button class="btn btn-outline-secondary border-start-0 d-none" id="btnClearSearch" type="button">
+                            <i class="fas fa-times"></i>
+                        </button>
                         <div class="input-group-append">
                             <span class="input-group-text"><i class="fas fa-search"></i></span>
                         </div>
@@ -129,6 +133,29 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                                 <div class="col-md-12">
                                     <div class="mb-3"><label class="form-label">Açıklama</label>
                                         <textarea name="description" class="form-control" rows="3"></textarea>
+                                    </div>
+                                </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="mb-3">
+                                        <label class="form-label text-primary font-weight-bold">
+                                            <i class="fas fa-warehouse me-1"></i> Depo Bazlı Alarm Seviyeleri
+                                        </label>
+                                        <div class="row g-2" id="warehouseAlarmsContainer">
+                                            <?php foreach ($warehouses as $w): ?>
+                                                <div class="col-sm-6 col-md-4">
+                                                    <div class="input-group input-group-sm">
+                                                        <span class="input-group-text border-end-0 bg-light" style="font-size: 0.75rem; width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?= e($w['name']) ?>">
+                                                            <?= e($w['name']) ?>
+                                                        </span>
+                                                        <input type="number" step="any" name="warehouse_alarms[<?= (int) $w['id'] ?>]" 
+                                                               class="form-control wh-alarm-input" placeholder="0" min="0" 
+                                                               data-wid="<?= (int) $w['id'] ?>" style="width: 40%;">
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <small class="text-muted">Bu depolardaki stok bu değerin altına düşerse ayrıca vurgulanır.</small>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
@@ -274,7 +301,9 @@ requireRole(ROLE_ADMIN, ROLE_USER);
         $('#formAction').val('add'); $('#formId').val(''); $('#crudForm')[0].reset();
         $('[name="unit"]').val('Adet').trigger('change');
         setStatus(1);
-        $('#previewImg').attr('src', noImg); $('#modalTitle').text('Ürün Ekle'); $('#crudModal').modal('show');
+        $('#previewImg').attr('src', noImg); $('#modalTitle').text('Ürün Ekle'); 
+        $('.wh-alarm-input').val(''); // Reset warehouse alarms
+        $('#crudModal').modal('show');
     }
     function editRow(id) {
         $.get(apiUrl, { action: 'get', id: id }, function (r) {
@@ -288,6 +317,15 @@ requireRole(ROLE_ADMIN, ROLE_USER);
             setStatus(u.is_active);
             var imgSrc = u.image ? '<?= BASE_URL ?>/images/UrunResim/' + u.image : noImg;
             $('#previewImg').attr('src', imgSrc);
+
+            // Depo bazlı alarmları doldur
+            $('.wh-alarm-input').val(''); // Önce temizle
+            if (u.warehouse_alarms) {
+                u.warehouse_alarms.forEach(function(wa) {
+                    $('.wh-alarm-input[data-wid="' + wa.warehouse_id + '"]').val(wa.stock_alarm);
+                });
+            }
+
             $('#modalTitle').text('Ürün Düzenle'); $('#crudModal').modal('show');
         }, 'json');
     }
@@ -396,7 +434,16 @@ requireRole(ROLE_ADMIN, ROLE_USER);
         $('#qrModal').modal('show');
     }
 
-    $('#searchBox').on('input', function () { clearTimeout(searchTimer); curSearch = $(this).val(); searchTimer = setTimeout(function () { curPage = 1; load(); }, 400); });
+    $('#searchBox').on('input', function () { 
+        const val = $(this).val();
+        $('#btnClearSearch').toggleClass('d-none', !val);
+        clearTimeout(searchTimer); 
+        curSearch = val; 
+        searchTimer = setTimeout(function () { curPage = 1; load(); }, 400); 
+    });
+    $('#btnClearSearch').on('click', function () {
+        $('#searchBox').val('').trigger('input');
+    });
     $('#perPage').on('change', function () { curPerPage = parseInt($(this).val()); curPage = 1; load(); });
     load();
 </script>

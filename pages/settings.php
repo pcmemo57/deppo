@@ -5,7 +5,7 @@
 requireRole(ROLE_ADMIN);
 
 $activeTab = $_GET['tab'] ?? 'general';
-$tabs = ['general', 'appearance', 'currency', 'data-mgmt', 'pdf', 'backup', 'mail'];
+$tabs = ['general', 'appearance', 'currency', 'data-mgmt', 'pdf', 'backup', 'gdrive', 'mail'];
 if (!in_array($activeTab, $tabs)) {
     $activeTab = 'general';
 }
@@ -32,6 +32,7 @@ $googleFontList = [
     'Lora' => 'Lora',
     'Cabin' => 'Cabin',
     'Zilla+Slab' => 'Zilla Slab',
+    'Play' => 'Play',
 ];
 ?>
 
@@ -106,7 +107,7 @@ $googleFontList = [
         color: #059669 !important;
     }
 
-    .card-tabs .card-body {
+    .card-tabs .card-body:not(.p-0) {
         padding: 25px !important;
     }
 </style>
@@ -153,6 +154,12 @@ $googleFontList = [
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link <?= $activeTab === 'gdrive' ? 'active' : '' ?>" data-bs-toggle="tab"
+                            href="#tab-gdrive">
+                            <i class="fab fa-google-drive text-primary"></i>Google Drive
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link <?= $activeTab === 'mail' ? 'active' : '' ?>" data-bs-toggle="tab"
                             href="#tab-mail">
                             <i class="fas fa-envelope"></i>Mail Ayarları
@@ -160,7 +167,8 @@ $googleFontList = [
                     </li>
                 </ul>
             </div>
-            <div class="card-body">
+            <div id="settingsCardBody" class="card-body <?= $activeTab === 'backup' ? 'p-0' : '' ?>">
+
                 <div class="tab-content">
 
                     <!-- ═══════════ MAIL ═══════════ -->
@@ -270,15 +278,40 @@ $googleFontList = [
                                         </div>
                                         <div class="card-body">
                                             <div class="mb-3">
-                                                <label class="form-label">Arkaplan Rengi</label>
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <input type="color" name="header_bg"
-                                                        class="form-control form-control-color"
-                                                        value="<?= e(get_setting('header_bg', '#343a40')) ?>"
-                                                        style="width:60px;height:38px">
-                                                    <input type="text" name="header_bg_hex" class="form-control"
-                                                        value="<?= e(get_setting('header_bg', '#343a40')) ?>"
-                                                        maxlength="7" placeholder="#343a40">
+                                                <label class="form-label">Navbar Arkaplan Seçimi</label>
+                                                <?php $headerBgType = get_setting('header_bg_type', 'manual'); ?>
+                                                <div class="d-flex gap-3 mb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio"
+                                                            name="header_bg_type" value="manual" id="headerBgManual"
+                                                            <?= $headerBgType === 'manual' ? 'checked' : '' ?>>
+                                                        <label class="form-check-label" for="headerBgManual">Manuel
+                                                            (Seçici)</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio"
+                                                            name="header_bg_type" value="random" id="headerBgRandom"
+                                                            <?= $headerBgType === 'random' ? 'checked' : '' ?>>
+                                                        <label class="form-check-label" for="headerBgRandom">Rastgele
+                                                            (Koyu)</label>
+                                                    </div>
+                                                </div>
+                                                <div id="header-manual-color-wrap"
+                                                    class="<?= $headerBgType === 'random' ? 'd-none' : '' ?>">
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <input type="color" name="header_bg"
+                                                            class="form-control form-control-color"
+                                                            value="<?= e(get_setting('header_bg', '#343a40')) ?>"
+                                                            style="width:60px;height:38px">
+                                                        <input type="text" name="header_bg_hex" class="form-control"
+                                                            value="<?= e(get_setting('header_bg', '#343a40')) ?>"
+                                                            maxlength="7" placeholder="#343a40">
+                                                    </div>
+                                                </div>
+                                                <div id="header-random-info"
+                                                    class="small text-muted mt-1 <?= $headerBgType === 'manual' ? 'd-none' : '' ?>">
+                                                    <i class="fas fa-info-circle me-1"></i> Kaydettiğinizde sistem
+                                                    otomatik olarak koyu bir renk belirleyecektir.
                                                 </div>
                                             </div>
                                             <div class="mb-3">
@@ -393,17 +426,32 @@ $googleFontList = [
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Google Font Seçimi</label>
-                                        <div class="input-icon-wrap">
-                                            <i class="fas fa-font field-icon"></i>
-                                            <select name="google_font" class="form-select select2-simple">
-                                                <?php foreach ($googleFontList as $fontKey => $fontLabel): ?>
-                                                    <option value="<?= e($fontKey) ?>" <?= get_setting('google_font', 'default') === $fontKey ? 'selected' : '' ?>>
-                                                        <?= e($fontLabel) ?>
-                                                    </option>
-                                                <?php endforeach; ?>
-                                            </select>
+                                    <div class="row">
+                                        <div class="col-8">
+                                            <div class="mb-3">
+                                                <label class="form-label">Google Font Seçimi</label>
+                                                <div class="input-icon-wrap">
+                                                    <i class="fas fa-font field-icon"></i>
+                                                    <select name="google_font" class="form-select select2-simple">
+                                                        <?php foreach ($googleFontList as $fontKey => $fontLabel): ?>
+                                                            <option value="<?= e($fontKey) ?>" <?= get_setting('google_font', 'default') === $fontKey ? 'selected' : '' ?>>
+                                                                <?= e($fontLabel) ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="mb-3">
+                                                <label class="form-label">Yazı Boyutu (%)</label>
+                                                <div class="input-group">
+                                                    <input type="number" name="font_size_scale" class="form-control"
+                                                        value="<?= e(get_setting('font_size_scale', '100')) ?>" min="50"
+                                                        max="200" step="5">
+                                                    <span class="input-group-text">%</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -506,6 +554,17 @@ $googleFontList = [
                                             <input type="text" name="site_name" class="form-control"
                                                 value="<?= e(get_setting('site_name', APP_NAME)) ?>">
                                         </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Yedekleme Bildirim E-postası</label>
+                                        <div class="input-icon-wrap">
+                                            <i class="fas fa-envelope field-icon"></i>
+                                            <input type="email" name="backup_notification_email" class="form-control"
+                                                value="<?= e(get_setting('backup_notification_email', '')) ?>"
+                                                placeholder="admin@ornek.com">
+                                        </div>
+                                        <small class="text-muted">Giriş/çıkış yedekleme sonuçları bu adrese mail olarak
+                                            gönderilir.</small>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">Kargo Gönderici Bilgisi</label>
@@ -747,38 +806,124 @@ $googleFontList = [
 
                     <!-- ═══════════ YEDEKLEME ═══════════ -->
                     <div class="tab-pane fade <?= $activeTab === 'backup' ? 'show active' : '' ?>" id="tab-backup">
-                        <div class="card card-outline card-primary">
-                            <div class="card-header">
-                                <h6 class="m-0 text-bold"><i class="fas fa-database me-1"></i> Veritabanı Yedekleri</h6>
+                        <div class="card-header bg-white border-bottom">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 text-bold text-primary"><i class="fas fa-database me-1"></i>
+                                    Veritabanı Yedekleri</h6>
                                 <div class="card-tools">
-                                    <button class="btn btn-primary btn-sm shadow-sm" onclick="createBackup()">
+                                    <button type="button" class="btn btn-primary shadow-sm" onclick="createBackup()">
                                         <i class="fas fa-plus-circle me-1"></i> Yeni Yedek Oluştur
                                     </button>
                                 </div>
                             </div>
-                            <div class="card-body p-0">
-                                <div class="table-responsive">
-                                    <table class="table table-hover align-middle mb-0">
-                                        <thead class="bg-light">
-                                            <tr>
-                                                <th class="ps-3">Dosya Adı</th>
-                                                <th>Boyut</th>
-                                                <th>Tarih</th>
-                                                <th class="text-end pe-3">İşlemler</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="backupTableBody">
-                                            <tr>
-                                                <td colspan="4" class="text-center text-muted p-4">Yükleniyor...</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                        </div>
+                        <div class="p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="bg-light text-muted small">
+                                        <tr>
+                                            <th class="ps-3" style="width: 50%;">Yedek Dosyası</th>
+                                            <th>Boyut</th>
+                                            <th>Tarih</th>
+                                            <th class="text-end pe-3">İşlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="unifiedBackupTableBody">
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted p-4">Yükleniyor...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ═══════════ GOOGLE DRIVE ═══════════ -->
+                    <div class="tab-pane fade <?= $activeTab === 'gdrive' ? 'show active' : '' ?>" id="tab-gdrive">
+                        <div class="card card-outline card-primary mb-4">
+                            <div class="card-header">
+                                <h6 class="m-0 text-bold"><i class="fab fa-google-drive me-1"></i> Google Drive
+                                    Yedekleme
+                                    Ayarları</h6>
+                            </div>
+                            <div class="card-body">
+                                <form id="formGDrive">
+                                    <input type="hidden" name="action" value="save_gdrive">
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch p-0" style="padding-left: 2.5em !important;">
+                                            <input type="hidden" name="google_drive_active" value="0">
+                                            <input class="form-check-input" type="checkbox" name="google_drive_active"
+                                                value="1" id="google_drive_active" <?= get_setting('google_drive_active', '0') === '1' ? 'checked' : '' ?> style="margin-left: -2.5em;">
+                                            <label class="form-check-label fw-bold" for="google_drive_active">Google
+                                                Drive
+                                                Yedeklemesi Aktif Mi?</label>
+                                            <div class="small text-muted">Açık olduğunda, manuel oluşturulan yedekler
+                                                otomatik olarak Google Drive'a aktarılır.</div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Drive Ana Klasör ID</label>
+                                        <div class="input-icon-wrap">
+                                            <i class="fas fa-folder field-icon"></i>
+                                            <input type="text" name="google_drive_folder_id" class="form-control"
+                                                value="<?= e(get_setting('google_drive_folder_id', '')) ?>"
+                                                placeholder="Örn: 1Xb6F-_JGtloRusJQgs_t8D7Qwh3QOmgL">
+                                        </div>
+                                        <small class="text-muted">Yedeklerin yükleneceği Google Drive klasörünün
+                                            URL'sindeki
+                                            ID kısmı.</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Client Secret JSON Dosyası</label>
+                                        <div class="input-group">
+                                            <input type="file" id="gdrive_json_file" accept=".json"
+                                                class="form-control">
+                                        </div>
+                                        <textarea name="google_drive_credentials_json"
+                                            id="google_drive_credentials_json"
+                                            style="display:none;"><?= e(get_setting('google_drive_credentials_json', '')) ?></textarea>
+
+                                        <?php if (!empty(get_setting('google_drive_credentials_json', ''))): ?>
+                                            <small class="text-success mt-1 d-block"><i class="fas fa-check-circle"></i>
+                                                Dosya
+                                                yüklü.</small>
+                                        <?php endif; ?>
+
+                                        <small class="text-muted mt-2 d-block">
+                                            <i class="fas fa-info-circle"></i> Kurulum Adımları:<br>
+                                            1. Google Cloud Console'dan <strong>OAuth 2.0 Client ID</strong>
+                                            oluşturun.<br>
+                                            2. "Authorized redirect URIs" kısmına şunu ekleyin: <br>
+                                            <code><?= BASE_URL ?>/api/google_auth.php</code><br>
+                                            3. İndirdiğiniz JSON dosyasını buradan yükleyin ve "Ayarları Kaydet"e
+                                            basın.<br>
+                                            4. Son olarak alttaki "Google ile Bağlan" butonuna basarak izin verin.
+                                        </small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <button type="submit" class="btn btn-primary"><i
+                                                class="fas fa-save me-1"></i>Ayarları
+                                            Kaydet</button>
+
+                                        <?php
+                                        $tokenJson = get_setting('google_drive_token', '');
+                                        if (!empty($tokenJson) && get_setting('google_drive_active', '0') === '1'):
+                                            ?>
+                                            <a href="<?= BASE_URL ?>/api/google_auth.php" class="btn btn-success ms-2"><i
+                                                    class="fab fa-google-drive me-1"></i> ✓ Google Drive Bağlı (Yenile)</a>
+                                        <?php else: ?>
+                                            <a href="<?= BASE_URL ?>/api/google_auth.php"
+                                                class="btn btn-outline-dark ms-2"><i class="fab fa-google me-1"></i> Google
+                                                ile Bağlan</a>
+                                        <?php endif; ?>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>
 
                 </div>
+
             </div>
         </div>
     </div>
@@ -852,6 +997,7 @@ $googleFontList = [
     $('#formPdf').on('submit', function (e) { e.preventDefault(); submitSettingsForm('formPdf'); });
     $('#formCurrency').on('submit', function (e) { e.preventDefault(); submitSettingsForm('formCurrency'); });
     $('#formGeneral').on('submit', function (e) { e.preventDefault(); submitSettingsForm('formGeneral'); });
+    $('#formGDrive').on('submit', function (e) { e.preventDefault(); submitSettingsForm('formGDrive'); });
 
     // Test maili
     $('#btnTestMail').on('click', function () {
@@ -935,6 +1081,32 @@ $googleFontList = [
         var tabId = $(e.target).attr('href').replace('#tab-', '');
         var newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?page=settings&tab=' + tabId;
         window.history.replaceState({ path: newUrl }, '', newUrl);
+
+        // Backup tab'ında padding'i sıfırla, diğerlerinde 25px yap
+        if (tabId === 'backup') {
+            $('#settingsCardBody').addClass('p-0');
+        } else {
+            $('#settingsCardBody').removeClass('p-0');
+        }
+    });
+
+    // Google Drive JSON Yükleme Oku
+    $('#gdrive_json_file').on('change', function () {
+        var input = this;
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    JSON.parse(e.target.result);
+                    $('#google_drive_credentials_json').val(e.target.result);
+                    showSuccess('JSON dosyası okundu. "Ayarları Kaydet" butonuna tıklayarak işlemi tamamlayın.');
+                } catch (err) {
+                    showError('Geçersiz JSON dosyası. Lütfen kontrol edin.');
+                    $(input).val('');
+                }
+            };
+            reader.readAsText(input.files[0]);
+        }
     });
 
     // TCMB kurları güncelle
@@ -1032,28 +1204,47 @@ $googleFontList = [
     function loadBackups() {
         $.get('<?= BASE_URL ?>/api/backup.php', { action: 'list' }, function (r) {
             if (r.success) {
-                if (r.data.length === 0) {
-                    $('#backupTableBody').html('<tr><td colspan="4" class="text-center text-muted p-4">Henüz yedek bulunmuyor.</td></tr>');
-                    return;
-                }
                 var html = '';
+
                 $.each(r.data, function (i, b) {
-                    html += '<tr>';
-                    html += '<td class="ps-3 fw-bold text-primary"><i class="fas fa-file-alt me-2 text-muted" style="margin-right: 5px"></i>' + b.filename + '</td>';
-                    html += '<td><span class="badge bg-secondary">' + b.size + '</span></td>';
-                    html += '<td>' + b.date + '</td>';
-                    html += '<td class="text-end pe-3">';
-                    html += '<div class="btn-group d-flex justify-content-end">';
-                    html += '<a href="<?= BASE_URL ?>/api/backup.php?action=download&filename=' + b.filename + '" class="btn btn-sm btn-outline-success" title="İndir"><i class="fas fa-download"></i></a>';
-                    html += '<button class="btn btn-sm btn-outline-warning" onclick="restoreBackup(\'' + b.filename + '\')" title="Geri Yükle"><i class="fas fa-undo"></i></button>';
-                    html += '<button class="btn btn-sm btn-outline-danger" onclick="deleteBackup(\'' + b.filename + '\')" title="Sil"><i class="fas fa-trash"></i></button>';
-                    html += '</div></td></tr>';
+                    // Lokal Satırı (Varsa)
+                    if (b.is_local) {
+                        var localBadge = '&nbsp;&nbsp;<span class="badge bg-secondary" title="Sadece Lokal"><i class="fas fa-server"></i> Lokalde</span>';
+                        html += '<tr>';
+                        html += '<td class="ps-3 fw-bold text-primary"><i class="fas fa-file-alt me-2 text-muted"></i>' + b.filename + localBadge + '</td>';
+                        html += '<td><span class="badge bg-light text-dark border">' + b.size + '</span></td>';
+                        html += '<td>' + b.date + '</td>';
+                        html += '<td class="text-end pe-3">';
+                        html += '<div class="btn-group justify-content-end">';
+                        html += '<a href="<?= BASE_URL ?>/api/backup.php?action=download&filename=' + b.filename + '" class="btn btn-sm btn-outline-success" title="Bilgisayara İndir"><i class="fas fa-download"></i></a>';
+                        html += '<button class="btn btn-sm btn-outline-warning" onclick="restoreBackup(\'' + b.filename + '\')" title="Sistemi Geri Yükle"><i class="fas fa-undo"></i></button>';
+                        html += '<button class="btn btn-sm btn-outline-danger" onclick="deleteBackup(\'' + b.filename + '\')" title="Lokali Sil"><i class="fas fa-trash"></i></button>';
+                        html += '</div></td></tr>';
+                    }
+
+                    // Cloud Satırı (Varsa)
+                    if (b.on_drive) {
+                        var cloudBadge = '&nbsp;&nbsp;<span class="badge bg-primary" title="Sadece Drive"><i class="fab fa-google-drive"></i> Bulutta</span>';
+                        html += '<tr>';
+                        html += '<td class="ps-3 fw-bold text-success"><i class="fab fa-google-drive me-2 text-muted"></i>' + b.filename + cloudBadge + '</td>';
+                        html += '<td><span class="badge bg-light text-dark border">' + b.size + '</span></td>';
+                        html += '<td>' + b.date + '</td>';
+                        html += '<td class="text-end pe-3">';
+                        html += '<div class="btn-group justify-content-end">';
+                        html += '<a href="https://drive.google.com/open?id=' + b.drive_id + '" target="_blank" class="btn btn-sm btn-outline-primary" title="Drive\'da Aç"><i class="fas fa-external-link-alt"></i></a>';
+                        html += '<button class="btn btn-sm btn-outline-warning" onclick="restoreDriveBackup(\'' + b.drive_id + '\', \'' + b.filename + '\')" title="Buluttan İndir ve Geri Yükle"><i class="fas fa-cloud-download-alt"></i></button>';
+                        html += '</div></td></tr>';
+                    }
                 });
-                $('#backupTableBody').html(html);
+
+                if (html === '') html = '<tr><td colspan="4" class="text-center text-muted p-4">Hiç yedek bulunamadı.</td></tr>';
+                $('#unifiedBackupTableBody').html(html);
             } else {
-                $('#backupTableBody').html('<tr><td colspan="4" class="text-center text-danger p-4">Hata: ' + r.message + '</td></tr>');
+                $('#unifiedBackupTableBody').html('<tr><td colspan="4" class="text-center text-danger p-4">Hata: ' + r.message + '</td></tr>');
             }
-        }, 'json');
+        }, 'json').fail(function () {
+            $('#unifiedBackupTableBody').html('<tr><td colspan="4" class="text-center text-danger p-4">Hata: Sunucuya bağlanılamadı.</td></tr>');
+        });
     }
 
     function createBackup() {
@@ -1117,9 +1308,47 @@ $googleFontList = [
         });
     }
 
-    // Tab açıldığında yedekleri yükle
+    function restoreDriveBackup(drive_id, filename) {
+        Swal.fire({
+            title: 'Buluttan İndir ve Geri Yükle',
+            text: 'Veritabanı Google Drive\'dan indirilip (' + filename + ') geri yüklenecektir. Devam etmek istiyor musunuz?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#f39c12',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Evet, Buluttan Yükle!',
+            cancelButtonText: 'İptal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Drive\'dan İndiriliyor & Geri Yükleniyor...',
+                    text: 'İşlem uzun sürebilir, sayfayı kapatmayın.',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+
+                $.post('<?= BASE_URL ?>/api/backup.php', { action: 'restore', drive_id: drive_id, filename: filename }, function (r) {
+                    if (r.success) {
+                        Swal.fire('Tamamlandı', r.message, 'success').then(() => location.reload());
+                    } else {
+                        showError(r.message + (r.data && r.data.error ? "\n\n" + r.data.error : ""));
+                    }
+                }, 'json');
+            }
+        });
+    }
+
+    // Yedeklemeleri Yükle
     $('a[href="#tab-backup"]').on('shown.bs.tab', function (e) {
         loadBackups();
+    });
+
+    // Eğer sayfa açılışında direkt backup tab'ındaysak yedekleri yükle
+    $(function () {
+        var urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('tab') === 'backup') {
+            loadBackups();
+        }
     });
 
     // ═══════════ EXCEL İÇE AKTAR (IMPORT) İŞLEMLERİ ═══════════
@@ -1221,8 +1450,7 @@ $googleFontList = [
                             showInfo(msg);
                             setTimeout(() => { location.reload(); }, 3000);
                         } else {
-                            showSuccess(msg);
-                            setTimeout(() => { location.reload(); }, 1500);
+                            showSuccess(msg); setTimeout(() => { location.reload(); }, 1500);
                         }
                     } else {
                         // Tamamen başarısız
@@ -1250,5 +1478,27 @@ $googleFontList = [
         };
 
         reader.readAsArrayBuffer(file);
+    });
+
+    // Header Arkaplan Türü Değişimi
+    $('input[name="header_bg_type"]').on('change', function () {
+        if ($(this).val() === 'random') {
+            $('#header-manual-color-wrap').addClass('d-none');
+            $('#header-random-info').removeClass('d-none');
+        } else {
+            $('#header-manual-color-wrap').removeClass('d-none');
+            $('#header-random-info').addClass('d-none');
+        }
+    });
+
+    // Color picker senkronizasyon (Header)
+    $('input[name="header_bg"]').on('input', function () {
+        $('input[name="header_bg_hex"]').val($(this).val());
+    });
+    $('input[name="header_bg_hex"]').on('input', function () {
+        var val = $(this).val();
+        if (/^#[0-9A-F]{6}$/i.test(val)) {
+            $('input[name="header_bg"]').val(val);
+        }
     });
 </script>

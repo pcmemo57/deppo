@@ -394,3 +394,126 @@ function isInventoryOpen(int $warehouseId): bool
     $row = Database::fetchOne("SELECT id FROM inventory_sessions WHERE warehouse_id = ? AND status = 'open'", [$warehouseId]);
     return !empty($row);
 }
+
+/**
+ * Beyaz yazı ile okunabilecek rastgele bir koyu renk üretir (HEX)
+ */
+function generateRandomSafeColor(): string
+{
+    // Koyu renkler için R, G, B değerlerini 0-150 arasında sınırla
+    $r = str_pad(dechex(rand(0, 150)), 2, '0', STR_PAD_LEFT);
+    $g = str_pad(dechex(rand(0, 150)), 2, '0', STR_PAD_LEFT);
+    $b = str_pad(dechex(rand(0, 150)), 2, '0', STR_PAD_LEFT);
+    return '#' . $r . $g . $b;
+}
+/**
+ * Şık bir HTML e-posta tasarımı oluşturur
+ */
+function generate_email_body(string $title, array $details = [], string $status = 'success', string $footerTxt = ''): string
+{
+    $primaryColor = ($status === 'success') ? '#28a745' : '#dc3545';
+    $siteName = get_setting('site_name', APP_NAME);
+    $logo = get_setting('system_logo', '');
+    $logoHtml = '';
+
+    if ($logo) {
+        $logoHtml = '<img src="' . BASE_URL . '/' . $logo . '" alt="' . $siteName . '" style="max-height: 50px; margin-bottom: 20px;">';
+    } else {
+        $logoHtml = '<h2 style="color: #333; margin-bottom: 20px;">' . $siteName . '</h2>';
+    }
+
+    $detailsHtml = '';
+    if (!empty($details)) {
+        $detailsHtml = '<table style="width: 100%; border-collapse: collapse; margin: 20px 0; background: #fafafa; border-radius: 6px; overflow: hidden;">';
+        foreach ($details as $label => $value) {
+            $detailsHtml .= '<tr>
+                <td style="padding: 12px 15px; border-bottom: 1px solid #eeeeee; color: #666; width: 40%; font-weight: bold;">' . e($label) . '</td>
+                <td style="padding: 12px 15px; border-bottom: 1px solid #eeeeee; color: #333;">' . $value . '</td>
+            </tr>';
+        }
+        $detailsHtml .= '</table>';
+    }
+
+    return '
+    <!DOCTYPE html>
+    <html lang="tr">
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body style="margin: 0; padding: 0; font-family: \'Helvetica Neue\', Helvetica, Arial, sans-serif; background-color: #f4f7f6; color: #444;">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f4f7f6; padding: 40px 0;">
+            <tr>
+                <td align="center">
+                    <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); overflow: hidden;">
+                        <tr>
+                            <td style="padding: 40px; text-align: center;">
+                                ' . $logoHtml . '
+                                <div style="display: inline-block; padding: 8px 16px; border-radius: 50px; background-color: ' . $primaryColor . '; color: #ffffff; font-weight: bold; font-size: 14px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">
+                                    ' . ($status === 'success' ? '✔ İŞLEM BAŞARILI' : '✘ HATA OLUŞTU') . '
+                                </div>
+                                <h1 style="color: #2c3e50; margin: 0 0 10px 0; font-size: 24px; font-weight: 700;">' . e($title) . '</h1>
+                                ' . $detailsHtml . '
+                                <p style="font-size: 14px; color: #7f8c8d; line-height: 1.6; margin-top: 30px;">
+                                    ' . $footerTxt . '
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="background-color: #f8f9fa; padding: 20px; text-align: center; color: #95a5a6; font-size: 12px;">
+                                &copy; ' . date('Y') . ' ' . $siteName . ' | Tüm hakları saklıdır.<br>
+                                Bu e-posta sistem tarafından otomatik olarak oluşturulmuştur.
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>';
+}
+/**
+ * Kritik stok uyarılarını getirir
+ */
+function getLowStockAlerts(): array
+{
+    // Global Alarmlar
+    $global = Database::fetchAll("
+        SELECT p.id, p.name, p.code, p.unit, p.image, p.stock_alarm, p.procurement_status, p.procurement_note,
+               (COALESCE(si.total_in, 0) - COALESCE(so.total_out, 0)) AS current_stock
+        FROM tbl_dp_products p
+        LEFT JOIN (
+            SELECT product_id, SUM(quantity) as total_in FROM tbl_dp_stock_in WHERE is_active = 1 GROUP BY product_id
+        ) si ON si.product_id = p.id
+        LEFT JOIN (
+            SELECT product_id, SUM(quantity) as total_out FROM tbl_dp_stock_out WHERE status = 1 GROUP BY product_id
+        ) so ON so.product_id = p.id
+        WHERE p.hidden = 0 AND p.is_active = 1 AND p.stock_alarm > 0
+        HAVING current_stock < p.stock_alarm
+        ORDER BY current_stock ASC
+    ");
+
+    // Depo Bazlı Alarmlar
+    $warehouse = Database::fetchAll("
+        SELECT p.id, p.name, p.code, p.unit, p.image, p.procurement_status, p.procurement_note,
+               w.name AS warehouse_name, pwa.stock_alarm AS wh_stock_alarm,
+               (COALESCE(si.total_in, 0) - COALESCE(so.total_out, 0)) AS current_stock
+        FROM tbl_dp_product_warehouse_alarms pwa
+        JOIN tbl_dp_products p ON p.id = pwa.product_id
+        JOIN tbl_dp_warehouses w ON w.id = pwa.warehouse_id
+        LEFT JOIN (
+            SELECT product_id, warehouse_id, SUM(quantity) as total_in FROM tbl_dp_stock_in WHERE is_active = 1 GROUP BY product_id, warehouse_id
+        ) si ON si.product_id = pwa.product_id AND si.warehouse_id = pwa.warehouse_id
+        LEFT JOIN (
+            SELECT product_id, warehouse_id, SUM(quantity) as total_out FROM tbl_dp_stock_out WHERE status = 1 GROUP BY product_id, warehouse_id
+        ) so ON so.product_id = pwa.product_id AND so.warehouse_id = pwa.warehouse_id
+        WHERE p.hidden = 0 AND p.is_active = 1 AND pwa.stock_alarm > 0
+        HAVING current_stock < wh_stock_alarm
+        ORDER BY current_stock ASC
+    ");
+
+    return [
+        'global' => $global,
+        'warehouse' => $warehouse,
+        'total' => count($global) + count($warehouse)
+    ];
+}

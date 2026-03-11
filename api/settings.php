@@ -37,11 +37,16 @@ switch ($action) {
 
     case 'save_appearance':
         requireRole(ROLE_ADMIN);
-        $keys = ['header_bg', 'header_color', 'footer_bg', 'footer_color', 'footer_text', 'google_font', 'system_logo_width', 'system_logo_height'];
+        $keys = ['header_bg_type', 'header_bg', 'header_color', 'footer_bg', 'footer_color', 'footer_text', 'google_font', 'font_size_scale', 'system_logo_width', 'system_logo_height'];
         foreach ($keys as $key) {
             if (isset($_POST[$key])) {
                 set_setting($key, sanitize($_POST[$key]));
             }
+        }
+
+        // Eğer rastgele renk seçildiyse üret
+        if (($_POST['header_bg_type'] ?? '') === 'random') {
+            set_setting('header_bg', generateRandomSafeColor());
         }
 
         // Genel Form ("Kaydet" butonu) üzerinden logo yüklemesi
@@ -85,6 +90,9 @@ switch ($action) {
         requireRole(ROLE_ADMIN);
         if (isset($_POST['site_name'])) {
             set_setting('site_name', sanitize($_POST['site_name']));
+        }
+        if (isset($_POST['backup_notification_email'])) {
+            set_setting('backup_notification_email', sanitize($_POST['backup_notification_email']));
         }
         if (isset($_POST['allow_passive_with_stock'])) {
             set_setting('allow_passive_with_stock', sanitize($_POST['allow_passive_with_stock']));
@@ -137,6 +145,30 @@ switch ($action) {
             'usd_formatted' => number_format($usd, 2, ',', '.'),
             'eur_formatted' => number_format($eur, 2, ',', '.'),
         ]);
+
+    case 'save_gdrive':
+        requireRole(ROLE_ADMIN);
+
+        if (isset($_POST['google_drive_active'])) {
+            set_setting('google_drive_active', sanitize($_POST['google_drive_active']));
+        } else {
+            set_setting('google_drive_active', '0'); // Checkbox gönderilmemişse kapalı kabul et
+        }
+
+        if (isset($_POST['google_drive_folder_id'])) {
+            set_setting('google_drive_folder_id', sanitize($_POST['google_drive_folder_id']));
+        }
+
+        // JSON dosyası boşluk veya tırnak içeriyor olabilir, ham halini sanitization'dan hafif geçirerek kaydedelim
+        if (isset($_POST['google_drive_credentials_json'])) {
+            $jsonContent = trim($_POST['google_drive_credentials_json']);
+            // JSON string içerisindeki XSS risklerini azaltmak için htmlspecialchars ile kaydedebiliriz ancak
+            // API ile direkt okuyacağımız için ham JSON olarak veritabanına koymak daha güvenilirdir.
+            // Fakat set_setting değerleri alırken sorun olmaması içi güvenli kaydet.
+            set_setting('google_drive_credentials_json', $jsonContent);
+        }
+
+        jsonResponse(true, 'Google Drive yedekleme ayarları başarıyla kaydedildi.');
 
     case 'test_mail':
         requireRole(ROLE_ADMIN);
@@ -191,6 +223,13 @@ switch ($action) {
         } else {
             jsonResponse(false, 'Dosya sunucuya kaydedilemedi.');
         }
+
+    case 'random_navbar_color':
+        // Tüm roller görebilir dendiği için requireLogin() yeterli (başta var)
+        $newColor = generateRandomSafeColor();
+        set_setting('header_bg', $newColor);
+        set_setting('header_bg_type', 'random'); // Tercihi de random'a çekelim ki ayarlar sayfasında uyumlu olsun
+        jsonResponse(true, 'Navbar rengi güncellendi.', ['color' => $newColor]);
 
     default:
         jsonResponse(false, 'Geçersiz işlem.');

@@ -9,7 +9,8 @@ require_once __DIR__ . '/database.php';
 // Güvenli oturum ayarları
 ini_set('session.cookie_httponly', 1);
 ini_set('session.use_strict_mode', 1);
-ini_set('session.cookie_samesite', 'Strict');
+// Lax allows the session cookie to be sent on top-level navigations (like coming back from Google OAuth)
+ini_set('session.cookie_samesite', 'Lax');
 ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 1 : 0);
 
 if (session_status() === PHP_SESSION_NONE) {

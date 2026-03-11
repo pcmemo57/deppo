@@ -20,3 +20,8 @@ images/UrunResim/*
 
 # Kurulum sonrası sil
 # setup/install.php — kurulum tamamlandıktan sonra silmeyi unutma!
+
+# Composer
+vendor/
+composer.phar
+composer.lock

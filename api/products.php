@@ -50,6 +50,10 @@ switch ($action) {
         $row = Database::fetchOne("SELECT * FROM `$table` WHERE id=? AND hidden=0", [$id]);
         if (!$row)
             jsonResponse(false, 'Kayıt bulunamadı.');
+
+        // Depo bazlı alarmları getir
+        $row['warehouse_alarms'] = Database::fetchAll("SELECT warehouse_id, stock_alarm FROM tbl_dp_product_warehouse_alarms WHERE product_id=?", [$id]);
+
         jsonResponse(true, '', $row);
 
     case 'add':
@@ -78,6 +82,20 @@ switch ($action) {
                 (int) ($_POST['is_active'] ?? 1)
             ]
         );
+
+        // Depo bazlı alarmları kaydet
+        $warehouseAlarms = $_POST['warehouse_alarms'] ?? [];
+        if (!empty($warehouseAlarms) && is_array($warehouseAlarms)) {
+            foreach ($warehouseAlarms as $wid => $alarmValue) {
+                if ((float) $alarmValue > 0) {
+                    Database::execute(
+                        "INSERT INTO tbl_dp_product_warehouse_alarms (product_id, warehouse_id, stock_alarm) VALUES (?, ?, ?)",
+                        [$id, (int) $wid, (float) $alarmValue]
+                    );
+                }
+            }
+        }
+
         jsonResponse(true, 'Ürün eklendi.', [
             'id' => $id,
             'name' => $name,
@@ -121,6 +139,21 @@ switch ($action) {
                 $id
             ]
         );
+
+        // Depo bazlı alarmları güncelle
+        Database::execute("DELETE FROM tbl_dp_product_warehouse_alarms WHERE product_id=?", [$id]);
+        $warehouseAlarms = $_POST['warehouse_alarms'] ?? [];
+        if (!empty($warehouseAlarms) && is_array($warehouseAlarms)) {
+            foreach ($warehouseAlarms as $wid => $alarmValue) {
+                if ((float) $alarmValue > 0) {
+                    Database::execute(
+                        "INSERT INTO tbl_dp_product_warehouse_alarms (product_id, warehouse_id, stock_alarm) VALUES (?, ?, ?)",
+                        [$id, (int) $wid, (float) $alarmValue]
+                    );
+                }
+            }
+        }
+
         jsonResponse(true, 'Ürün güncellendi.');
 
     case 'toggle':

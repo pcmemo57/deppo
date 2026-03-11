@@ -91,6 +91,16 @@ function getStockData(array $warehouseIds, string $search = '', int $page = 1, i
             $outMap[$r['warehouse_id']][$r['product_id']] = (float) $r['qty'];
         }
 
+        // Depo bazlı alarmları al
+        $whAlarms = Database::fetchAll(
+            "SELECT product_id, warehouse_id, stock_alarm FROM tbl_dp_product_warehouse_alarms WHERE product_id IN ($prodPH) AND warehouse_id IN ($placeholders)",
+            array_merge(array_values($productIds), array_values($warehouseIds))
+        );
+        $whAlarmMap = [];
+        foreach ($whAlarms as $wa) {
+            $whAlarmMap[$wa['product_id']][$wa['warehouse_id']] = (float) $wa['stock_alarm'];
+        }
+
         $data = [];
         foreach ($products as $p) {
             $row = [
@@ -101,6 +111,7 @@ function getStockData(array $warehouseIds, string $search = '', int $page = 1, i
                 'stock_alarm' => (int) $p['stock_alarm'],
                 'last_price_base' => (float) toBaseCurrencyDisplay($p['last_purchase_price'] ?? 0, $p['last_purchase_currency'] ?? 'EUR'),
                 'stocks' => [],
+                'warehouse_alarms' => [],
                 'total' => 0
             ];
             foreach ($warehouseIds as $wid) {
@@ -108,6 +119,7 @@ function getStockData(array $warehouseIds, string $search = '', int $page = 1, i
                 $out = $outMap[$wid][$p['id']] ?? 0;
                 $qty = round($in - $out, 3);
                 $row['stocks'][$warehouseMap[$wid] ?? $wid] = $qty;
+                $row['warehouse_alarms'][$warehouseMap[$wid] ?? $wid] = $whAlarmMap[$p['id']][$wid] ?? 0;
                 $row['total'] += $qty;
             }
             $row['total'] = round($row['total'], 3);

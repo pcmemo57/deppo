@@ -40,6 +40,8 @@ $createdBy = $first['created_by_name'] ?? '—';
 $totalBase = 0;
 // Note: total limits and price processing removed per user request
 unset($item);
+
+$fontSizeScale = get_setting('font_size_scale', '100');
 ?>
 <!DOCTYPE html>
 <html lang="tr">
@@ -56,9 +58,15 @@ unset($item);
             margin: 15mm;
         }
 
+        html {
+            font-size: calc(100% *
+                    <?= (float) $fontSizeScale / 100 ?>
+                ) !important;
+        }
+
         body {
             font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-size: 13px;
+            font-size: 0.8125rem;
             line-height: 1.4;
             color: #1a202c;
             margin: 0;
@@ -88,8 +96,8 @@ unset($item);
         }
 
         .info-header-table td {
-            padding: 4px 8px;
-            font-size: 11px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.6875rem;
             border: none;
         }
 
@@ -116,10 +124,10 @@ unset($item);
             background-color: #f7fafc;
             color: #2d3748;
             font-weight: 700;
-            font-size: 10px;
+            font-size: 0.625rem;
             text-transform: uppercase;
             border: 1px solid #cbd5e0;
-            padding: 6px 8px;
+            padding: 0.375rem 0.5rem;
             text-align: left;
         }
 
@@ -135,9 +143,9 @@ unset($item);
 
         .list-end {
             text-align: center;
-            padding: 15px;
+            padding: 0.9375rem;
             font-weight: 700;
-            font-size: 12px;
+            font-size: 0.75rem;
             text-transform: uppercase;
             border: 1px solid #cbd5e0;
             border-top: none;
@@ -158,10 +166,10 @@ unset($item);
         }
 
         .btn {
-            padding: 10px 24px;
-            border-radius: 8px;
+            padding: 0.625rem 1.5rem;
+            border-radius: 0.5rem;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 0.875rem;
             cursor: pointer;
             border: none;
             transition: all 0.2s;
@@ -233,16 +241,16 @@ unset($item);
 
         .item-name {
             font-weight: 700;
-            font-size: 10px;
+            font-size: 0.625rem;
             text-transform: uppercase;
             margin-bottom: 0;
             display: block;
         }
 
         .item-desc {
-            font-size: 11px;
+            font-size: 0.6875rem;
             color: #718096;
-            margin-top: 2px;
+            margin-top: 0.125rem;
         }
     </style>
 </head>
@@ -254,7 +262,8 @@ unset($item);
     </div>
     <div class="container" id="pdfContent">
         <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #cbd5e0; padding-bottom: 15px;">
-            <h2 style="margin: 0; color: #2d3748; font-size: 20px; text-transform: uppercase;">Stok Çıkış Fişi / Stock
+            <h2 style="margin: 0; color: #2d3748; font-size: 1.25rem; text-transform: uppercase;">Stok Çıkış Fişi /
+                Stock
                 Out Slip</h2>
             <div style="color: #718096; margin-top: 5px; font-weight: 600;">İşlem No (Batch No): <span
                     style="color: #2d3748;">
@@ -309,7 +318,7 @@ unset($item);
                                     <?php if ($item['image']): ?>
                                         <img src="<?= UPLOAD_URL . e($item['image']) ?>" class="item-img" alt="product">
                                     <?php else: ?>
-                                        <i class="fas fa-image text-muted opacity-25" style="font-size: 20px;"></i>
+                                        <i class="fas fa-image text-muted opacity-25" style="font-size: 1.25rem;"></i>
                                     <?php endif; ?>
                                 </div>
                                 <div>
@@ -319,9 +328,9 @@ unset($item);
                                 </div>
                             </div>
                         </td>
-                        <td class="num-align" style="font-weight: 600; font-size: 11px;">
+                        <td class="num-align" style="font-weight: 600; font-size: 0.6875rem;">
                             <?= formatQty($item['quantity']) ?> <span
-                                style="font-size: 10px; font-weight: normal; color: #718096;">
+                                style="font-size: 0.625rem; font-weight: normal; color: #718096;">
                                 <?= e($item['unit']) ?>
                             </span>
                         </td>

@@ -42,12 +42,12 @@ $entrustedList = Database::fetchAll(
       ORDER BY e.created_at DESC"
 );
 
-// Stok Alarmı (Kritik Seviye Altındakiler) - JOIN ile optimize edildi
+// Stok Alarmı (Kritik Seviye Altındakiler) - Global
 $lowStockProducts = Database::fetchAll("
     SELECT p.id, p.name, p.code, p.unit, p.image, p.stock_alarm, p.procurement_status, p.procurement_note,
            (COALESCE(si.total_in, 0) - COALESCE(so.total_out, 0)) AS current_stock
     FROM tbl_dp_products p
-    INNER JOIN (
+    LEFT JOIN (
         SELECT product_id, SUM(quantity) as total_in 
         FROM tbl_dp_stock_in 
         WHERE is_active = 1 
@@ -64,6 +64,31 @@ $lowStockProducts = Database::fetchAll("
     ORDER BY current_stock ASC
 ");
 
+// Stok Alarmı (Depo Bazlı)
+$lowStockWarehouseProducts = Database::fetchAll("
+    SELECT p.id, p.name, p.code, p.unit, p.image, p.procurement_status, p.procurement_note,
+           w.name AS warehouse_name, pwa.stock_alarm AS wh_stock_alarm,
+           (COALESCE(si.total_in, 0) - COALESCE(so.total_out, 0)) AS current_stock
+    FROM tbl_dp_product_warehouse_alarms pwa
+    JOIN tbl_dp_products p ON p.id = pwa.product_id
+    JOIN tbl_dp_warehouses w ON w.id = pwa.warehouse_id
+    LEFT JOIN (
+        SELECT product_id, warehouse_id, SUM(quantity) as total_in 
+        FROM tbl_dp_stock_in 
+        WHERE is_active = 1 
+        GROUP BY product_id, warehouse_id
+    ) si ON si.product_id = pwa.product_id AND si.warehouse_id = pwa.warehouse_id
+    LEFT JOIN (
+        SELECT product_id, warehouse_id, SUM(quantity) as total_out 
+        FROM tbl_dp_stock_out 
+        WHERE status = 1
+        GROUP BY product_id, warehouse_id
+    ) so ON so.product_id = pwa.product_id AND so.warehouse_id = pwa.warehouse_id
+    WHERE p.hidden = 0 AND p.is_active = 1 AND pwa.stock_alarm > 0
+    HAVING current_stock < wh_stock_alarm
+    ORDER BY current_stock ASC
+");
+
 $procurementStatuses = [
     0 => 'Beklemede',
     1 => 'Teklifler Değerlendiriliyor',
@@ -73,227 +98,6 @@ $procurementStatuses = [
     5 => 'Tamamlandı'
 ];
 ?>
-
-<!-- İstatistik Kartları -->
-<?php if (!empty($lowStockProducts)): ?>
-    <div class="row">
-        <div class="col-12">
-            <div class="alert alert-danger shadow-sm border-0 bg-soft-red text-dark p-0 overflow-hidden mb-4">
-                <div class="bg-danger text-white px-4 py-2 d-flex align-items-center justify-content-between">
-                    <h5 class="fw-bold mb-0" style="font-size: 1.1rem;">
-                        <i class="fas fa-exclamation-triangle me-2"></i> Kritik Stok Uyarıları!
-                    </h5>
-                    <span class="badge bg-white text-danger fw-bold rounded-pill px-3"><?= count($lowStockProducts) ?>
-                        Ürün</span>
-                </div>
-                <div class="list-group list-group-flush px-4 py-2">
-                    <?php foreach ($lowStockProducts as $lp): ?>
-                        <div
-                            class="list-group-item d-flex align-items-center justify-content-between flex-wrap bg-transparent border-0 px-0 py-2">
-                            <div class="me-auto">
-                                <span class="fw-bold fs-6 text-dark"><?= e($lp['name']) ?></span>
-                            </div>
-                            <div class="d-flex align-items-center flex-wrap">
-                                <span
-                                    class="badge rounded bg-white text-dark border shadow-sm py-1 px-3 fw-normal badge-spacing"
-                                    style="font-size: 0.8125rem;">
-                                    <i class="fas fa-cubes text-muted me-2"></i> Mevcut Stok: <span
-                                        class="text-danger fw-bold ms-1"><?= e(formatQty($lp['current_stock'])) ?></span>
-                                </span>
-                                <span
-                                    class="badge rounded bg-white text-dark border shadow-sm py-1 px-3 fw-normal badge-spacing"
-                                    style="font-size: 0.8125rem;">
-                                    <i class="fas fa-bell text-muted me-2"></i> Alarm Seviyesi: <span
-                                        class="fw-bold ms-1"><?= e(formatQty($lp['stock_alarm'])) ?></span>
-                                </span>
-                                <a href="<?= BASE_URL ?>/index.php?page=stock_status&search=<?= urlencode($lp['name']) ?>"
-                                    class="badge rounded bg-white text-info border shadow-sm py-1 px-3 text-decoration-none hover-shadow fw-bold badge-spacing"
-                                    style="font-size: 0.8125rem;" title="Stok Detayı">
-                                    <i class="fas fa-search me-2"></i> Detayları Gör
-                                </a>
-                                <a href="javascript:void(0)"
-                                    onclick="openProcurementModal(<?= (int) $lp['id'] ?>, '<?= e(addslashes($lp['name'])) ?>', <?= (int) $lp['procurement_status'] ?>, '<?= e(addslashes($lp['procurement_note'])) ?>', '<?= e($lp['image']) ?>', '<?= e(addslashes($lp['code'])) ?>')"
-                                    class="badge rounded bg-white text-primary border shadow-sm py-1 px-3 text-decoration-none hover-shadow fw-bold badge-spacing"
-                                    style="font-size: 0.8125rem;">
-                                    <i class="fas fa-truck-loading me-2"></i> Tedarik:
-                                    <span
-                                        class="ms-1"><?= $procurementStatuses[$lp['procurement_status']] ?? 'Bilinmiyor' ?></span>
-                                </a>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <style>
-        .bg-soft-red {
-            background-color: #fff8f8;
-            border-left: 5px solid #dc3545 !important;
-        }
-
-        .hover-shadow:hover {
-            filter: brightness(0.95);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
-            transform: translateY(-1px);
-        }
-
-        .badge {
-            transition: all 0.2s ease-in-out;
-        }
-
-        .badge-spacing {
-            margin: 3px 6px !important;
-        }
-    </style>
-<?php endif; ?>
-
-<!-- Tedarik Süreci Modalı -->
-<div class="modal fade" id="procurementModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content premium-modal border-0 shadow-lg">
-            <div class="modal-header bg-premium py-3">
-                <h5 class="modal-title fw-bold text-white"><i class="fas fa-truck-loading me-3 text-warning"
-                        style="margin-right: 10px;"></i>Tedarik Süreci Güncelleme</h5>
-                <button type="button" class="btn btn-link text-white p-0 border-0" data-bs-dismiss="modal"><i
-                        class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body p-0">
-                <div class="row g-0">
-                    <!-- Sol Taraf: Ürün Kartı -->
-                    <div class="col-md-5 bg-light p-4 border-end">
-                        <div class="text-center mb-3">
-                            <img id="proc_product_img" class="img-fluid rounded shadow-sm mb-3 border bg-white p-1"
-                                src="" alt="" style="max-height: 200px; width: 100%; object-fit: contain;">
-                            <div id="proc_no_img"
-                                class="bg-white d-flex align-items-center justify-content-center rounded shadow-sm mb-3 mx-auto border"
-                                style="height: 180px; width: 180px;">
-                                <i class="fas fa-box text-muted fa-4x"></i>
-                            </div>
-                        </div>
-                        <div class="px-2">
-                            <h4 id="proc_product_name_h" class="fw-bold text-dark text-center mb-1"></h4>
-                            <p id="proc_product_code_p" class="text-muted text-center small mb-4 border-bottom pb-2">
-                            </p>
-
-                            <div class="modal-section-label">
-                                <i class="fas fa-history text-primary me-2"></i> Geçmiş Tedarikçiler
-                            </div>
-                            <div id="proc_supplier_history" class="small text-muted ps-2 bg-white p-3 rounded border">
-                                <div class="spinner-border spinner-border-sm text-primary"></div> Yükleniyor...
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Sağ Taraf: Süreç Formu -->
-                    <div class="col-md-7 p-4 bg-white">
-                        <input type="hidden" id="proc_product_id">
-
-                        <div class="modal-section-label">
-                            <i class="fas fa-info-circle text-primary me-2"></i> Süreç Bilgileri
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">Güncel Durum</label>
-                            <div class="input-icon-wrap">
-                                <i class="fas fa-tasks field-icon"></i>
-                                <select id="proc_status" class="form-select border-2 shadow-sm ps-5 py-2">
-                                    <?php foreach ($procurementStatuses as $val => $label): ?>
-                                        <option value="<?= $val ?>"><?= e($label) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="mb-2">
-                            <label class="form-label fw-bold">Süreç Notları / Açıklama</label>
-                            <div class="input-icon-wrap">
-                                <i class="fas fa-comment-dots field-icon" style="top: 15px; transform: none;"></i>
-                                <textarea id="proc_note" class="form-control border-2 shadow-sm ps-5" rows="8"
-                                    placeholder="Tedarik süreci ile ilgili gelişmeleri buraya not edin..."></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer bg-light border-top py-3 px-4">
-                <button type="button" class="btn-modal-cancel me-auto" data-bs-dismiss="modal">Vazgeç</button>
-                <button type="button" class="btn-modal-save" id="btnSaveProcurement">
-                    <i class="fas fa-save me-2"></i>Değişiklikleri Kaydet
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    function esc(v) { return $('<div/>').text(v || '').html(); }
-
-    function openProcurementModal(id, name, status, note, image, code) {
-        $('#proc_product_id').val(id);
-        $('#proc_product_name_h').text(name);
-        $('#proc_product_code_p').text(code || 'Kodsuz Ürün');
-        $('#proc_status').val(status);
-        $('#proc_note').val(note);
-
-        // Resim ayarı
-        if (image) {
-            $('#proc_product_img').attr('src', '<?= BASE_URL ?>/images/UrunResim/' + encodeURIComponent(image)).show();
-            $('#proc_no_img').hide();
-        } else {
-            $('#proc_product_img').hide();
-            $('#proc_no_img').show();
-        }
-
-        // Tedarikçi geçmişini getir
-        $('#proc_supplier_history').html('<div class="spinner-border spinner-border-sm text-primary"></div> Yükleniyor...');
-        $.get('<?= BASE_URL ?>/api/products.php', { action: 'get_supplier_history', id: id }, function (r) {
-            if (r.success && r.data.length > 0) {
-                let sHtml = '<ul class="list-unstyled mb-0">';
-                $.each(r.data, function (i, s) {
-                    sHtml += `<li class="mb-1"><i class="fas fa-truck text-muted me-2 small"></i>${esc(s.supplier_name)}</li>`;
-                });
-                sHtml += '</ul>';
-                $('#proc_supplier_history').html(sHtml);
-            } else {
-                $('#proc_supplier_history').html('<span class="text-muted font-italic">Kayıtlı tedarikçi bulunamadı.</span>');
-            }
-        }, 'json');
-
-        $('#procurementModal').modal('show');
-    }
-
-    $(function () {
-        $('#btnSaveProcurement').on('click', function () {
-            var id = $('#proc_product_id').val();
-            var status = $('#proc_status').val();
-            var note = $('#proc_note').val();
-            var $btn = $(this);
-
-            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Kaydediliyor...');
-
-            $.post('<?= BASE_URL ?>/api/products.php', {
-                action: 'update_procurement',
-                id: id,
-                status: status,
-                note: note
-            }, function (r) {
-                if (r.success) {
-                    showSuccess(r.message);
-                    $('#procurementModal').modal('hide');
-                    setTimeout(function () { location.reload(); }, 800);
-                } else {
-                    showError(r.message);
-                    $btn.prop('disabled', false).html('<i class="fas fa-check-circle me-1"></i>Değişiklikleri Kaydet');
-                }
-            }, 'json').fail(function () {
-                showError('Bağlantı hatası oluştu.');
-                $btn.prop('disabled', false).html('<i class="fas fa-check-circle me-1"></i>Değişiklikleri Kaydet');
-            });
-        });
-    });
-</script>
 
 <style>
     /* ───────────────────────────────────────────

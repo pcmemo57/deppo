@@ -22,14 +22,14 @@ $warehouses = Database::fetchAll("
     }
 
     .card-header .card-title {
-        font-size: 1.75rem !important;
+        font-size: 1.5rem;
         display: flex;
         align-items: center;
     }
 
     .card-header .card-title i {
-        font-size: 1.5rem;
-        margin-right: 12px;
+        font-size: 1.25rem;
+        margin-right: 0.75rem;
     }
 
     /* Tüm header araçlarını aynı yüksekliğe sabitle */
@@ -37,8 +37,8 @@ $warehouses = Database::fetchAll("
     .card-header .card-tools .input-group-sm .form-control,
     .card-header .card-tools .input-group-sm .input-group-text,
     .card-header .card-tools .btn-sm {
-        height: 32px;
-        line-height: 1 !important;
+        height: 2rem;
+        line-height: 1;
         font-size: 0.8125rem;
         padding-top: 0;
         padding-bottom: 0;

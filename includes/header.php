@@ -8,6 +8,7 @@ $siteName = get_setting('site_name', 'Depo Yönetim Sistemi');
 $headerBg = get_setting('header_bg', '#343a40');
 $headerColor = get_setting('header_color', '#ffffff');
 $googleFont = get_setting('google_font', 'default');
+$fontSizeScale = get_setting('font_size_scale', '100');
 
 $googleFonts = [
     'Roboto' => BASE_URL . '/assets/vendor/fonts/Roboto.css',
@@ -31,6 +32,7 @@ $googleFonts = [
     'Lora' => BASE_URL . '/assets/vendor/fonts/Lora.css',
     'Cabin' => BASE_URL . '/assets/vendor/fonts/Cabin.css',
     'Zilla+Slab' => BASE_URL . '/assets/vendor/fonts/Zilla_Slab.css',
+    'Play' => BASE_URL . '/assets/vendor/fonts/Play.css',
 ];
 
 $fontLinkTag = '';
@@ -76,12 +78,23 @@ if (isset($googleFonts[$selectedFont])) {
             --header-color:
                 <?= e($headerColor) ?>
             ;
+            --font-size-scale:
+                <?= (float) $fontSizeScale / 100 ?>
+            ;
             --radius-sm: 4px;
             --radius-md: 8px;
             --radius-lg: 12px;
             --radius-xl: 16px;
             --common-radius: var(--radius-sm);
-            /* Global Köşe Yuvarlaklığı Standardı */
+        }
+
+        /* 
+           GLOBAL FONT SCALING ENGINE 
+           We set the base font size on HTML to 100% * scale.
+           This makes 1rem = 16px * scale.
+        */
+        html {
+            font-size: calc(100% * var(--font-size-scale)) !important;
         }
 
         body,
@@ -101,6 +114,13 @@ if (isset($googleFonts[$selectedFont])) {
         .select2-container,
         .brand-text {
             font-family: var(--font-family) !important;
+        }
+
+        /* Ensure baseline font sizes use rem units for inheritance */
+        body {
+            font-size: 1rem !important;
+            /* Inherits from html */
+            line-height: 1.5;
         }
 
         .main-header {
@@ -132,7 +152,7 @@ if (isset($googleFonts[$selectedFont])) {
         }
 
         .nav-sidebar .nav-icon {
-            margin-right: 10px !important;
+            margin-right: 0.625rem !important;
             text-align: left !important;
             width: auto !important;
             margin-left: 0 !important;
@@ -171,7 +191,7 @@ if (isset($googleFonts[$selectedFont])) {
 
         /* Standardize status badges (pill style) */
         .status-badge {
-            padding: 4px 12px;
+            padding: 0.25rem 0.75rem;
             border-radius: var(--common-radius) !important;
             font-size: 0.72rem;
             font-weight: 700;
@@ -179,7 +199,7 @@ if (isset($googleFonts[$selectedFont])) {
             letter-spacing: 0.03em;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 0.375rem;
             cursor: pointer;
             transition: all 0.2s;
             border: 1px solid transparent;
@@ -218,8 +238,8 @@ if (isset($googleFonts[$selectedFont])) {
         }
 
         .status-btn-item {
-            padding: 6px 16px;
-            border-radius: 8px;
+            padding: 0.375rem 1rem;
+            border-radius: 0.5rem;
             font-size: 0.8rem;
             font-weight: 600;
             cursor: pointer;
@@ -261,7 +281,7 @@ if (isset($googleFonts[$selectedFont])) {
             font-size: 0.8rem;
             font-weight: 600;
             color: #374151;
-            margin-bottom: 6px;
+            margin-bottom: 0.375rem;
             display: block;
         }
 
@@ -295,7 +315,7 @@ if (isset($googleFonts[$selectedFont])) {
 
         .input-icon-wrap .field-icon {
             position: absolute;
-            left: 11px;
+            left: 0.7rem;
             top: 50%;
             transform: translateY(-50%);
             color: #9aa5be;
@@ -313,7 +333,7 @@ if (isset($googleFonts[$selectedFont])) {
         i.far,
         i.fab,
         i.fa {
-            margin-right: 10px !important;
+            margin-right: 0.625rem !important;
         }
 
         /* İstisnalar: Bu alanlarda ikonlar bitişik kalmalı veya kendi özel mesafesini kullanmalı */
@@ -324,8 +344,13 @@ if (isset($googleFonts[$selectedFont])) {
         .no-margin i,
         .swal2-icon i,
         .pagination i,
-        .nav-link i.fa-angle-left {
+        .nav-link i.fa-angle-left,
+        .btn i,
+        .badge i,
+        .dropdown-item i,
+        .list-group-item i {
             margin-right: 0 !important;
+            margin-left: 0 !important;
         }
 
         /* Eğer ikon kapsayıcı içindeki tek elemansa mesafe verme (ortalamayı bozmamak için) */
@@ -349,8 +374,8 @@ if (isset($googleFonts[$selectedFont])) {
         .select2-container--bootstrap-5 .select2-selection {
             border: 1.5px solid #d1d9e6 !important;
             border-radius: var(--common-radius) !important;
-            min-height: 40px !important;
-            padding: 6px 10px 6px 32px !important;
+            min-height: 2.5rem !important;
+            padding: 0.375rem 0.625rem 0.375rem 2rem !important;
             font-size: 0.88rem !important;
             background: #fff !important;
             display: flex !important;
@@ -393,7 +418,7 @@ if (isset($googleFonts[$selectedFont])) {
 
         .card-header .card-title i {
             font-size: 1.5rem;
-            margin-right: 5px;
+            margin-right: 0.3125rem;
             /* İkon ve yazı arası 5px */
         }
 
@@ -408,7 +433,7 @@ if (isset($googleFonts[$selectedFont])) {
         .card-header .card-tools .input-group-sm .form-control,
         .card-header .card-tools .input-group-sm .input-group-text,
         .card-header .card-tools .btn-sm {
-            height: 32px !important;
+            height: 2rem !important;
             line-height: inherit;
             font-size: 0.8125rem;
             padding-top: 0;
@@ -427,12 +452,33 @@ if (isset($googleFonts[$selectedFont])) {
             padding: 0 10px;
         }
 
-        /* Tüm butonlarda ikon ve metin arası 5px boşluk (Modern Flexbox Gap Çözümü) */
-        .btn {
+        /* Tüm butonlarda ikon ve metin arası boşluk (Modern Flexbox Gap Çözümü) */
+        .btn,
+        .badge,
+        .alert,
+        .card-title,
+        .info-box-text,
+        .modal-title,
+        .modal-section-label,
+        .dropdown-item,
+        .list-group-item {
             display: inline-flex !important;
             align-items: center;
+            gap: 0.625rem;
+        }
+
+        .alert,
+        .card-title,
+        .modal-title,
+        .modal-section-label,
+        .dropdown-item,
+        .list-group-item {
+            display: flex !important;
+        }
+
+        .btn,
+        .badge {
             justify-content: center;
-            gap: 5px;
             border-radius: var(--common-radius) !important;
         }
 
@@ -467,10 +513,29 @@ if (isset($googleFonts[$selectedFont])) {
 
         /* Buton içindeki ikonların varsayılan marjinlerini sıfırla (Çakışmaları önlemek için) */
         .btn i,
+        .badge i,
+        .alert i,
+        .card-title i,
+        .modal-title i,
+        .modal-section-label i,
+        .dropdown-item i,
+        .list-group-item i,
         .btn .fas,
+        .badge .fas,
+        .dropdown-item .fas,
+        .list-group-item .fas,
         .btn .far,
+        .badge .far,
+        .dropdown-item .far,
+        .list-group-item .far,
         .btn .fab,
-        .btn .fa {
+        .badge .fab,
+        .dropdown-item .fab,
+        .list-group-item .fab,
+        .btn .fa,
+        .badge .fa,
+        .dropdown-item .fa,
+        .list-group-item .fa {
             margin: 0 !important;
         }
 
@@ -478,10 +543,41 @@ if (isset($googleFonts[$selectedFont])) {
         #nav-usd-rate,
         #nav-eur-rate,
         #btnNavbarUpdateCurrency {
-            padding: 6px 14px !important;
+            padding: 0.375rem 0.875rem !important;
             font-size: 0.8125rem;
+            gap: 0.5rem !important;
+            /* İkon mesafesi */
+        }
+
+        .swal2-popup {
+            font-size: 1rem !important;
         }
     </style>
+    <script src="<?= BASE_URL ?>/assets/vendor/js/jquery.min.js"></script>
+    <script>
+        $(function () {
+            $('#btnQuickRandomColor').on('click', function (e) {
+                e.preventDefault();
+                var btn = $(this);
+                btn.addClass('disabled').find('i').addClass('fa-spin');
+
+                $.post('<?= BASE_URL ?>/api/settings.php', { action: 'random_navbar_color' }, function (r) {
+                    btn.removeClass('disabled').find('i').removeClass('fa-spin');
+                    if (r.success) {
+                        // Sayfayı yenilemeden root değişkenini güncelle
+                        document.documentElement.style.setProperty('--header-bg', r.data.color);
+                        // Header class'ındaki inline style'ı da güncelle
+                        $('.main-header').css('background', r.data.color);
+                    } else {
+                        alert(r.message);
+                    }
+                }, 'json').fail(function () {
+                    btn.removeClass('disabled').find('i').removeClass('fa-spin');
+                    alert('Bağlantı hatası.');
+                });
+            });
+        });
+    </script>
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
@@ -512,15 +608,15 @@ if (isset($googleFonts[$selectedFont])) {
                         <span class="mx-3" style="opacity: 0.5;">|</span>
                         <div class="d-flex align-items-center" style="gap: 10px;">
                             <span class="badge bg-success shadow-sm" id="nav-usd-rate">
-                                <i class="fas fa-dollar-sign me-1"></i>USD: <?= formatPrice($usd) ?>
+                                <i class="fas fa-dollar-sign"></i>USD: <?= formatPrice($usd) ?>
                             </span>
                             <span class="badge bg-primary shadow-sm" id="nav-eur-rate">
-                                <i class="fas fa-euro-sign me-1"></i>EUR: <?= formatPrice($eur) ?>
+                                <i class="fas fa-euro-sign"></i>EUR: <?= formatPrice($eur) ?>
                             </span>
                             <?php if (currentUser()['role'] !== ROLE_REQUESTER): ?>
                                 <button id="btnNavbarUpdateCurrency" class="badge bg-info border-0 shadow-sm"
                                     style="cursor: pointer; font-weight: 500;">
-                                    <i class="fas fa-sync-alt me-1"></i>Güncelle (<?= $updateTime ?>)
+                                    <i class="fas fa-sync-alt"></i>Güncelle (<?= $updateTime ?>)
                                 </button>
                             <?php endif; ?>
                         </div>
@@ -553,6 +649,12 @@ if (isset($googleFonts[$selectedFont])) {
                                     </span>
                                 </div>
                             </div>
+                        </li>
+                        <li><a class="dropdown-item py-2" href="javascript:void(0)" id="btnQuickRandomColor">
+                                <i class="fas fa-palette me-2"></i> Rastgele Renk
+                            </a></li>
+                        <li>
+                            <hr class="dropdown-divider">
                         </li>
                         <li><a class="dropdown-item text-danger py-2" href="<?= BASE_URL ?>/logout.php">
                                 <i class="fas fa-sign-out-alt me-2"></i> Çıkış Yap

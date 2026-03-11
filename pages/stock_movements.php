@@ -142,7 +142,7 @@ $entrustedCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_entrusted
     .small-box .icon {
         top: 10px;
         right: 15px;
-        font-size: 50px;
+        font-size: 3.125rem;
         opacity: 0.3;
     }
 
