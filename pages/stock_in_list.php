@@ -628,8 +628,9 @@ $warehouses = Database::fetchAll("
             <div class="col-md-6">
               <label class="form-label">Adet <span class="req">*</span></label>
               <div class="qty-group">
-                <input type="number" name="quantity" id="quantity" class="form-control" min="0.001" step="any"
-                  placeholder="0.00" required disabled>
+                <input type="number" name="quantity" id="quantity" class="form-control" min="1" step="1"
+                  oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                  placeholder="0" required disabled>
                 <span class="unit-badge" id="unitLabel">Adet</span>
               </div>
             </div>
@@ -777,8 +778,9 @@ $warehouses = Database::fetchAll("
             <div class="col-md-6">
               <label class="form-label">Adet <span class="req">*</span></label>
               <div class="qty-group">
-                <input type="number" name="quantity" id="editQty" class="form-control" min="0.001" step="any"
-                  placeholder="0.00" required>
+                <input type="number" name="quantity" id="editQty" class="form-control" min="1" step="1"
+                  oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                  placeholder="0" required>
                 <span class="unit-badge" id="editUnitLabel">Adet</span>
               </div>
             </div>

@@ -124,10 +124,11 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label">Alarm Seviyesi (Stok Az) <i
+                                        <label class="form-label">Genel (Toplam) Stok Alarmı <i
                                                 class="fas fa-bell text-warning ms-1"></i></label>
-                                        <input type="number" name="stock_alarm" class="form-control" value="0" min="0">
-                                        <small class="text-muted">0 girilirse alarm oluşmaz.</small>
+                                        <input type="number" name="stock_alarm" class="form-control" value="0" min="0" step="1"
+                                               oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                                        <small class="text-muted">Tüm depoların toplam stoğu bu değerin altına düşerse uyarı verir.</small>
                                     </div>
                                 </div>
                                 <div class="col-md-12">
@@ -135,11 +136,10 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
                                         <textarea name="description" class="form-control" rows="3"></textarea>
                                     </div>
                                 </div>
-                                </div>
                                 <div class="col-md-12">
                                     <div class="mb-3">
                                         <label class="form-label text-primary font-weight-bold">
-                                            <i class="fas fa-warehouse me-1"></i> Depo Bazlı Alarm Seviyeleri
+                                            <i class="fas fa-warehouse me-1"></i> Depo Bazlı Alarm Seviyeleri (Bağımsız)
                                         </label>
                                         <div class="row g-2" id="warehouseAlarmsContainer">
                                             <?php foreach ($warehouses as $w): ?>
@@ -148,14 +148,15 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
                                                         <span class="input-group-text border-end-0 bg-light" style="font-size: 0.75rem; width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?= e($w['name']) ?>">
                                                             <?= e($w['name']) ?>
                                                         </span>
-                                                        <input type="number" step="any" name="warehouse_alarms[<?= (int) $w['id'] ?>]" 
-                                                               class="form-control wh-alarm-input" placeholder="0" min="0" 
+                                                        <input type="number" name="warehouse_alarms[<?= (int) $w['id'] ?>]" 
+                                                               class="form-control wh-alarm-input" placeholder="0" min="0" step="1"
+                                                               oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                                                data-wid="<?= (int) $w['id'] ?>" style="width: 40%;">
                                                     </div>
                                                 </div>
                                             <?php endforeach; ?>
                                         </div>
-                                        <small class="text-muted">Bu depolardaki stok bu değerin altına düşerse ayrıca vurgulanır.</small>
+                                        <small class="text-muted">İlgili depodaki stok bu değerin altına düşerse (toplam stoktan bağımsız) uyarı verir.</small>
                                     </div>
                                 </div>
                                 <div class="col-md-3">

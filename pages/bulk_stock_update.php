@@ -59,6 +59,7 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
                             <th style="width: 70px;" class="ps-3 text-center">Resim</th>
                             <th style="min-width: 200px;">Ürün Bilgisi</th>
                             <th style="width: 240px;">Birim Fiyat & Para Birimi</th>
+                            <th style="width: 150px;">Genel Alarm</th>
                             <!-- Dinamik depolar -->
                         </tr>
                         <tr id="tableSubHead">
@@ -259,9 +260,8 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
         font-size: 0.85rem;
     }
 
-    /* Quantity Inputs */
     .qty-input-box {
-        max-width: 120px;
+        max-width: 140px;
         margin: 0 auto;
     }
 
@@ -501,14 +501,14 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
         }
 
         // --- STATE MANAGEMENT ---
-        let pendingChanges = {}; // KEY: product_id, VALUE: { base_data: {price, currency}, wh_data: { wid: {qty, alarm} } }
+        let pendingChanges = {}; // KEY: product_id, VALUE: { base_data: {price, currency, global_alarm}, wh_data: { wid: {qty, alarm} } }
         let changeCount = 0;
 
         function updateChangeCount() {
             let count = 0;
             Object.keys(pendingChanges).forEach(pid => {
                 const p = pendingChanges[pid];
-                if (p.price_changed || p.curr_changed) count++;
+                if (p.price_changed || p.curr_changed || p.global_alarm_changed) count++;
                 if (p.wh_data) {
                     Object.keys(p.wh_data).forEach(wid => {
                         const w = p.wh_data[wid];
@@ -555,6 +555,10 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
                     pendingChanges[pid].currency = val;
                     pendingChanges[pid].old_curr = oldVal;
                     pendingChanges[pid].curr_changed = val !== oldVal;
+                } else if (type === 'global_alarm') {
+                    pendingChanges[pid].global_alarm = val;
+                    pendingChanges[pid].old_global_alarm = oldVal;
+                    pendingChanges[pid].global_alarm_changed = Math.abs(parseFloat(val || 0) - parseFloat(oldVal || 0)) > 0.001;
                 }
             }
             
@@ -562,7 +566,7 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
             if (wid && !pendingChanges[pid].wh_data[wid].qty_changed && !pendingChanges[pid].wh_data[wid].alarm_changed) {
                 delete pendingChanges[pid].wh_data[wid];
             }
-            if (Object.keys(pendingChanges[pid].wh_data).length === 0 && !pendingChanges[pid].price_changed && !pendingChanges[pid].curr_changed) {
+            if (Object.keys(pendingChanges[pid].wh_data).length === 0 && !pendingChanges[pid].price_changed && !pendingChanges[pid].curr_changed && !pendingChanges[pid].global_alarm_changed) {
                 delete pendingChanges[pid];
             }
             
@@ -634,12 +638,13 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
             localStorage.setItem(STORAGE_KEY, JSON.stringify(whs));
 
             if (whs.length === 0) {
-                $('#tableHead').html('<th style="width: 70px;" class="ps-3 text-center">Resim</th><th>Ürün Bilgisi</th><th style="width: 240px;">Birim Fiyat & Para Birimi</th>');
-                $('#tableBody').html('<tr><td colspan="3" class="text-center p-5 text-muted"><i class="fas fa-warehouse fa-3x mb-3 d-block opacity-25"></i>Lütfen güncellenecek depoları seçin.</td></tr>');
+                $('#tableHead').html('<th style="width: 70px;" class="ps-3 text-center">Resim</th><th>Ürün Bilgisi</th><th style="width: 240px;">Birim Fiyat & Para Birimi</th><th style="width: 150px;">Genel Alarm</th>');
+                $('#tableSubHead').empty();
+                $('#tableBody').html('<tr><td colspan="4" class="text-center p-5 text-muted"><i class="fas fa-warehouse fa-3x mb-3 d-block opacity-25"></i>Lütfen güncellenecek depoları seçin.</td></tr>');
                 return;
             }
 
-            $('#tableBody').html(`<tr><td colspan="${(whs.length * 2) + 3}" class="text-center p-5"><i class="fas fa-spinner fa-spin fa-2x text-warning opacity-50"></i></td></tr>`);
+            $('#tableBody').html(`<tr><td colspan="${(whs.length * 2) + 4}" class="text-center p-5"><i class="fas fa-spinner fa-spin fa-2x text-warning opacity-50"></i></td></tr>`);
 
             $.get('<?= BASE_URL ?>/api/bulk_stock_update.php', {
                 action: 'list_products',
@@ -656,16 +661,16 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
 
         function renderTable(products, whs) {
             // Headers
-            let headHtml = '<th style="width: 70px;" class="ps-3 text-center">Resim</th><th>Ürün Bilgisi</th><th style="width: 240px;">Birim Fiyat & Para Birimi</th>';
+            let headHtml = '<th style="width: 70px;" class="ps-3 text-center">Resim</th><th>Ürün Bilgisi</th><th style="width: 240px;">Birim Fiyat & Para Birimi</th><th style="width: 150px;">Genel Alarm</th>';
             $('.wh-switch:checked').each(function () {
                 const name = $(this).data('name');
                 headHtml += `<th class="text-center wh-group-border-left" colspan="2">${name}</th>`;
             });
             
             // Sub-Headers
-            let subHeadHtml = '<th colspan="3" class="border-0 bg-transparent"></th>';
+            let subHeadHtml = '<th colspan="4" class="border-0 bg-transparent"></th>';
             whs.forEach(() => {
-                subHeadHtml += '<th class="text-center small py-1 wh-group-border-left wh-qty-col" style="width:100px; color:#64748b">Adet</th><th class="text-center small py-1 wh-alarm-col" style="width:80px; color:#ef4444">Alarm</th>';
+                subHeadHtml += '<th class="text-center small py-1 wh-group-border-left wh-qty-col" style="width:120px; color:#64748b">Adet</th><th class="text-center small py-1 wh-alarm-col" style="width:100px; color:#ef4444">Alarm</th>';
             });
 
             $('#tableHead').html(headHtml);
@@ -673,7 +678,7 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
 
             // Body
             if (products.length === 0) {
-                $('#tableBody').html(`<tr><td colspan="${(whs.length * 2) + 3}" class="text-center p-5 text-muted">Arama kriterine uygun ürün bulunamadı.</td></tr>`);
+                $('#tableBody').html(`<tr><td colspan="${(whs.length * 2) + 4}" class="text-center p-5 text-muted">Arama kriterine uygun ürün bulunamadı.</td></tr>`);
                 return;
             }
 
@@ -688,6 +693,8 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
                 const priceClass = pState.price_changed ? 'changed' : '';
                 const currentCurr = pState.curr_changed ? pState.currency : p.last_currency;
                 const currClass = pState.curr_changed ? 'changed' : '';
+                const currentGlobalAlarm = pState.global_alarm_changed ? pState.global_alarm : p.global_stock_alarm;
+                const globalAlarmClass = pState.global_alarm_changed ? 'changed' : '';
 
                 bodyHtml += `
                 <tr data-id="${pid}">
@@ -715,6 +722,10 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
                             Son Alış: <span class="text-primary font-weight-bold">${formatPrice(p.last_price)} ${p.last_currency || 'TL'}</span>
                         </div>
                     </td>
+                    <td>
+                        <input type="number" step="any" min="0" class="form-control global-alarm-input form-control-sm ${globalAlarmClass}" 
+                               data-pid="${pid}" data-old="${p.global_stock_alarm}" value="${currentGlobalAlarm || ''}" placeholder="0">
+                    </td>
             `;
                 whs.forEach(wid => {
                     const originalQty = p.stocks[wid] || 0;
@@ -729,7 +740,8 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
                     bodyHtml += `
                     <td class="text-center wh-group-border-left wh-qty-col">
                         <div class="qty-input-box mx-auto">
-                            <input type="number" step="any" min="0" class="form-control qty-input form-control-sm ${qtyClass}" 
+                            <input type="number" step="1" min="0" class="form-control qty-input form-control-sm ${qtyClass}" 
+                                   oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                    data-pid="${pid}" data-wid="${wid}" data-old="${originalQty}" value="${displayQty}">
                             <span class="current-qty-badge">Mevcut: <strong>${formatQty(originalQty)}</strong></span>
                         </div>
@@ -762,8 +774,12 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
                 $(this).toggleClass('changed', (pendingChanges[$(this).data('pid')]?.price_changed));
             });
             $('.currency-select').on('change', function () {
-            trackChange($(this).data('pid'), null, 'currency', $(this).val(), $(this).data('old-curr'));
+                trackChange($(this).data('pid'), null, 'currency', $(this).val(), $(this).data('old-curr'));
                 $(this).toggleClass('changed', (pendingChanges[$(this).data('pid')]?.curr_changed));
+            });
+            $('.global-alarm-input').on('input change', function () {
+                trackChange($(this).data('pid'), null, 'global_alarm', $(this).val(), $(this).data('old'));
+                $(this).toggleClass('changed', (pendingChanges[$(this).data('pid')]?.global_alarm_changed));
             });
         }
 
@@ -787,21 +803,24 @@ $warehouses = Database::fetchAll("SELECT id, name FROM tbl_dp_warehouses WHERE h
                             currency: curr
                         };
                         if (w.alarm_changed) up.stock_alarm = w.alarm;
+                        if (p.global_alarm_changed) up.global_stock_alarm = p.global_alarm;
                         finalUpdates.push(up);
                     });
-                } else if (p.price_changed || p.curr_changed) {
+                } else if (p.price_changed || p.curr_changed || p.global_alarm_changed) {
                     const whs = getSelectedWarehouses();
                     if (whs.length > 0) {
                         const row = $(`tr[data-id="${pid}"]`);
                         if (row.length > 0) {
                             const firstWhInput = row.find('.qty-input').first();
-                            finalUpdates.push({
+                            const up = {
                                 product_id: pid,
                                 warehouse_id: firstWhInput.data('wid'),
                                 new_qty: firstWhInput.data('old'),
                                 unit_price: price,
                                 currency: curr
-                            });
+                            };
+                            if (p.global_alarm_changed) up.global_stock_alarm = p.global_alarm;
+                            finalUpdates.push(up);
                         }
                     }
                 }

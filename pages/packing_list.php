@@ -374,8 +374,8 @@ $customers = Database::fetchAll("SELECT id, name FROM tbl_dp_customers WHERE hid
         </td>
         <td>
             <div class="input-group input-group-sm">
-                <input type="number" step="0.01" class="form-control form-control-sm text-center item-qty" value="1"
-                    required>
+                <input type="number" min="1" step="1" class="form-control form-control-sm text-center item-qty" value="1"
+                    oninput="this.value = this.value.replace(/[^0-9]/g, '')" required>
             </div>
         </td>
         <td class="text-center">

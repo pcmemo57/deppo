@@ -23,7 +23,7 @@ $action = sanitize($_POST['action'] ?? $_GET['action'] ?? '');
 switch ($action) {
     case 'save_mail':
         requireRole(ROLE_ADMIN);
-        $keys = ['mail_host', 'mail_port', 'mail_secure', 'mail_user', 'mail_from', 'mail_from_name', 'program_manager_email'];
+        $keys = ['mail_host', 'mail_port', 'mail_secure', 'mail_user', 'mail_from', 'mail_from_name', 'program_manager_email', 'critical_stock_notification_email', 'backup_notification_email'];
         foreach ($keys as $key) {
             if (isset($_POST[$key])) {
                 set_setting($key, sanitize($_POST[$key]));
@@ -102,6 +102,9 @@ switch ($action) {
         }
         if (isset($_POST['kargo_gonderici'])) {
             set_setting('kargo_gonderici', sanitize($_POST['kargo_gonderici']));
+        }
+        if (isset($_POST['stock_alert_visibility'])) {
+            set_setting('stock_alert_visibility', sanitize($_POST['stock_alert_visibility']));
         }
         jsonResponse(true, 'Genel ayarlar kaydedildi.');
 

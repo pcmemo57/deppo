@@ -89,7 +89,14 @@ include __DIR__ . '/includes/sidebar.php';
 echo '<div class="content-wrapper">';
 
 // ─── Kritik Stok Uyarıları (Global Header) ──────────────────────────────────
-$alerts = getLowStockAlerts();
+$stockVisibility = get_setting('stock_alert_visibility', 'all');
+$shouldShowAlerts = ($stockVisibility === 'all' || ($stockVisibility === 'home' && $currentPage === 'dashboard'));
+
+$alerts = ['total' => 0];
+if ($shouldShowAlerts) {
+    $alerts = getLowStockAlerts();
+}
+
 if ($alerts['total'] > 0) {
     echo '<div class="global-stock-alerts px-3 pt-3">
         <div class="card card-danger card-outline shadow-sm mb-0" style="border-radius: 12px; border-top-width: 3px;">

@@ -253,6 +253,27 @@ $googleFontList = [
                                         <small class="text-muted">Ürün taleplerinde bu adrese de bilgi maili
                                             gönderilir.</small>
                                     </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Kritik Stok Bildirim E-postası</label>
+                                        <div class="input-icon-wrap">
+                                            <i class="fas fa-bell field-icon"></i>
+                                            <input type="email" name="critical_stock_notification_email" class="form-control"
+                                                value="<?= e(get_setting('critical_stock_notification_email', '')) ?>"
+                                                placeholder="stok@ornek.com">
+                                        </div>
+                                        <small class="text-muted">Kritik stok seviyesinin altına düşen ürünlerin listesi günlük olarak bu adrese gönderilir.</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Yedekleme Bildirim E-postası</label>
+                                        <div class="input-icon-wrap">
+                                            <i class="fas fa-envelope field-icon"></i>
+                                            <input type="email" name="backup_notification_email" class="form-control"
+                                                value="<?= e(get_setting('backup_notification_email', '')) ?>"
+                                                placeholder="admin@ornek.com">
+                                        </div>
+                                        <small class="text-muted">Giriş/çıkış yedekleme sonuçları bu adrese mail olarak
+                                            gönderilir.</small>
+                                    </div>
                                 </div>
                             </div>
                             <div class="d-flex gap-2">
@@ -556,17 +577,6 @@ $googleFontList = [
                                         </div>
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label">Yedekleme Bildirim E-postası</label>
-                                        <div class="input-icon-wrap">
-                                            <i class="fas fa-envelope field-icon"></i>
-                                            <input type="email" name="backup_notification_email" class="form-control"
-                                                value="<?= e(get_setting('backup_notification_email', '')) ?>"
-                                                placeholder="admin@ornek.com">
-                                        </div>
-                                        <small class="text-muted">Giriş/çıkış yedekleme sonuçları bu adrese mail olarak
-                                            gönderilir.</small>
-                                    </div>
-                                    <div class="mb-3">
                                         <label class="form-label">Kargo Gönderici Bilgisi</label>
                                         <div class="input-icon-wrap">
                                             <i class="fas fa-truck field-icon"></i>
@@ -602,6 +612,18 @@ $googleFontList = [
                                                 rolündeki kullanıcılar "Stok Hareketleri" menüsü altında bu özelliği
                                                 görebilir.</div>
                                         </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Kritik Stok Uyarı Görünümü</label>
+                                        <div class="input-icon-wrap">
+                                            <i class="fas fa-eye field-icon"></i>
+                                            <select name="stock_alert_visibility" class="form-select select2-simple">
+                                                <option value="all" <?= get_setting('stock_alert_visibility', 'all') === 'all' ? 'selected' : '' ?>>Tüm Sayfalarda</option>
+                                                <option value="home" <?= get_setting('stock_alert_visibility', 'all') === 'home' ? 'selected' : '' ?>>Sadece Anasayfada</option>
+                                            </select>
+                                        </div>
+                                        <small class="text-muted">Kritik stok uyarısı kartının nerede gösterileceğini belirler.</small>
                                     </div>
                                 </div>
                             </div>

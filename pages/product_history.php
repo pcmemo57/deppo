@@ -156,7 +156,8 @@ $totalBalance = array_sum(array_column($stocks, 'balance'));
                                         <div class="mb-3">
                                             <label class="form-label">Alarm Seviyesi</label>
                                             <input type="number" name="stock_alarm" class="form-control"
-                                                value="<?= (int) $product['stock_alarm'] ?>" min="0">
+                                                value="<?= (int) $product['stock_alarm'] ?>" min="0" step="1"
+                                                oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                                         </div>
                                     </div>
                                     <div class="col-md-12">

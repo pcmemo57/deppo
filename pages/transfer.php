@@ -370,8 +370,8 @@ $warehouses = Database::fetchAll("
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Miktar</label>
                             <div class="input-group input-group-sm" style="height: 40px;">
-                                <input type="number" id="transferQty" class="form-control text-end" min="0.001"
-                                    step="any" placeholder="0.00"
+                                <input type="number" id="transferQty" class="form-control text-end" min="1"
+                                    step="1" placeholder="0" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                     style="padding-left:13px!important; height:100% !important; border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important; border-right: 0 !important;" disabled>
                                 <button type="button" class="btn btn-primary h-100 px-3" id="btnAddTransferLine"
                                     style="border-top-left-radius: 0 !important; border-bottom-left-radius: 0 !important; border-top-right-radius: 8px !important; border-bottom-right-radius: 8px !important;">

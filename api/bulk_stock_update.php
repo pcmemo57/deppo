@@ -49,7 +49,7 @@ try {
                 $params[] = "%$search%";
             }
 
-            $products = Database::fetchAll("SELECT id, name, code, unit, image,
+            $products = Database::fetchAll("SELECT id, name, code, unit, image, stock_alarm,
                                             (SELECT unit_price FROM tbl_dp_stock_in WHERE product_id = p.id AND is_active = 1 ORDER BY created_at DESC LIMIT 1) AS last_price,
                                             (SELECT currency FROM tbl_dp_stock_in WHERE product_id = p.id AND is_active = 1 ORDER BY created_at DESC LIMIT 1) AS last_currency
                                             FROM tbl_dp_products p WHERE $where ORDER BY name LIMIT 100", $params);
@@ -70,6 +70,7 @@ try {
                     'image' => $p['image'],
                     'last_price' => (float) ($p['last_price'] ?? 0),
                     'last_currency' => $p['last_currency'] ?? 'TL',
+                    'global_stock_alarm' => (float) ($p['stock_alarm'] ?? 0),
                     'stocks' => $stocks,
                     'alarms' => $alarms
                 ];
@@ -150,6 +151,12 @@ try {
                     if ($newAlarm > 0) {
                         Database::execute("INSERT INTO tbl_dp_product_warehouse_alarms (product_id, warehouse_id, stock_alarm) VALUES (?, ?, ?)", [$productId, $warehouseId, $newAlarm]);
                     }
+                }
+
+                // Genel alarmı güncelle
+                if (isset($update['global_stock_alarm'])) {
+                    $newGlobalAlarm = (float) $update['global_stock_alarm'];
+                    Database::execute("UPDATE tbl_dp_products SET stock_alarm = ? WHERE id = ?", [$newGlobalAlarm, $productId]);
                 }
             }
 

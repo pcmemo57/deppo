@@ -517,7 +517,8 @@ $entrustedCount = Database::fetchOne('SELECT COUNT(*) AS c FROM tbl_dp_entrusted
                         <label class="form-label">İşlem Miktarı <span class="text-danger">*</span></label>
                         <div class="input-icon-wrap">
                             <i class="fas fa-sort-numeric-up field-icon"></i>
-                            <input type="number" id="actionQty" class="form-control" step="any" required>
+                            <input type="number" id="actionQty" class="form-control" min="1" step="1"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '')" required>
                         </div>
                     </div>
 

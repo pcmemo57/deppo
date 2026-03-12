@@ -306,8 +306,9 @@ $warehouses = Database::fetchAll("
                         <div class="col-md-5">
                             <label class="form-label">Miktar</label>
                             <div class="input-group">
-                                <input type="number" id="qtyInput" class="form-control text-end" placeholder="0.00"
-                                    step="any"
+                                <input type="number" id="qtyInput" class="form-control text-end" placeholder="0"
+                                    min="1" step="1"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                     style="border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important; border-right: 0 !important;"
                                     disabled>
                                 <button type="button" class="btn btn-primary px-3" id="btnAddLine"

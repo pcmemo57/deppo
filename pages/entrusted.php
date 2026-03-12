@@ -263,7 +263,8 @@ $warehouses = Database::fetchAll("
                             <div class="col-md-4">
                                 <div class="input-group">
                                     <input type="number" id="qtyInput" class="form-control text-end" placeholder="Miktar"
-                                        step="any" style="border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important; border-right: 0 !important;" disabled>
+                                        min="1" step="1" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                        style="border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important; border-right: 0 !important;" disabled>
                                     <button type="button" class="btn btn-success px-3" id="btnAddLine" style="border-top-left-radius: 0 !important; border-bottom-left-radius: 0 !important;" disabled>
                                         <i class="fas fa-plus me-1"></i> Ekle
                                     </button>
@@ -356,7 +357,8 @@ $warehouses = Database::fetchAll("
                         <label class="form-label">İşlem Miktarı <span class="text-danger">*</span></label>
                         <div class="input-icon-wrap">
                             <i class="fas fa-sort-numeric-up field-icon"></i>
-                            <input type="number" id="actionQty" class="form-control" step="any" required>
+                            <input type="number" id="actionQty" class="form-control" min="1" step="1"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '')" required>
                         </div>
                     </div>
 

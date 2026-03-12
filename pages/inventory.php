@@ -128,7 +128,8 @@ requireRole(ROLE_ADMIN, ROLE_USER);
                                             <div class="col">
                                                 <input type="number" id="countQty"
                                                     class="form-control form-control-lg text-center fw-bold text-primary"
-                                                    value="1" min="1" step="any" inputmode="decimal">
+                                                    value="1" min="1" step="1" inputmode="numeric"
+                                                    oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                                             </div>
                                             <div class="col-auto">
                                                 <button class="btn btn-success btn-lg px-4 fw-bold"

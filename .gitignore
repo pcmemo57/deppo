@@ -25,3 +25,4 @@ images/UrunResim/*
 vendor/
 composer.phar
 composer.lock
+backups/
